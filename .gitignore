@@ -1,0 +1,31 @@
+# === macOS
+.DS_Store
+.AppleDouble
+
+# === Windows
+Thumbs.db
+Desktop.ini
+
+# === Vim
+*.swp
+*.swo
+*~
+
+# === VSCode
+.vscode/settings.json
+
+# === JetBrains IDEs
+.idea/
+
+# === General
+.env.local
+
+# === Dotfiles-repo-specific
+
+# Per-machine zsh config, bootstrapped from zsh/zsh-config.example by install.sh.
+# Each machine edits this independently — must not be committed.
+zsh/zsh-config
+
+# Local git identity (real name/email/SSH key paths), bootstrapped from
+# git/git-identity.example.
+git/git-identity

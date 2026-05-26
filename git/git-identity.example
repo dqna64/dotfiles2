@@ -1,0 +1,20 @@
+# === Copy to ~/.config/git/git-identity and fill in your details
+
+# Primary git identity, used as default when running git operations that
+# depend on git identity
+PRIMARY_NAME="Primary Name"
+PRIMARY_EMAIL="primary@example.com"
+
+# Secondary git identity, opt in for repos in certain paths
+SECONDARY_NAME="Secondary Name"  
+SECONDARY_EMAIL="secondary@example.com"
+
+PRIMARY_REMOTE_ACCOUNT_SSH_PUBLIC_KEY="/path/to/ssh/public_key"
+SECONDARY_REMOTE_ACCOUNT_SSH_PUBLIC_KEY="/path/to/ssh/public_key"
+
+# GitHub usernames for each account. Used by git-setup.sh to render
+# SSH Host aliases (github.com-<username>) so remote URLs like
+# git@github.com-<username>:org/repo.git authenticate as the right
+# account. No effect outside SSH config rendering.
+PRIMARY_GITHUB_USERNAME="primary-username"
+SECONDARY_GITHUB_USERNAME="secondary-username"

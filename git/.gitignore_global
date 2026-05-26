@@ -1,0 +1,25 @@
+## Git reads this file from ~/.gitignore_global
+## Symlink the above path to this file
+
+# macOS
+.DS_Store
+.AppleDouble
+
+# Windows  
+Thumbs.db
+Desktop.ini
+
+# Vim
+*.swp
+*.swo
+*~
+
+# VSCode
+.vscode/settings.json
+
+# JetBrains IDEs
+.idea/
+
+# General
+.env.local
+*.log

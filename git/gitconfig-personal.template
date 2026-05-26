@@ -1,0 +1,3 @@
+[user]
+    name = "{{SECONDARY_NAME}}"
+    email = "{{SECONDARY_EMAIL}}"

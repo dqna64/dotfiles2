@@ -1,0 +1,36 @@
+[user]
+    name = "{{PRIMARY_NAME}}"
+    email = "{{PRIMARY_EMAIL}}"
+
+[includeIf "gitdir:~/example-repository-opt-into-secondary-git-identity/"]
+    path = ~/.gitconfig-secondary
+
+[core]
+    excludesfile = ~/.gitignore_global
+    editor = vim
+
+[push]
+    default = simple
+
+[pull]
+    rebase = true
+
+[init]
+	defaultBranch = main
+
+# Identity switching aliases
+# $ git primary    # Switch repo's user.name/user.email to primary (work)
+# $ git secondary  # Switch repo's user.name/user.email to secondary (personal)
+# $ git whoami     # Show repo's current user.name/user.email
+#
+# SSH key selection is no longer managed via git aliases. Instead, ~/.ssh/config
+# defines one Host alias per GitHub account, named github.com-<github-username>
+# (rendered by git/git-setup.sh from ssh/config.template — usernames come from
+# git-identity). Attach a repo to a specific account by setting its remote URL
+# to use the alias hostname, e.g.
+#   git remote set-url origin git@github.com-{{PRIMARY_GITHUB_USERNAME}}:<org>/<repo>.git
+[alias]
+    primary = !git config user.name "{{PRIMARY_NAME}}" && git config user.email "{{PRIMARY_EMAIL}}" && echo "Switched to primary identity: {{PRIMARY_EMAIL}}"
+    secondary = !git config user.name "{{SECONDARY_NAME}}" && git config user.email "{{SECONDARY_EMAIL}}" && echo "Switched to secondary identity: {{SECONDARY_EMAIL}}"
+    whoami = !git config user.name && git config user.email
+

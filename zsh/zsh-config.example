@@ -1,0 +1,43 @@
+# === Machine identifier
+# Used elsewhere (e.g. zsh/.zshenv) to enable machine-specific behaviour
+# such as Canva devbox PATH additions.
+# Options (extend as needed):
+#   DVBX1, DVBX2, DVBX3  - Canva devboxes
+#   MB_M1         - personal MacBook
+#   MB_CNV        - work Macbook
+# Leave unset or use a non-matching value to disable all machine-specific blocks.
+DQNA64_MACHINE=
+
+# === Set zsh theme
+# Note: oh-my-zsh already uses a variable called ZSH_THEME. We use ZSH_THEME_MY which
+# may affect the final value set for ZSH_THEME by the zsh theme setup in these
+# dotfiles.
+# Options:
+# - p10k
+# - starship
+ZSH_THEME_MY="p10k"
+
+# === 
+ENABLE_P10K_INSTANT_PROMPT=false
+
+# === Yabai window manager for macos
+# Enable Yabai along with my custom yabai configs
+ENABLE_YABAI_DQNA64=false # true or false
+
+# === Verbosity for my dotfiles stdout
+# Options:
+# - 0: almost nothing
+# - 1: important messages
+# - 2: informative messages
+export VERBOSITY_DQNA64=1
+
+# === Path to CNV work binaries
+
+export CNV_WORK_BIN_PATH=
+
+# === Path for agents to store and read plans
+
+export AGENT_PLANS=
+
+# ===
+

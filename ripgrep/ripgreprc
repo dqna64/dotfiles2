@@ -1,0 +1,22 @@
+# Case-insensitive if pattern is all lowercase, sensitive otherwise.
+--smart-case
+# Search hidden files/dirs (dotfiles), but…
+--hidden
+# …never descend into .git. --hidden would otherwise include it.
+--glob=!.git/*
+# Skip lockfiles — huge, noisy, rarely what you want.
+--glob=!*.lock
+--glob=!package-lock.json
+--glob=!yarn.lock
+--glob=!pnpm-lock.yaml
+# Truncate absurdly long lines (minified JS, generated code) instead of dumping them.
+--max-columns=200
+--max-columns-preview
+# Nicer colours. Optional — drop if you don't like them.
+--colors=line:none
+--colors=line:style:bold
+--colors=path:fg:magenta
+--colors=path:style:bold
+--colors=match:fg:red
+--colors=match:style:bold
+

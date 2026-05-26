@@ -1,0 +1,164 @@
+{
+  "window.autoDetectColorScheme": false,
+  "workbench.preferredLightColorTheme": "One Dark Pro",
+  "workbench.preferredDarkColorTheme": "One Dark Pro",
+  "editor.inlineSuggest.enabled": true,
+  "editor.inlayHints.enabled": "off",
+  "sshfs.configs": [
+    {
+      "name": "cse",
+      "host": "login6.cse.unsw.edu.au",
+      "username": "z5359836",
+      "privateKeyPath": "$HOME/.ssh/id_ed25519",
+      "root": "~/",
+      "port": 22
+    }
+  ],
+  "github.copilot.enable": {
+    "*": true,
+    "plaintext": false,
+    "markdown": false,
+    "scminput": false,
+    "yaml": false,
+    "css": true,
+    "html": true,
+    "javascript": true,
+    "jsonc": false,
+    "rust": true,
+    "python": false,
+    "cpp": false,
+    "c": false,
+    "typescript": true,
+    "typescriptreact": true,
+    "java": true
+  },
+  "editor.minimap.enabled": false,
+  "editor.wordWrap": "on",
+  "editor.rulers": [
+    80
+  ],
+  "workbench.iconTheme": "material-icon-theme",
+  "workbench.colorCustomizations": {
+    "[Bluloco Light Italic]": {
+      "editor.background": "#ece0d2",
+      "sideBar.background": "#eedcca",
+      "list.inactiveSelectionBackground": "#5fefea8b",
+      "list.activeSelectionBackground": "#2bbbcb"
+    },
+    "[Bearded Theme Milkshake Mango]": {
+      "editor.background": "#ece0d2",
+      "sideBar.background": "#eedcca",
+      "list.inactiveSelectionBackground": "#5fefea8b",
+      "list.activeSelectionBackground": "#2bbbcb"
+    },
+    "[Atom One Light]": {
+      "editor.background": "#ece0d2",
+      "sideBar.background": "#eedcca"
+    },
+    "editor.selectionHighlightBorder": "#56d0c4e8",
+    "editor.selectionBackground": "#47d1ca79",
+    "editor.inactiveSelectionBackground": "#168cb790",
+    "editor.lineHighlightBackground": "#fafafa1c",
+    "editor.semanticHighlighting": true,
+    "terminal.background": "#00000000"
+  },
+  "editor.renderWhitespace": "all",
+  "svelte.enable-ts-plugin": true,
+  "workbench.colorTheme": "One Dark Pro",
+  "[python]": {
+    "editor.formatOnSave": false,
+    "editor.formatOnType": false,
+    // "editor.defaultFormatter": "ms-python.autopep8"
+  },
+  "C_Cpp.default.cppStandard": "c++20",
+  "C_Cpp.intelliSenseEngine": "default", // Intellisense conflicts with clangd, disable it
+  "C_Cpp.clang_format_fallbackStyle": "{BasedOnStyle: Google, IndentWidth: 4, ColumnLimit: 0}",
+  "cmake.configureOnOpen": true,
+  "code-runner.executorMap": {
+    // "cpp": "cd $dir && g++ $fileName -o $fileNameWithoutExt && $dir$fileNameWithoutExt",
+    // "cpp": "cd $dir && g++ -std=c++20 $fileName -o $fileNameWithoutExt && $dir$fileNameWithoutExt",
+    "cpp": "cd $dir && g++ -std=c++20 $fileName && ./a.out"
+  },
+  "cmake.pinnedCommands": [
+    "workbench.action.tasks.configureTaskRunner",
+    "workbench.action.tasks.runTask"
+  ],
+  "[cpp]": {
+    "editor.defaultFormatter": "xaver.clang-format"
+  },
+  "C_Cpp.default.cStandard": "c11",
+  "clangd.path": "/Users/me/Library/Application Support/Code/User/globalStorage/llvm-vs-code-extensions.vscode-clangd/install/15.0.6/clangd_15.0.6/bin/clangd",
+  "haskell.manageHLS": "GHCup",
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+  },
+  "js/ts.updateImportsOnFileMove.enabled": "prompt",
+  "gitlens.codeLens.recentChange.enabled": true,
+  "gitlens.codeLens.authors.enabled": true,
+  "gitlens.codeLens.enabled": true,
+  "gitlens.currentLine.enabled": true,
+  "python.formatting.provider": "none",
+  "window.zoomLevel": 2,
+  "[html]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[css]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "terminal.integrated.stickyScroll.enabled": true,
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "diffEditor.ignoreTrimWhitespace": true,
+  "githubPullRequests.pullBranch": "never",
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "prisma.showPrismaDataPlatformNotification": false,
+  "github.copilot.editor.enableAutoCompletions": true,
+  "[jsonc]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
+  },
+  "[markdown]": {
+    "editor.unicodeHighlight.ambiguousCharacters": false,
+    "editor.unicodeHighlight.invisibleCharacters": false,
+    "diffEditor.ignoreTrimWhitespace": false,
+    "editor.wordWrap": "on",
+    "editor.quickSuggestions": {
+      "comments": "off",
+      "strings": "off",
+      "other": "off"
+    },
+    "editor.formatOnSave": false
+  },
+  "search.useIgnoreFiles": false,
+  "cmake.options.statusBarVisibility": "visible", // allow search gitignored files
+  "[java]": {
+    "editor.defaultFormatter": "redhat.java"
+  },
+  "java.configuration.runtimes": [
+    {
+      "name": "JavaSE-11",
+      "path": "/Library/Java/JavaVirtualMachines/microsoft-11.jdk/Contents/Home",
+    },
+    {
+      "name": "JavaSE-22",
+      "path": "/Library/Java/JavaVirtualMachines/temurin-22.jdk/Contents/Home",
+      "default": true
+    }
+  ],
+  "codium.enable": false,
+  "[c]": {
+    // "editor.defaultFormatter": "xaver.clang-format"
+  },
+  "editor.formatOnSave": true,
+  "terminal.integrated.gpuAcceleration": "off",
+  "window.systemColorTheme": "dark",
+  "window.titleBarStyle": "custom",
+  "claudeCode.preferredLocation": "sidebar",
+  // "files.trimTrailingWhitespace": true,
+  // "files.insertFinalNewline": true,
+}
