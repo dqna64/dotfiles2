@@ -14,24 +14,6 @@ checkoutorigin() {
   git remote set-branches --add origin "$1" && git fetch origin "$1" && git checkout "$1"
 }
 
-backup_branch() {
-  local BRANCH_NAME
-  if BRANCH_NAME=$(git branch --show-current 2>/dev/null) ; then
-    echo "Current branch name: ${BRANCH_NAME}"
-  else
-    echo "No current branch name found"
-    return 1
-  fi
-  
-  local SUFFIX="${1:-backup-$(date +%y%m%d)}"
-  
-  local NEW_BRANCH_NAME="${BRANCH_NAME}-${SUFFIX}"
-  
-  echo "Creating new branch ${NEW_BRANCH_NAME}..."
-  git branch "$NEW_BRANCH_NAME" "$BRANCH_NAME"
-  git push -u origin "$NEW_BRANCH_NAME"
-}
-
 # By BlakeC
 evergreen() {
   # Verify we're in a git repository
@@ -47,33 +29,7 @@ evergreen() {
     return 1
   fi
 
-  # Switch to the green branch and pull the latest changes
-  echo "Switching to green and pulling down the latest..."
-  git checkout green && git pull origin green
-}
-
-# By BlakeC
-stashmergepop() {
-  # Verify we're in a git repository
-  if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-    echo "Error: Not a git repository." >&2
-    return 1
-  fi
-
-  # State to record whether or not a stash is created
-  stash_created=0
-
-  echo "Checking for unstaged changes..."
-  if [ -n "$(git status --porcelain)" ]; then
-    echo "Unstaged changes detected. Stashing them now..."
-    git stash push -m "pre-merge stash"
-    if [ $? -eq 0 ]; then
-      stash_created=1
-    else
-      echo "Error: Failed to stash changes." >&2
-      return 1
-    fi
-  else
-	:
-  fi
+  # Switch to the master branch and pull the latest changes
+  echo "Switching to master and pulling down the latest..."
+  git checkout master && git pull origin master
 }

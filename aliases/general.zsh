@@ -12,7 +12,12 @@ function mkcd() {
 #   1 -> coder.gordnh-devbox-1
 #   2 -> main.gordons-devbox-forge.gordonh.coder
 #   3 -> main.gordons-qagent-devbox.gordonh.coder
-# If no session prefix is given, lists the sessions on the host.
+# If no session prefix is given, lists the sessions on the host and exits
+# the remote shell.
+# If a session prefix is given, attempts to attach to the session.
+# Example:
+# $ sd 1 main- # ssh into devbox 1, attempt attach to tmux session
+#   # whose name starts with "main-"
 function sd() {
   local host
   case "$1" in
@@ -25,7 +30,7 @@ function sd() {
     ssh -t "$host" 'tmux ls'
     return
   fi
-  ssh -t "$host" "tmux attach -t $2"
+  ssh -t "$host" "tmux attach -t $2; exec \$SHELL -l"
 }
 
 # SP  ' '  0x20 = · U+00B7 Middle Dot
