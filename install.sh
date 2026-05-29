@@ -175,25 +175,24 @@ cat <<EOF
 
   Optional: configure git identities + per-account SSH host aliases.
 
-    1. Edit  $DOTFILES_DIR/git/git-identity  with your real values
-       (copy from git-identity.example if it doesn't exist yet).
-    2. Run   $DOTFILES_DIR/git/git-setup.sh
-       Sets up:
-         - $DOTFILES_DIR/git/dqna64-dotfiles.gitconfig
-                                   (rendered from gitconfig.template;
-                                    gitignored. Consumed via [include]
-                                    in ~/.gitconfig.)
-         - ~/.gitignore_global     (symlinked to git/.gitignore_global)
-         - ~/.ssh/dqna64-dotfiles.conf
-                                   (rendered from ssh/config.template;
-                                    defines github.com-<username> Host
-                                    aliases (one per GitHub account) so
-                                    multiple GitHub accounts can be used
-                                    in parallel — no ssh-add juggling.)
-       git-setup.sh does NOT touch ~/.gitconfig OR ~/.ssh/config — both
-       are user-owned. If either does not already pull in the rendered
-       snippet, the script prints the exact lines to add.
-       Skip step 2 if you'll manage these files by hand.
+    Run  $DOTFILES_DIR/git/git-setup.sh
+      Renders:
+        - $DOTFILES_DIR/git/dqna64-dotfiles.gitconfig
+                                  (rendered from gitconfig.template;
+                                   gitignored. Consumed via [include]
+                                   in ~/.gitconfig.)
+        - ~/.gitignore_global     (symlinked to git/.gitignore_global)
+        - $DOTFILES_DIR/ssh/dqna64-dotfiles.conf
+                                  (rendered from ssh/config.template;
+                                   gitignored. Consumed via Include in
+                                   ~/.ssh/config. Defines github.com-<username>
+                                   Host aliases (one per GitHub account) so
+                                   multiple GitHub accounts can be used
+                                   in parallel — no ssh-add juggling.)
+      git-setup.sh does NOT touch ~/.gitconfig OR ~/.ssh/config — both
+      are user-owned. If either does not already pull in the rendered
+      snippet, the script prints the exact lines to add.
+      Skip if you'll manage these files by hand.
 
 EOF
 
@@ -210,8 +209,23 @@ symlink_dotfile "$DOTFILES_DIR/tmux/.tmux.conf" "$HOME/.tmux.conf"
 symlink_dotfile "$DOTFILES_DIR/yabai/yabairc" "$HOME/.config/yabai/yabairc"
 
 # === claude
-# Claude config is per-machine; see claude/README.md for the symlink commands
-# matching your machine. Not automated here.
+#
+# Claude config is per-machine (settings + CLAUDE.md vary by host), so it
+# isn't symlinked here. The README has the exact `ln -sf` commands keyed by
+# $DQNA64_MACHINE.
+
+cat <<EOF
+
+  Optional: install per-machine Claude Code config.
+
+    See  $DOTFILES_DIR/claude/README.md  for the symlink commands
+    matching your machine (\$DQNA64_MACHINE). E.g. on MB_M1:
+
+      ln -sf "$DOTFILES_DIR/claude/settings.mb_m1.json" "\$HOME/.claude/settings.json"
+
+    Skip if you'll manage ~/.claude/ by hand.
+
+EOF
 
 # === DOTFILES_DIR reminder
 

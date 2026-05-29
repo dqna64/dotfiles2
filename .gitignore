@@ -29,3 +29,9 @@ zsh/zsh-config
 # Local git identity (real name/email/SSH key paths), bootstrapped from
 # git/git-identity.example.
 git/git-identity
+
+# Rendered per-machine config files (contain real values substituted from
+# git-identity). Live next to their templates and are written by
+# git/git-setup.sh.
+git/dqna64-dotfiles.gitconfig
+ssh/dqna64-dotfiles.conf

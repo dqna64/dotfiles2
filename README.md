@@ -55,7 +55,8 @@ re-source `.zshrc` after making changes to those files.
    - `git/dqna64-dotfiles.gitconfig` — gitconfig snippet (gitignored,
      next to its template)
    - `~/.gitignore_global` — symlink to `git/.gitignore_global`
-   - `~/.ssh/dqna64-dotfiles.conf` — SSH host-alias snippet
+   - `ssh/dqna64-dotfiles.conf` — SSH host-alias snippet (gitignored,
+     next to its template)
 
    `~/.gitconfig` and `~/.ssh/config` are user-owned and never modified
    by the script. To pull in the rendered files, `git-setup.sh` prints
@@ -68,8 +69,8 @@ re-source `.zshrc` after making changes to those files.
    ```
 
    ```
-   # in ~/.ssh/config
-   Include ~/.ssh/dqna64-dotfiles.conf
+   # in ~/.ssh/config (path printed by git-setup.sh based on $DOTFILES_DIR)
+   Include ~/dotfiles_dqna64/ssh/dqna64-dotfiles.conf
    ```
 
 4. **(Optional) Symlink Claude / VS Code / Cursor config** following the
@@ -121,6 +122,18 @@ to register it anywhere — `.zshrc` globs the dirs automatically.
   repo root. If `.zshenv` moves to a different depth, update the `:h`
   count (`<repo>/.zshenv` → `:A:h`; `<repo>/zsh/sub/.zshenv` →
   `:A:h:h:h`). Dir name doesn't matter, only depth.
+
+## TODO
+
+- [ ] Add an `uninstall.sh` that reverses `install.sh`: remove the symlinks
+  it created (`~/.zshenv`, `~/.zshrc`, `~/.tmux.conf`,
+  `~/.config/karabiner/karabiner.json`, `~/.config/yabai/yabairc`, plus
+  the Claude / git / ssh symlinks), restore the most recent
+  `<file>.backup.<timestamp>` if present, and optionally remove
+  `~/.oh-my-zsh` and the cloned `$DOTFILES_DIR`. Should be idempotent
+  and only touch paths it knows it owns (i.e. symlinks that resolve into
+  `$DOTFILES_DIR`), to avoid nuking unrelated user config. Also tells the user to
+  'include' directives from ~/.gitconfig and ~/.ssh/config.
 
 ## Migrating from the bare git repo dotfiles
 

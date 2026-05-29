@@ -1,6 +1,18 @@
-# Rendered by dotfiles/git/git-setup.sh into ~/.ssh/dqna64-dotfiles.conf.
+# Rendered by dotfiles/git/git-setup.sh into
+# ssh/dqna64-dotfiles.conf (next to this template, but gitignored
+# because the rendered file contains per-machine values).
 # DO NOT EDIT THE RENDERED FILE — edit ssh/config.template and re-run
 # git-setup.sh. Placeholder values come from git/git-identity.
+#
+# The rendered file is consumed via an Include directive in ~/.ssh/config:
+#
+#     Include ~/dotfiles_dqna64/ssh/dqna64-dotfiles.conf
+#
+# (Use the actual path to your clone if you cloned to a different location.
+# git-setup.sh prints the exact line based on $DOTFILES_DIR.)
+#
+# The script never modifies ~/.ssh/config itself, so any hand-curated
+# Host blocks you keep there are preserved across re-runs.
 #
 # Per-account GitHub Host aliases, one per GitHub username. Both aliases
 # resolve to github.com but offer different keys, so multiple GitHub

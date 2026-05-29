@@ -3,7 +3,7 @@
 # Set up all git-related host config:
 #   - gitconfig.template          -> git/dqna64-dotfiles.gitconfig  (rendered, gitignored, included from ~/.gitconfig)
 #   - git/.gitignore_global       -> ~/.gitignore_global             (symlinked)
-#   - ssh/config.template         -> ~/.ssh/dqna64-dotfiles.conf     (rendered)
+#   - ssh/config.template         -> ssh/dqna64-dotfiles.conf        (rendered, gitignored, Included from ~/.ssh/config)
 #
 # Run AFTER install.sh — install.sh handles the zsh/karabiner/tmux/yabai
 # pieces but leaves git-related host setup to this script because most of
@@ -29,24 +29,14 @@ GIT_DIR="$DOTFILES_DIR/git"
 SSH_TEMPLATE_DIR="$DOTFILES_DIR/ssh"
 GIT_IDENTITY_FILE="$GIT_DIR/git-identity"
 
-# Rendered gitconfig lives inside this repo, next to its template, but
-# gitignored — it contains per-machine values (real email, SSH key
-# paths) substituted from git-identity.
+# Rendered files live inside this repo, next to their templates, but
+# gitignored — they contain per-machine values (real email, GitHub
+# usernames, SSH key paths) substituted from git-identity. Each machine
+# renders its own copies; nothing here is shared across hosts.
 GITCONFIG_RENDERED="$GIT_DIR/dqna64-dotfiles.gitconfig"
-# Display/instruction form: tilde-prefixed when the repo lives under
-# $HOME (the common case — $DOTFILES_DIR defaults to $HOME/dotfiles_dqna64),
-# absolute otherwise. Git resolves `~` inside [include] paths
-if [[ "$GITCONFIG_RENDERED" == "$HOME/"* ]]; then
-    GITCONFIG_INCLUDE_PATH="~/${GITCONFIG_RENDERED#"$HOME/"}"
-else
-    GITCONFIG_INCLUDE_PATH="$GITCONFIG_RENDERED"
-fi
-USER_GITCONFIG="$HOME/.gitconfig"
+SSH_SNIPPET_DEST="$SSH_TEMPLATE_DIR/dqna64-dotfiles.conf"
 
-# Where the rendered SSH snippet lands and what gets Included from
-# ~/.ssh/config. Kept under ~/.ssh (not ~/.ssh/config.d) for portability —
-# Include just needs an absolute path.
-SSH_SNIPPET_DEST="$HOME/.ssh/dqna64-dotfiles.conf"
+USER_GITCONFIG="$HOME/.gitconfig"
 SSH_CONFIG="$HOME/.ssh/config"
 SSH_INCLUDE_LINE="Include $SSH_SNIPPET_DEST"
 
@@ -138,13 +128,11 @@ symlink_repo_file "$GIT_DIR/.gitignore_global" "$HOME/.gitignore_global"
 # Check whether ~/.gitconfig pulls in the rendered snippet via [include].
 # We never modify ~/.gitconfig — if the include is missing, print the
 # exact block to add. Use `git config` for detection so whitespace /
-# alternative formatting in ~/.gitconfig doesn't fool a raw grep. Accept
-# either the tilde-form (preferred) or the absolute form, since git
-# resolves both identically.
+# alternative formatting in ~/.gitconfig doesn't fool a raw grep.
 gitconfig_include_needed=true
 if [[ -f "$USER_GITCONFIG" ]] \
         && git config --file "$USER_GITCONFIG" --get-all include.path 2>/dev/null \
-        | grep -qxF -e "$GITCONFIG_INCLUDE_PATH" -e "$GITCONFIG_RENDERED"; then
+        | grep -qxF -- "$GITCONFIG_RENDERED"; then
     gitconfig_include_needed=false
 fi
 
@@ -155,20 +143,21 @@ fi
 #
 # This script NEVER modifies ~/.ssh/config — that file may contain hand-
 # curated config we must not touch. We only write to files we own:
-#   - $HOME/.ssh/ (mkdir + chmod, harmless if already present)
-#   - $HOME/.ssh/dqna64-dotfiles.conf (the rendered snippet; we own it)
+#   - $SSH_SNIPPET_DEST (the rendered snippet, inside this repo, gitignored)
 # If ~/.ssh/config does not already Include our snippet, we PRINT
-# instructions for the user to add the line manually.
-mkdir -p "$HOME/.ssh"
-chmod 700 "$HOME/.ssh"
+# instructions for the user to add the line manually. The snippet is
+# chmod 600 so ssh is happy whether or not it enforces StrictModes on
+# Included files.
 render_template "$SSH_TEMPLATE_DIR/config.template" "$SSH_SNIPPET_DEST"
 chmod 600 "$SSH_SNIPPET_DEST"
 
-ssh_include_needed=false
-if [[ ! -f "$SSH_CONFIG" ]]; then
-    ssh_include_needed=true
-elif ! grep -qxF "$SSH_INCLUDE_LINE" "$SSH_CONFIG"; then
-    ssh_include_needed=true
+# Check whether ~/.ssh/config Includes our snippet. Match against the
+# canonical `Include <absolute-path>` line as a fixed string. We don't
+# bother handling unusual whitespace or quoting — anyone who edits the
+# Include line by hand can recognize the script's nag and ignore it.
+ssh_include_needed=true
+if [[ -f "$SSH_CONFIG" ]] && grep -qxF "$SSH_INCLUDE_LINE" "$SSH_CONFIG"; then
+    ssh_include_needed=false
 fi
 
 cat <<EOF
@@ -206,7 +195,7 @@ yourself, ideally near the TOP so anything you set later in ~/.gitconfig
 can override the defaults:
 
     [include]
-        path = $GITCONFIG_INCLUDE_PATH
+        path = $GITCONFIG_RENDERED
 
 After adding it, verify with (NOT \`--global\`, which scopes to the
 file itself and does not resolve includes):
@@ -214,7 +203,7 @@ file itself and does not resolve includes):
 ===
 EOF
 else
-    echo "OK: $USER_GITCONFIG already includes $GITCONFIG_INCLUDE_PATH."
+    echo "OK: $USER_GITCONFIG already includes $GITCONFIG_RENDERED."
     echo "==="
 fi
 
