@@ -91,20 +91,20 @@ bindkey "[D" backward-word
 bindkey "[C" forward-word
 
 # === Machine-specific zsh config
-# Source per-machine config from the dotfiles repo based on $DQNA64_MACHINE
-# (set in zsh/zsh-config, sourced by ~/.zshenv). Add a new case below to
-# wire up additional machines.
-case "$DQNA64_MACHINE" in
-    MB_M1)
-        MACHINE_ZSHRC="$DOTFILES_DIR/zsh/.zshrc.mb-m1"
-        if [ ! -f "$MACHINE_ZSHRC" ]; then
-            echo "Warning: machine-specific zshrc not found at $MACHINE_ZSHRC (DQNA64_MACHINE=$DQNA64_MACHINE)" >&2
-        else
-            source "$MACHINE_ZSHRC"
-        fi
-        unset MACHINE_ZSHRC
-        ;;
-esac
+# Source per-machine config from the dotfiles repo if a matching file
+# exists. Filename convention is zsh/.zshrc.<machine>, where <machine>
+# is $DQNA64_MACHINE lowercased with underscores replaced by hyphens
+# (e.g. MB_M1 -> mb-m1, MB_CNV -> mb-cnv, DVBX1 -> dvbx1). To wire up
+# a new machine, just drop the file in zsh/ — no edit here needed.
+# Missing files are not an error (most machines won't have one).
+if [ -n "$DQNA64_MACHINE" ]; then
+    MACHINE_ZSHRC="$DOTFILES_DIR/zsh/.zshrc.${${DQNA64_MACHINE:l}//_/-}"
+    if [ -f "$MACHINE_ZSHRC" ]; then
+        [ "${VERBOSITY_DQNA64:-0}" -ge 1 ] && echo "Loading machine zshrc from $MACHINE_ZSHRC"
+        source "$MACHINE_ZSHRC"
+    fi
+    unset MACHINE_ZSHRC
+fi
 
 # === Yabai window management
 # yabairc itself is read by yabai from $HOME/.config/yabai/yabairc (symlinked

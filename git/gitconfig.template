@@ -1,9 +1,24 @@
+# Rendered by dotfiles/git/git-setup.sh into
+# git/dqna64-dotfiles.gitconfig (next to this template, but gitignored
+# because the rendered file contains per-machine values).
+# DO NOT EDIT THE RENDERED FILE — edit git/gitconfig.template and re-run
+# git-setup.sh. Placeholder values come from git/git-identity.
+#
+# The rendered file is consumed via an [include] block in ~/.gitconfig:
+#
+#     [include]
+#         path = ~/dotfiles_dqna64/git/dqna64-dotfiles.gitconfig
+#
+# (Use the actual path to your clone if you cloned to a different location.
+# git-setup.sh prints the exact line based on $DOTFILES_DIR.)
+#
+# The script never modifies ~/.gitconfig itself, so any machine-local
+# config (e.g. [maintenance], [trace2]) you keep there is preserved
+# across re-runs.
+
 [user]
     name = "{{PRIMARY_NAME}}"
     email = "{{PRIMARY_EMAIL}}"
-
-[includeIf "gitdir:~/example-repository-opt-into-secondary-git-identity/"]
-    path = ~/.gitconfig-secondary
 
 [core]
     excludesfile = ~/.gitignore_global

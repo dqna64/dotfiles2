@@ -50,6 +50,25 @@ symlink_dotfile() {
 	ln -s "$src" "$dst"
 }
 
+# normalize_github_remote <url>
+#
+# Reduce a GitHub remote URL to the canonical "owner/repo" form so we can
+# compare URLs that differ only in transport / auth. Accepts:
+#   - https://github.com/owner/repo(.git)?
+#   - git@github.com:owner/repo(.git)?
+#   - git@github.com-<alias>:owner/repo(.git)?    (SSH host-alias form from
+#                                                  this repo's ssh/config.template)
+#   - ssh://git@github.com/owner/repo(.git)?
+# Strips the protocol+host prefix, any `.git` (with optional trailing `/`),
+# and any leftover trailing `/`. Returns the raw input unchanged if no
+# pattern matches.
+normalize_github_remote() {
+	# Use `#` as the sed delimiter so the `|` alternation inside the regex
+	# isn't interpreted as the delimiter itself. `#` doesn't appear in
+	# normal git remote URLs.
+	echo "$1" | sed -E 's#^(https://|git@|ssh://git@)[^:/]*[:/]##;s#\.git/?$##;s#/$##'
+}
+
 # === Pre-clone checks
 
 if ! command -v git >/dev/null 2>&1; then
@@ -63,6 +82,23 @@ DOTFILES_REPO="https://github.com/dqna64/dotfiles2.git"
 DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dotfiles_dqna64}"
 
 if [ -d "$DOTFILES_DIR/.git" ]; then
+	# A git repo already exists at $DOTFILES_DIR. We don't want to silently
+	# symlink files out of it unless it's actually the dqna64-dotfiles
+	# repo — otherwise a leftover test clone or unrelated repo at this
+	# path would get installed into $HOME. Compare normalized origin URLs
+	# so HTTPS / plain SSH / host-alias SSH all pass.
+	existing_remote=$(git -C "$DOTFILES_DIR" remote get-url origin 2>/dev/null || echo "")
+	if [ "$(normalize_github_remote "$existing_remote")" != "$(normalize_github_remote "$DOTFILES_REPO")" ]; then
+		echo "Error: $DOTFILES_DIR is a git repo, but its origin remote does not match the dqna64-dotfiles repo." >&2
+		echo "  found:    ${existing_remote:-<no origin remote>}" >&2
+		echo "  expected: $DOTFILES_REPO (or any URL pointing at the same owner/repo)" >&2
+		echo "" >&2
+		echo "Fix one of the following and re-run:" >&2
+		echo "  - point origin at the right repo:  git -C \"$DOTFILES_DIR\" remote set-url origin \"$DOTFILES_REPO\"" >&2
+		echo "  - install to a different path:     DOTFILES_DIR=<other-path> $0" >&2
+		echo "  - remove the conflicting directory and let install.sh re-clone." >&2
+		exit 1
+	fi
 	echo "Dotfiles repo already exists at $DOTFILES_DIR, skipping clone."
 else
 	if [ -e "$DOTFILES_DIR" ]; then
@@ -122,8 +158,10 @@ cat <<EOF
        (copy from git-identity.example if it doesn't exist yet).
     2. Run   $DOTFILES_DIR/git/git-setup.sh
        Sets up:
-         - ~/.gitconfig            (rendered from gitconfig.template)
-         - ~/.gitconfig-personal   (rendered from gitconfig-personal.template)
+         - $DOTFILES_DIR/git/dqna64-dotfiles.gitconfig
+                                   (rendered from gitconfig.template;
+                                    gitignored. Consumed via [include]
+                                    in ~/.gitconfig.)
          - ~/.gitignore_global     (symlinked to git/.gitignore_global)
          - ~/.ssh/dqna64-dotfiles.conf
                                    (rendered from ssh/config.template;
@@ -131,8 +169,9 @@ cat <<EOF
                                     aliases (one per GitHub account) so
                                     multiple GitHub accounts can be used
                                     in parallel — no ssh-add juggling.)
-       git-setup.sh does NOT touch ~/.ssh/config; if the file does not
-       already Include the snippet, it prints the exact line to add.
+       git-setup.sh does NOT touch ~/.gitconfig OR ~/.ssh/config — both
+       are user-owned. If either does not already pull in the rendered
+       snippet, the script prints the exact lines to add.
        Skip step 2 if you'll manage these files by hand.
 
 EOF
@@ -157,15 +196,11 @@ symlink_dotfile "$DOTFILES_DIR/yabai/yabairc" "$HOME/.config/yabai/yabairc"
 
 cat <<EOF
 
-  Note: zsh/.zshenv reads \$DOTFILES_DIR to locate this repo at runtime.
-  It defaults to \$HOME/dotfiles_dqna64 in .zshenv, which matches the
-  default clone location used above ($DOTFILES_DIR).
-
-  If you cloned to a different location, ensure DOTFILES_DIR is set to
-  '$DOTFILES_DIR' in your shell environment BEFORE zsh sources .zshenv
-  (e.g. via your login environment or a parent process). Otherwise the
-  .zshenv default ('\$HOME/dotfiles_dqna64') will be used and any
-  reference to \$DOTFILES_DIR (e.g. RIPGREP_CONFIG_PATH) will break.
+  Note: zsh/.zshenv auto-derives \$DOTFILES_DIR from its own location
+  (now $DOTFILES_DIR) by resolving the ~/.zshenv symlink created above.
+  No per-machine edit needed even if the repo lives outside the default
+  \$HOME/dotfiles_dqna64. If you ever replace ~/.zshenv with a regular
+  file (not a symlink), .zshenv falls back to \$HOME/dotfiles_dqna64.
 
 EOF
 

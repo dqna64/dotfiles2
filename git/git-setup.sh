@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 
 # Set up all git-related host config:
-#   - gitconfig.template          -> ~/.gitconfig            (rendered)
-#   - gitconfig-personal.template -> ~/.gitconfig-personal   (rendered)
-#   - git/.gitignore_global       -> ~/.gitignore_global     (symlinked)
-#   - ssh/config.template         -> ~/.ssh/dqna64-dotfiles.conf (rendered)
+#   - gitconfig.template          -> git/dqna64-dotfiles.gitconfig  (rendered, gitignored, included from ~/.gitconfig)
+#   - git/.gitignore_global       -> ~/.gitignore_global             (symlinked)
+#   - ssh/config.template         -> ~/.ssh/dqna64-dotfiles.conf     (rendered)
 #
 # Run AFTER install.sh — install.sh handles the zsh/karabiner/tmux/yabai
 # pieces but leaves git-related host setup to this script because most of
@@ -14,10 +13,11 @@
 # <file>.backup.<YYYYMMDDHHMMSS> before being overwritten; the gitignore
 # symlink is skipped if already correctly pointing at the repo.
 #
-# This script NEVER touches ~/.ssh/config. The SSH snippet only takes effect
-# once you manually add `Include ~/.ssh/dqna64-dotfiles.conf` to ~/.ssh/config
-# (ideally at or near the top). The script will print this instruction if
-# the line is missing.
+# This script NEVER touches ~/.gitconfig OR ~/.ssh/config — both are
+# user-owned and may contain machine-local config we must not clobber
+# (e.g. [maintenance], [trace2] in ~/.gitconfig). Instead, the script
+# renders standalone files and prints the exact one-time line(s) to add
+# to ~/.gitconfig / ~/.ssh/config to pull them in via [include] / Include.
 
 set -euo pipefail
 
@@ -28,6 +28,20 @@ DOTFILES_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 GIT_DIR="$DOTFILES_DIR/git"
 SSH_TEMPLATE_DIR="$DOTFILES_DIR/ssh"
 GIT_IDENTITY_FILE="$GIT_DIR/git-identity"
+
+# Rendered gitconfig lives inside this repo, next to its template, but
+# gitignored — it contains per-machine values (real email, SSH key
+# paths) substituted from git-identity.
+GITCONFIG_RENDERED="$GIT_DIR/dqna64-dotfiles.gitconfig"
+# Display/instruction form: tilde-prefixed when the repo lives under
+# $HOME (the common case — $DOTFILES_DIR defaults to $HOME/dotfiles_dqna64),
+# absolute otherwise. Git resolves `~` inside [include] paths
+if [[ "$GITCONFIG_RENDERED" == "$HOME/"* ]]; then
+    GITCONFIG_INCLUDE_PATH="~/${GITCONFIG_RENDERED#"$HOME/"}"
+else
+    GITCONFIG_INCLUDE_PATH="$GITCONFIG_RENDERED"
+fi
+USER_GITCONFIG="$HOME/.gitconfig"
 
 # Where the rendered SSH snippet lands and what gets Included from
 # ~/.ssh/config. Kept under ~/.ssh (not ~/.ssh/config.d) for portability —
@@ -100,6 +114,7 @@ render_template() {
     fi
 
     backup_if_present "$output_file"
+    mkdir -p "$(dirname "$output_file")"
 
     sed -e "s|{{PRIMARY_NAME}}|${PRIMARY_NAME}|g" \
         -e "s|{{PRIMARY_EMAIL}}|${PRIMARY_EMAIL}|g" \
@@ -114,12 +129,24 @@ render_template() {
     echo "Rendered $template_file -> $output_file"
 }
 
-render_template "$GIT_DIR/gitconfig.template"          "$HOME/.gitconfig"
-render_template "$GIT_DIR/gitconfig-personal.template" "$HOME/.gitconfig-personal"
+render_template "$GIT_DIR/gitconfig.template" "$GITCONFIG_RENDERED"
 
 # Symlink the global gitignore so edits to git/.gitignore_global in the repo
 # take effect immediately.
 symlink_repo_file "$GIT_DIR/.gitignore_global" "$HOME/.gitignore_global"
+
+# Check whether ~/.gitconfig pulls in the rendered snippet via [include].
+# We never modify ~/.gitconfig — if the include is missing, print the
+# exact block to add. Use `git config` for detection so whitespace /
+# alternative formatting in ~/.gitconfig doesn't fool a raw grep. Accept
+# either the tilde-form (preferred) or the absolute form, since git
+# resolves both identically.
+gitconfig_include_needed=true
+if [[ -f "$USER_GITCONFIG" ]] \
+        && git config --file "$USER_GITCONFIG" --get-all include.path 2>/dev/null \
+        | grep -qxF -e "$GITCONFIG_INCLUDE_PATH" -e "$GITCONFIG_RENDERED"; then
+    gitconfig_include_needed=false
+fi
 
 # Render the SSH host-aliases snippet. Each account gets its own Host alias
 # named github.com-<github-username> (with the username sourced from
@@ -170,6 +197,26 @@ GitHub SSH host aliases (per-remote):
      ssh -T git@github.com-${SECONDARY_GITHUB_USERNAME}
 ===
 EOF
+
+if [[ "$gitconfig_include_needed" == "true" ]]; then
+    cat <<EOF
+ACTION REQUIRED: ~/.gitconfig does not include the rendered snippet yet.
+This script does not modify ~/.gitconfig — add the following two lines
+yourself, ideally near the TOP so anything you set later in ~/.gitconfig
+can override the defaults:
+
+    [include]
+        path = $GITCONFIG_INCLUDE_PATH
+
+After adding it, verify with (NOT \`--global\`, which scopes to the
+file itself and does not resolve includes):
+    git config --get user.email   # should print $PRIMARY_EMAIL
+===
+EOF
+else
+    echo "OK: $USER_GITCONFIG already includes $GITCONFIG_INCLUDE_PATH."
+    echo "==="
+fi
 
 if [[ "$ssh_include_needed" == "true" ]]; then
     cat <<EOF

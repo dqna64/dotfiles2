@@ -1,5 +1,6 @@
-## Git reads this file from ~/.gitignore_global
-## Symlink the above path to this file
+# Git's global ignore file. core.excludesfile in git/gitconfig.template
+# points git at ~/.gitignore_global, which git/git-setup.sh symlinks
+# back to this file. So: edit here, no other action needed.
 
 # macOS
 .DS_Store
@@ -23,3 +24,6 @@ Desktop.ini
 # General
 .env.local
 *.log
+
+# Claude Code
+**/.claude/settings.local.json
