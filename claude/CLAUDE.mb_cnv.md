@@ -15,7 +15,32 @@
 - Never force push.
 - Prefer new commits over amending.
 - Stage specific files — avoid `git add -A` or `git add .`.
-- Don't commit unless explicitly asked.
+
+## Branch Plans
+- When working on a branch, look for a plan associated with the branch in `$AGENT_PLANS`.
+- If no plan is found for the current branch, inform the user and ask if they would like one to be created.
+- Plan contents vary by the type of work. Use discretion — include only what's useful, skip sections that don't apply.
+- Common elements across all plans:
+  - **Goal**: what this branch is trying to achieve, and why.
+  - **Steps**: ordered breakdown of the work.
+  - **Verification**: how we'll know it's done and correct.
+  - **Links**: Jira ticket, related PRs, design docs, Slack threads, etc.
+- Type-specific additions (use only the relevant ones):
+  - **Bug fix / investigation**: reproduction steps, hypotheses, root cause once found, regression risk.
+  - **New feature**: requirements, design decisions and trade-offs, component/module breakdown, rollout considerations.
+  - **Small adjustment**: usually just goal, steps, and verification — keep it short.
+  - **Refactor**: scope and boundaries, before/after shape, behavior-preservation strategy, regression risk.
+  - **Writing tests**: what's being covered, current coverage gaps, test cases to add, fixtures/mocks needed.
+- Keep the plan a living document — update it as work progresses (e.g. add the root cause once a bug is diagnosed, record changes as we implement the solution).
+
+## PR Creation
+- Bias towards using these headings: Overview/Purpose, Problem, Solution, Verify, Links.
+  - **Overview/Purpose**: high-level summary of what the PR aims to achieve.
+  - **Problem**: the issue and its technical cause that this PR addresses.
+  - **Solution**: the technical solution implemented in this PR.
+  - **Verify**: steps to test that the solution works.
+  - **Links**: relevant links, including the Jira ticket.
+- Not all of these headings are necessary for every PR. Use discretion to select the necessary ones only.
 
 ## Testing
 <!-- Add project-specific test commands and conventions here -->
