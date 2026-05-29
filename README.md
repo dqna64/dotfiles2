@@ -138,4 +138,4 @@ to register it anywhere — `.zshrc` globs the dirs automatically.
 ## Migrating from the bare git repo dotfiles
 
 - [ ] clean up redundant bits in `~/.gitconfig`
-- [ ] clean up previous symlink ~/.gitignore_global → /Users/gordonh/.config/git/gitignore_global 
+- [ ] Clean up previous symlink ~/.gitignore_global → /Users/gordonh/.config/git/gitignore_global 
