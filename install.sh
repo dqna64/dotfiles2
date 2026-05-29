@@ -100,6 +100,12 @@ if [ -d "$DOTFILES_DIR/.git" ]; then
 		exit 1
 	fi
 	echo "Dotfiles repo already exists at $DOTFILES_DIR, skipping clone."
+	echo "  To force a fresh clone, remove or move it aside first, e.g.:"
+	echo "    mv \"$DOTFILES_DIR\" \"$DOTFILES_DIR.backup.\$(date +%Y%m%d%H%M%S)\""
+	echo "  Or install into a different path:"
+	echo "    DOTFILES_DIR=<other-path> $0"
+	echo "  To just pull the latest changes into the existing clone:"
+	echo "    git -C \"$DOTFILES_DIR\" pull --ff-only"
 else
 	if [ -e "$DOTFILES_DIR" ]; then
 		echo "Error: $DOTFILES_DIR exists but is not a git repo." >&2
@@ -114,17 +120,32 @@ fi
 
 # https://ohmyz.sh/
 
-echo "Installing oh-my-zsh..."
-# Prevent ohmyzsh installation running zsh at the end prevent it from
-# replacing .zshrc, preventing changing default shell
-RUNZSH=no KEEP_ZSHRC=yes CHSH=no sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+ZSH="${ZSH:-$HOME/.oh-my-zsh}"
+if [ -d "$ZSH" ]; then
+	echo "oh-my-zsh already installed at $ZSH, skipping."
+else
+	echo "Installing oh-my-zsh..."
+	# Prevent ohmyzsh installation running zsh at the end prevent it from
+	# replacing .zshrc, preventing changing default shell
+	RUNZSH=no KEEP_ZSHRC=yes CHSH=no sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+fi
 
-echo "Downloading oh-my-zsh themes..."
-echo "powerlevel10k..."
-ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
-git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "${ZSH_CUSTOM}/themes/powerlevel10k"
-echo "zsh-autosuggestions..."
-git clone https://github.com/zsh-users/zsh-autosuggestions "${ZSH_CUSTOM}/plugins/zsh-autosuggestions"
+echo "Downloading oh-my-zsh themes/plugins..."
+ZSH_CUSTOM="${ZSH_CUSTOM:-$ZSH/custom}"
+
+if [ -d "${ZSH_CUSTOM}/themes/powerlevel10k" ]; then
+	echo "powerlevel10k already installed, skipping."
+else
+	echo "powerlevel10k..."
+	git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "${ZSH_CUSTOM}/themes/powerlevel10k"
+fi
+
+if [ -d "${ZSH_CUSTOM}/plugins/zsh-autosuggestions" ]; then
+	echo "zsh-autosuggestions already installed, skipping."
+else
+	echo "zsh-autosuggestions..."
+	git clone https://github.com/zsh-users/zsh-autosuggestions "${ZSH_CUSTOM}/plugins/zsh-autosuggestions"
+fi
 
 # === zsh
 
