@@ -174,26 +174,29 @@ fi
 
 cat <<EOF
 
-  Optional: configure git identities + per-account SSH host aliases.
+Configure git identities + per-account SSH host aliases [optional]
 
-    Run  $DOTFILES_DIR/git/git-setup.sh
-      Renders:
-        - $DOTFILES_DIR/git/dqna64-dotfiles.gitconfig
-                                  (rendered from gitconfig.template;
-                                   gitignored. Consumed via [include]
-                                   in ~/.gitconfig.)
-        - ~/.gitignore_global     (symlinked to git/.gitignore_global)
-        - $DOTFILES_DIR/ssh/dqna64-dotfiles.conf
-                                  (rendered from ssh/config.template;
-                                   gitignored. Consumed via Include in
-                                   ~/.ssh/config. Defines github.com-<username>
-                                   Host aliases (one per GitHub account) so
-                                   multiple GitHub accounts can be used
-                                   in parallel — no ssh-add juggling.)
-      git-setup.sh does NOT touch ~/.gitconfig OR ~/.ssh/config — both
-      are user-owned. If either does not already pull in the rendered
-      snippet, the script prints the exact lines to add.
-      Skip if you'll manage these files by hand.
+    Run:
+
+      $DOTFILES_DIR/git/git-setup.sh
+
+    Renders:
+      - $DOTFILES_DIR/git/dqna64-dotfiles.gitconfig
+                                (rendered from gitconfig.template;
+                                 gitignored. Consumed via [include]
+                                 in ~/.gitconfig.)
+      - ~/.gitignore_global     (symlinked to git/.gitignore_global)
+      - $DOTFILES_DIR/ssh/dqna64-dotfiles.conf
+                                (rendered from ssh/config.template;
+                                 gitignored. Consumed via Include in
+                                 ~/.ssh/config. Defines github.com-<username>
+                                 Host aliases (one per GitHub account) so
+                                 multiple GitHub accounts can be used
+                                 in parallel — no ssh-add juggling.)
+    git-setup.sh does NOT touch ~/.gitconfig OR ~/.ssh/config — both
+    are user-owned. If either does not already pull in the rendered
+    snippet, the script prints the exact lines to add.
+    Skip if you'll manage these files by hand.
 
 EOF
 
