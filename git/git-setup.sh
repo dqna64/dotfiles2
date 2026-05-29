@@ -10,7 +10,7 @@
 # it depends on values from git/git-identity.
 #
 # Re-running is safe: existing rendered files are moved aside to
-# <file>.backup.<YYYYMMDDHHMMSS> before being overwritten; the gitignore
+# <file>.backup_dqna64.<YYYYMMDDHHMMSS> before being overwritten; the gitignore
 # symlink is skipped if already correctly pointing at the repo.
 #
 # This script NEVER touches ~/.gitconfig OR ~/.ssh/config — both are
@@ -54,14 +54,16 @@ fi
 # shellcheck source=/dev/null
 source "$GIT_IDENTITY_FILE"
 
-# Back up <file> to <file>.backup.<ts> if it exists and is not a symlink we
-# would happily overwrite. Symlinks point at things we don't own, so back
-# them up too rather than dereferencing+overwriting.
+# Back up <file> to <file>.backup_dqna64.<ts> if it exists and is not a
+# symlink we would happily overwrite. Symlinks point at things we don't own,
+# so back them up too rather than dereferencing+overwriting. The
+# backup_dqna64 marker keeps these distinct from any other `.backup` files
+# you might have and lets `.gitignore` match them precisely.
 backup_if_present() {
     local file="$1"
     if [[ -e "$file" || -L "$file" ]]; then
         local backup
-        backup="$file.backup.$(date +%Y%m%d%H%M%S)"
+        backup="$file.backup_dqna64.$(date +%Y%m%d%H%M%S)"
         echo "Backing up existing $file to $backup..."
         mv "$file" "$backup"
     fi
@@ -70,7 +72,7 @@ backup_if_present() {
 # Idempotently create an absolute symlink <dst> -> <src>.
 #   - If <dst> is already a symlink pointing at <src>: no-op.
 #   - If <dst> exists as anything else (file, dir, wrong symlink): back it
-#     up to <dst>.backup.<ts> first, then create the new symlink.
+#     up to <dst>.backup_dqna64.<ts> first, then create the new symlink.
 symlink_repo_file() {
     local src="$1"
     local dst="$2"

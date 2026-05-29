@@ -15,9 +15,10 @@ set -e
 #   - If <dst> is already a symlink pointing at <src>, prints a message and
 #     does nothing (safe to re-run).
 #   - If <dst> exists as a regular file, directory, or symlink pointing
-#     elsewhere, it is moved aside to "<dst>.backup.<YYYYMMDDHHMMSS>" before
-#     the new symlink is created. Existing files are never overwritten or
-#     deleted.
+#     elsewhere, it is moved aside to "<dst>.backup_dqna64.<YYYYMMDDHHMMSS>"
+#     before the new symlink is created. Existing files are never overwritten
+#     or deleted. The marker keeps these backups distinct from any other
+#     `.backup` files you might have and lets `.gitignore` match them precisely.
 #   - Creates an absolute symlink: <dst> -> <src>.
 #
 # Args:
@@ -41,7 +42,7 @@ symlink_dotfile() {
 
 	if [ -e "$dst" ] || [ -L "$dst" ]; then
 		local backup
-		backup="$dst.backup.$(date +%Y%m%d%H%M%S)"
+		backup="$dst.backup_dqna64.$(date +%Y%m%d%H%M%S)"
 		echo "Backing up existing $dst to $backup..."
 		mv "$dst" "$backup"
 	fi
@@ -101,7 +102,7 @@ if [ -d "$DOTFILES_DIR/.git" ]; then
 	fi
 	echo "Dotfiles repo already exists at $DOTFILES_DIR, skipping clone."
 	echo "  To force a fresh clone, remove or move it aside first, e.g.:"
-	echo "    mv \"$DOTFILES_DIR\" \"$DOTFILES_DIR.backup.\$(date +%Y%m%d%H%M%S)\""
+	echo "    mv \"$DOTFILES_DIR\" \"$DOTFILES_DIR.backup_dqna64.\$(date +%Y%m%d%H%M%S)\""
 	echo "  Or install into a different path:"
 	echo "    DOTFILES_DIR=<other-path> $0"
 	echo "  To just pull the latest changes into the existing clone:"

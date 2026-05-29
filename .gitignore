@@ -35,3 +35,8 @@ git/git-identity
 # git/git-setup.sh.
 git/dqna64-dotfiles.gitconfig
 ssh/dqna64-dotfiles.conf
+
+# Backups created by install.sh / git-setup.sh when an existing file is
+# moved aside before being replaced. The "backup_dqna64" marker keeps them
+# distinct from any other `.backup` files. Per-machine, never committed.
+*.backup_dqna64.*

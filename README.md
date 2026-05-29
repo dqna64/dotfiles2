@@ -20,7 +20,7 @@ re-source `.zshrc` after making changes to those files.
 1. **Bootstrap.** Clones this repo to `$HOME/dotfiles_dqna64`, installs
    oh-my-zsh + plugins, and symlinks the zsh / karabiner / tmux / yabai
    entry points. Existing files are backed up to
-   `<file>.backup.<timestamp>`.
+   `<file>.backup_dqna64.<timestamp>`.
 
    ```bash
    curl -fsSL https://raw.githubusercontent.com/dqna64/dotfiles2/main/install.sh | bash
@@ -112,8 +112,9 @@ to register it anywhere — `.zshrc` globs the dirs automatically.
 
 - `zsh/zsh-config` — machine identifier + flags.
 - `git/git-identity` — real name/email/SSH key paths/GitHub usernames.
-- `*.backup.*` — created by `install.sh` and `git-setup.sh` when an
-  existing file is moved aside.
+- `*.backup_dqna64.*` — created by `install.sh` and `git-setup.sh` when
+  an existing file is moved aside before being replaced. The marker
+  keeps these distinct from any other `.backup` files you might have.
 
 ## Brittleness
 
@@ -129,7 +130,7 @@ to register it anywhere — `.zshrc` globs the dirs automatically.
   it created (`~/.zshenv`, `~/.zshrc`, `~/.tmux.conf`,
   `~/.config/karabiner/karabiner.json`, `~/.config/yabai/yabairc`, plus
   the Claude / git / ssh symlinks), restore the most recent
-  `<file>.backup.<timestamp>` if present, and optionally remove
+  `<file>.backup_dqna64.<timestamp>` if present, and optionally remove
   `~/.oh-my-zsh` and the cloned `$DOTFILES_DIR`. Should be idempotent
   and only touch paths it knows it owns (i.e. symlinks that resolve into
   `$DOTFILES_DIR`), to avoid nuking unrelated user config. Also tells the user to
