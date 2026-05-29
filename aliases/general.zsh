@@ -12,8 +12,8 @@ function mkcd() {
 #   1 -> coder.gordnh-devbox-1
 #   2 -> main.gordons-devbox-forge.gordonh.coder
 #   3 -> main.gordons-qagent-devbox.gordonh.coder
-# If no session prefix is given, lists the sessions on the host and exits
-# the remote shell.
+# If no session prefix is given, lists the sessions on the host and replaces
+# the remote shell with an interactive shell.
 # If a session prefix is given, attempts to attach to the session.
 # Example:
 # $ sd 1 main- # ssh into devbox 1, attempt attach to tmux session
@@ -26,11 +26,15 @@ function sd() {
     3) host="main.gordons-qagent-devbox.gordonh.coder" ;;
     *) echo "usage: sd <1|2|3> [tmux-session-prefix]" >&2; return 1 ;;
   esac
+  # Look the login shell up from /etc/passwd instead.
+  # Eg '/bin/zsh' or '/bin/bash'
+  # We do this bc $SHELL isn't reliably set in non-interactive ssh sessions
+  local shell_cmd='exec "$(getent passwd "$(id -un)" | cut -d: -f7)" -l'
   if [ -z "$2" ]; then
-    ssh -t "$host" 'tmux ls'
+    ssh -t "$host" "tmux ls; $shell_cmd"
     return
   fi
-  ssh -t "$host" "tmux attach -t $2; exec \$SHELL -l"
+  ssh -t "$host" "tmux attach -t $2; $shell_cmd"
 }
 
 # SP  ' '  0x20 = · U+00B7 Middle Dot
