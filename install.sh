@@ -2,6 +2,42 @@
 
 set -e
 
+if [ -t 1 ]; then
+	RED='\033[31m'
+	GREEN='\033[32m'
+	YELLOW='\033[33m'
+	BLUE='\033[34m'
+	BOLD='\033[1m'
+	RESET='\033[0m'
+else
+	RED=''
+	GREEN=''
+	YELLOW=''
+	BLUE=''
+	BOLD=''
+	RESET=''
+fi
+
+echo_info() {
+	echo -e "${GREEN}$*${RESET}"
+}
+
+echo_success() {
+	echo -e "${GREEN}${BOLD}$*${RESET}"
+}
+
+echo_warn() {
+	echo -e "${YELLOW}$*${RESET}" >&2
+}
+
+echo_error() {
+	echo -e "${RED}${BOLD}$*${RESET}" >&2
+}
+
+echo_note() {
+	echo -e "${BLUE}$*${RESET}"
+}
+
 # === Helpers
 
 # symlink_dotfile <src> <dst>
@@ -29,7 +65,7 @@ symlink_dotfile() {
 	local dst="$2"
 
 	if [ ! -f "$src" ]; then
-		echo "Error: expected $src to exist." >&2
+		echo_error "Error: expected $src to exist."
 		exit 1
 	fi
 
@@ -51,6 +87,68 @@ symlink_dotfile() {
 	ln -s "$src" "$dst"
 }
 
+is_macos() {
+	[ "$(uname -s)" = "Darwin" ]
+}
+
+# brew_executable returns the first usable Homebrew binary.
+# Preconditions: a Homebrew installation may already exist in PATH or at a
+# standard Apple Silicon / Intel install path.
+brew_executable() {
+	if command -v brew >/dev/null 2>&1; then
+		command -v brew
+		return 0
+	fi
+
+	local candidate
+	for candidate in /opt/homebrew/bin/brew /usr/local/bin/brew; do
+		if [ -x "$candidate" ]; then
+			echo "$candidate"
+			return 0
+		fi
+	done
+
+	return 1
+}
+
+# install_homebrew_if_needed installs Homebrew on macOS when it is not
+# already available. Preconditions: the machine is macOS and the installer can
+# be downloaded from GitHub using curl.
+install_homebrew_if_needed() {
+	if ! is_macos; then
+		echo_info "Not macOS; skipping Homebrew installation."
+		return 0
+	fi
+
+	if brew_executable >/dev/null 2>&1; then
+		echo_info "Homebrew already installed, skipping."
+		return 0
+	fi
+
+	if command -v xcode-select >/dev/null 2>&1 && ! xcode-select -p >/dev/null 2>&1; then
+		echo_warn "Warning: Xcode command line tools are not installed. Homebrew may still install, but some formulae may fail later."
+		echo_warn "Run 'xcode-select --install' if you want to install the developer toolchain now."
+	fi
+
+	echo_info "macOS detected — installing Homebrew..."
+	if ! /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; then
+		echo_error "Homebrew installation failed. Check network connectivity and permissions, then retry."
+		return 1
+	fi
+
+	local brew_exec
+	if ! brew_exec=$(brew_executable 2>/dev/null); then
+		echo_error "Homebrew installation completed, but brew is not on PATH."
+		echo_info "Try adding Homebrew to your PATH and re-run the script."
+		echo_info "  Apple Silicon: eval \"\$(/opt/homebrew/bin/brew shellenv)\""
+		echo_info "  Intel Mac:    eval \"\$(/usr/local/bin/brew shellenv)\""
+		return 1
+	fi
+
+	eval "$("$brew_exec" shellenv)" >/dev/null 2>&1 || true
+	echo_success "Homebrew installation finished."
+}
+
 # normalize_github_remote <url>
 #
 # Reduce a GitHub remote URL to the canonical "owner/repo" form so we can
@@ -69,6 +167,10 @@ normalize_github_remote() {
 	# normal git remote URLs.
 	echo "$1" | sed -E 's#^(https://|git@|ssh://git@)[^:/]*[:/]##;s#\.git/?$##;s#/$##'
 }
+
+# Optionally install Homebrew on macOS so later steps (git, etc.)
+# can rely on `brew` if it's not already present.
+install_homebrew_if_needed
 
 # === Pre-clone checks
 
