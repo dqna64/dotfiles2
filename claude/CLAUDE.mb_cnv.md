@@ -25,6 +25,7 @@
   - **Steps**: ordered breakdown of the work.
   - **Verification**: how we'll know it's done and correct.
   - **Links**: Jira ticket, related PRs, design docs, Slack threads, etc.
+  - **Sessions**: a running log of every Claude session that worked on this branch. For each session record its session id, the working directory, and the machine name (hostname). Append a new entry whenever you start work in a new session.
 - Type-specific additions (use only the relevant ones):
   - **Bug fix / investigation**: reproduction steps, hypotheses, root cause once found, regression risk.
   - **New feature**: requirements, design decisions and trade-offs, component/module breakdown, rollout considerations.
