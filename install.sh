@@ -296,6 +296,7 @@ else
 	echo_info "powerlevel10k..."
 	git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "${ZSH_CUSTOM}/themes/powerlevel10k"
 fi
+echo_note "Using the powerlevel10k theme? Run 'p10k configure' in zsh to customise your prompt."
 
 if [ -d "${ZSH_CUSTOM}/plugins/zsh-autosuggestions" ]; then
 	echo "zsh-autosuggestions already installed, skipping."
@@ -325,8 +326,6 @@ else
 	echo_note "Edit it to update per-machine values (DQNA64_MACHINE, theme, etc.); see ${ZSH_CONFIG_FILE}.example for any new options."
 	echo_note "After updating, restart zsh (or run 'exec zsh') as it's sourced by ~/.zshenv at shell startup."
 fi
-
-## TODO set zsh as default shell
 
 # === git
 #
@@ -414,12 +413,42 @@ cat <<EOF
 EOF
 printf '%b' "$RESET"
 
+# === Set zsh as the default login shell
+#
+# oh-my-zsh was installed with CHSH=no, so the login shell is still unchanged
+# at this point. Switch it to zsh here. Skipped if it's already zsh or if we
+# can't prompt for a password (non-interactive bootstrap).
+echo ""
+# zsh's presence was already verified in the pre-clone checks above.
+zsh_path="$(command -v zsh)"
+if [ "$SHELL" = "$zsh_path" ]; then
+	echo_info "Default login shell is already zsh ($zsh_path)."
+elif [ ! -t 0 ]; then
+	echo_warn "Non-interactive run; leaving your login shell unchanged."
+	echo_note "To make zsh your default later, run:  chsh -s \"$zsh_path\""
+else
+	echo_info "Setting zsh ($zsh_path) as your default login shell..."
+	# chsh only accepts shells listed in /etc/shells.
+	if ! grep -qxF "$zsh_path" /etc/shells 2>/dev/null; then
+		echo_note "Adding $zsh_path to /etc/shells (may prompt for your password)..."
+		echo "$zsh_path" | sudo tee -a /etc/shells >/dev/null || true
+	fi
+	if chsh -s "$zsh_path"; then
+		echo_success "Default shell changed to zsh; it takes effect on your next login."
+	else
+		echo_warn "Could not change the default shell automatically."
+		echo_note "Run this yourself:  chsh -s \"$zsh_path\""
+	fi
+fi
+unset zsh_path
+
 # === Start zsh
 
 # Only hand off to an interactive zsh when stdin is a real terminal. Under a
 # piped bootstrap (`curl ... | bash`) stdin is the script stream, so `exec zsh`
 # would inherit it, hit EOF, and exit immediately without an interactive
 # shell — so we just tell the user to open a new terminal instead.
+echo ""
 if [ -t 0 ]; then
 	echo_success "Done. Starting zsh..."
 	exec zsh
