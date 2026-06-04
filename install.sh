@@ -168,9 +168,9 @@ normalize_github_remote() {
 	echo "$1" | sed -E 's#^(https://|git@|ssh://git@)[^:/]*[:/]##;s#\.git/?$##;s#/$##'
 }
 
-# Optionally install Homebrew on macOS so later steps (git, etc.)
-# can rely on `brew` if it's not already present.
-install_homebrew_if_needed
+# Optionally install Homebrew on macOS.
+# Failure to install Homebrew here won't abort the rest of the install.
+install_homebrew_if_needed || echo_warn "Continuing without Homebrew; install it later if you need it."
 
 # === Pre-clone checks
 
@@ -179,10 +179,51 @@ if ! command -v git >/dev/null 2>&1; then
 	exit 1
 fi
 
+# zsh is required for:
+# - oh-my-zsh installer
+# - it is the preferred shell of this dotfiles
+if ! command -v zsh >/dev/null 2>&1; then
+	echo_error "Error: zsh is required but not installed."
+	echo_info "Install zsh and re-run, e.g.:"
+	echo_info "  macOS:         brew install zsh"
+	echo_info "  Debian/Ubuntu: sudo apt-get install zsh"
+	exit 1
+fi
+
 # === Clone this dotfiles repo if it does not already exist
 
-DOTFILES_REPO="https://github.com/dqna64/dotfiles2.git"
-DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dotfiles_dqna64}"
+# Canonical repo URL. Only used as a last-resort fallback when we can't learn
+# the URL from a local checkout — i.e. a piped `curl | bash` bootstrap, where
+# the script arrives on stdin and has no way to know which URL it came from.
+# Override with DOTFILES_REPO=... in the environment (e.g. to bootstrap a fork).
+DOTFILES_REPO_FALLBACK="https://github.com/dqna64/dotfiles2.git"
+
+# Prefer learning where to install from — and which repo URL to use — from the
+# checkout this script is actually running out of. The common case is "clone
+# somewhere, then run ./install.sh": in that case we install from that clone
+# (no surprise second copy in $HOME) and treat its origin as the repo URL (so
+# forks/renames work without editing this script). A piped `curl | bash` run
+# has no script file on disk, so both fall back to the defaults below.
+default_dotfiles_dir="$HOME/dotfiles_dqna64"
+detected_repo=""
+if [ -n "${BASH_SOURCE[0]:-}" ]; then
+	script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd -P)"
+	script_repo_root="$(git -C "$script_dir" rev-parse --show-toplevel 2>/dev/null || echo "")"
+	# Require install.sh to live at the repo root, so a copy of this script
+	# vendored deep inside some unrelated monorepo can't hijack the install.
+	if [ -n "$script_repo_root" ] && [ -f "$script_repo_root/install.sh" ]; then
+		detected_remote="$(git -C "$script_repo_root" remote get-url origin 2>/dev/null || echo "")"
+		if [ -n "$detected_remote" ]; then
+			default_dotfiles_dir="$script_repo_root"
+			detected_repo="$detected_remote"
+		fi
+	fi
+fi
+
+# Resolution order (most specific wins): explicit env var > the local checkout
+# we're running from > hardcoded canonical fallback.
+DOTFILES_REPO="${DOTFILES_REPO:-${detected_repo:-$DOTFILES_REPO_FALLBACK}}"
+DOTFILES_DIR="${DOTFILES_DIR:-$default_dotfiles_dir}"
 
 if [ -d "$DOTFILES_DIR/.git" ]; then
 	# A git repo already exists at $DOTFILES_DIR. We don't want to silently
@@ -228,7 +269,7 @@ if [ -d "$ZSH" ]; then
 	echo "oh-my-zsh already installed at $ZSH, skipping."
 else
 	echo "Installing oh-my-zsh..."
-	# Prevent ohmyzsh installation running zsh at the end prevent it from
+	# Prevent ohmyzsh installation running zsh at the end, prevent it from
 	# replacing .zshrc, preventing changing default shell
 	RUNZSH=no KEEP_ZSHRC=yes CHSH=no sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 fi
@@ -347,5 +388,13 @@ EOF
 
 # === Start zsh
 
-echo "Starting zsh..."
-exec zsh
+# Only hand off to an interactive zsh when stdin is a real terminal. Under a
+# piped bootstrap (`curl ... | bash`) stdin is the script stream, so `exec zsh`
+# would inherit it, hit EOF, and exit immediately without an interactive
+# shell — so we just tell the user to open a new terminal instead.
+if [ -t 0 ]; then
+	echo "Starting zsh..."
+	exec zsh
+else
+	echo "Done. Open a new terminal (or run 'zsh') to start your configured shell."
+fi
