@@ -34,13 +34,19 @@ re-source `.zshrc` after making changes to those files.
    ~/dotfiles_dqna64/install.sh
    ```
 
-   To clone elsewhere, set `DOTFILES_DIR=<path>` — prefix it to the
-   receiving `bash` in the curl form, or `export` it before running the
-   manual form. `install.sh` will clone into that path and symlink
-   `~/.zshenv` to it; `zsh/.zshenv` auto-derives `DOTFILES_DIR` from
-   that symlink on every shell startup, so no shell-rc edit is needed
-   to remember the non-default location. `.zshrc` warns at startup if
-   `DOTFILES_DIR` doesn't resolve to a real clone.
+   **Custom install path.** The default is `$HOME/dotfiles_dqna64`, but
+   you can install anywhere by setting the `DOTFILES_DIR=<path>` env var:
+
+   ```bash
+   # curl form — put the var before the receiving `bash`:
+   curl -fsSL https://raw.githubusercontent.com/dqna64/dotfiles2/main/install.sh | DOTFILES_DIR=~/code/dotfiles bash
+
+
+   `install.sh` clones into that path and symlinks `~/.zshenv` to it;
+   `zsh/.zshenv` auto-derives `DOTFILES_DIR` from that symlink on every
+   shell startup, so no shell-rc edit is needed to remember the
+   non-default location. `.zshrc` warns at startup if `DOTFILES_DIR`
+   doesn't resolve to a real clone.
 
 2. **Edit `zsh/zsh-config`** (bootstrapped from `zsh-config.example` by
    `install.sh`). Set `DQNA64_MACHINE` to one of `MB_M1`, `MB_CNV`,

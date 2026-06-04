@@ -225,6 +225,17 @@ fi
 DOTFILES_REPO="${DOTFILES_REPO:-${detected_repo:-$DOTFILES_REPO_FALLBACK}}"
 DOTFILES_DIR="${DOTFILES_DIR:-$default_dotfiles_dir}"
 
+# How to tell the user to re-invoke this installer in the messages below.
+# When we're running from a real script file on disk we can point back at it
+# ($0 is its path). A piped `curl | bash` bootstrap has no script on disk and
+# leaves $0 as "bash", which would print a useless command — so fall back to
+# the canonical curl one-liner instead.
+if [ -n "${BASH_SOURCE[0]:-}" ] && [ -f "${BASH_SOURCE[0]:-}" ]; then
+	reinstall_elsewhere="DOTFILES_DIR=<other-path> $0"
+else
+	reinstall_elsewhere="curl -fsSL https://raw.githubusercontent.com/dqna64/dotfiles2/main/install.sh | DOTFILES_DIR=<other-path> bash"
+fi
+
 if [ -d "$DOTFILES_DIR/.git" ]; then
 	# A git repo already exists at $DOTFILES_DIR. We don't want to silently
 	# symlink files out of it unless it's actually the dqna64-dotfiles
@@ -233,21 +244,21 @@ if [ -d "$DOTFILES_DIR/.git" ]; then
 	# so HTTPS / plain SSH / host-alias SSH all pass.
 	existing_remote=$(git -C "$DOTFILES_DIR" remote get-url origin 2>/dev/null || echo "")
 	if [ "$(normalize_github_remote "$existing_remote")" != "$(normalize_github_remote "$DOTFILES_REPO")" ]; then
-		echo "Error: $DOTFILES_DIR is a git repo, but its origin remote does not match the dqna64-dotfiles repo." >&2
+		echo "Error: another git repo already occupies $DOTFILES_DIR; its origin is not the dqna64-dotfiles repo." >&2
 		echo "  found:    ${existing_remote:-<no origin remote>}" >&2
 		echo "  expected: $DOTFILES_REPO (or any URL pointing at the same owner/repo)" >&2
 		echo "" >&2
-		echo "Fix one of the following and re-run:" >&2
-		echo "  - point origin at the right repo:  git -C \"$DOTFILES_DIR\" remote set-url origin \"$DOTFILES_REPO\"" >&2
-		echo "  - install to a different path:     DOTFILES_DIR=<other-path> $0" >&2
-		echo "  - remove the conflicting directory and let install.sh re-clone." >&2
+		echo "Pick the option that matches what's there and re-run:" >&2
+		echo "  - it IS your dotfiles clone with a stale origin -> re-point it: git -C \"$DOTFILES_DIR\" remote set-url origin \"$DOTFILES_REPO\"" >&2
+		echo "  - it's an unrelated repo you want to keep        -> install elsewhere: $reinstall_elsewhere" >&2
+		echo "  - it's disposable                               -> remove it and let install.sh re-clone." >&2
 		exit 1
 	fi
 	echo "Dotfiles repo already exists at $DOTFILES_DIR, skipping clone."
 	echo "  To force a fresh clone, remove or move it aside first, e.g.:"
 	echo "    mv \"$DOTFILES_DIR\" \"$DOTFILES_DIR.backup_dqna64.\$(date +%Y%m%d%H%M%S)\""
 	echo "  Or install into a different path:"
-	echo "    DOTFILES_DIR=<other-path> $0"
+	echo "    $reinstall_elsewhere"
 	echo "  To just pull the latest changes into the existing clone:"
 	echo "    git -C \"$DOTFILES_DIR\" pull --ff-only"
 else
