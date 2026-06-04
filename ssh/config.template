@@ -28,11 +28,11 @@
 Host github.com-{{PRIMARY_GITHUB_USERNAME}}
     HostName github.com
     User git
-    IdentityFile {{PRIMARY_REMOTE_ACCOUNT_SSH_PUBLIC_KEY}}
+    IdentityFile {{PRIMARY_REMOTE_ACCOUNT_SSH_PRIVATE_KEY}}
     IdentitiesOnly yes
 
 Host github.com-{{SECONDARY_GITHUB_USERNAME}}
     HostName github.com
     User git
-    IdentityFile {{SECONDARY_REMOTE_ACCOUNT_SSH_PUBLIC_KEY}}
+    IdentityFile {{SECONDARY_REMOTE_ACCOUNT_SSH_PRIVATE_KEY}}
     IdentitiesOnly yes
