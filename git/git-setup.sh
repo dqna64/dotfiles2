@@ -112,8 +112,8 @@ render_template() {
         -e "s|{{PRIMARY_EMAIL}}|${PRIMARY_EMAIL}|g" \
         -e "s|{{SECONDARY_NAME}}|${SECONDARY_NAME}|g" \
         -e "s|{{SECONDARY_EMAIL}}|${SECONDARY_EMAIL}|g" \
-        -e "s|{{PRIMARY_REMOTE_ACCOUNT_SSH_PUBLIC_KEY}}|${PRIMARY_REMOTE_ACCOUNT_SSH_PUBLIC_KEY}|g" \
-        -e "s|{{SECONDARY_REMOTE_ACCOUNT_SSH_PUBLIC_KEY}}|${SECONDARY_REMOTE_ACCOUNT_SSH_PUBLIC_KEY}|g" \
+        -e "s|{{PRIMARY_REMOTE_ACCOUNT_SSH_PRIVATE_KEY}}|${PRIMARY_REMOTE_ACCOUNT_SSH_PRIVATE_KEY}|g" \
+        -e "s|{{SECONDARY_REMOTE_ACCOUNT_SSH_PRIVATE_KEY}}|${SECONDARY_REMOTE_ACCOUNT_SSH_PRIVATE_KEY}|g" \
         -e "s|{{PRIMARY_GITHUB_USERNAME}}|${PRIMARY_GITHUB_USERNAME}|g" \
         -e "s|{{SECONDARY_GITHUB_USERNAME}}|${SECONDARY_GITHUB_USERNAME}|g" \
         "$template_file" > "$output_file"
@@ -176,8 +176,8 @@ Git identity (per-repo):
    git whoami         # Show current identity
 ===
 GitHub SSH host aliases (per-remote):
-   github.com-${PRIMARY_GITHUB_USERNAME}    -> $PRIMARY_REMOTE_ACCOUNT_SSH_PUBLIC_KEY
-   github.com-${SECONDARY_GITHUB_USERNAME}  -> $SECONDARY_REMOTE_ACCOUNT_SSH_PUBLIC_KEY
+   github.com-${PRIMARY_GITHUB_USERNAME}    -> $PRIMARY_REMOTE_ACCOUNT_SSH_PRIVATE_KEY
+   github.com-${SECONDARY_GITHUB_USERNAME}  -> $SECONDARY_REMOTE_ACCOUNT_SSH_PRIVATE_KEY
 
    Attach a repo to a specific account by setting its remote URL:
      git remote set-url origin git@github.com-${PRIMARY_GITHUB_USERNAME}:<org>/<repo>.git

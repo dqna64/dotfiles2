@@ -9,8 +9,8 @@ PRIMARY_EMAIL="primary@example.com"
 SECONDARY_NAME="Secondary Name"  
 SECONDARY_EMAIL="secondary@example.com"
 
-PRIMARY_REMOTE_ACCOUNT_SSH_PUBLIC_KEY="/path/to/ssh/public_key"
-SECONDARY_REMOTE_ACCOUNT_SSH_PUBLIC_KEY="/path/to/ssh/public_key"
+PRIMARY_REMOTE_ACCOUNT_SSH_PRIVATE_KEY="/path/to/ssh/private_key"
+SECONDARY_REMOTE_ACCOUNT_SSH_PRIVATE_KEY="/path/to/ssh/private_key"
 
 # GitHub usernames for each account. Used by git-setup.sh to render
 # SSH Host aliases (github.com-<username>) so remote URLs like
