@@ -72,18 +72,18 @@ symlink_dotfile() {
 	mkdir -p "$(dirname "$dst")"
 
 	if [ -L "$dst" ] && [ "$(readlink "$dst")" = "$src" ]; then
-		echo "$dst already symlinked to $src, skipping."
+		echo "Already symlinked, skipping: $dst -> $src"
 		return 0
 	fi
 
 	if [ -e "$dst" ] || [ -L "$dst" ]; then
 		local backup
 		backup="$dst.backup_dqna64.$(date +%Y%m%d%H%M%S)"
-		echo "Backing up existing $dst to $backup..."
+		echo_warn "Backing up existing $dst to $backup..."
 		mv "$dst" "$backup"
 	fi
 
-	echo "Symlinking $src -> $dst..."
+	echo_info "Symlinking $src -> $dst..."
 	ln -s "$src" "$dst"
 }
 
@@ -175,7 +175,7 @@ install_homebrew_if_needed || echo_warn "Continuing without Homebrew; install it
 # === Pre-clone checks
 
 if ! command -v git >/dev/null 2>&1; then
-	echo "Error: git is required but not installed." >&2
+	echo_error "Error: git is required but not installed."
 	exit 1
 fi
 
@@ -236,6 +236,7 @@ else
 	reinstall_elsewhere="curl -fsSL https://raw.githubusercontent.com/dqna64/dotfiles2/main/install.sh | DOTFILES_DIR=<other-path> bash"
 fi
 
+echo ""
 if [ -d "$DOTFILES_DIR/.git" ]; then
 	# A git repo already exists at $DOTFILES_DIR. We don't want to silently
 	# symlink files out of it unless it's actually the dqna64-dotfiles
@@ -244,29 +245,29 @@ if [ -d "$DOTFILES_DIR/.git" ]; then
 	# so HTTPS / plain SSH / host-alias SSH all pass.
 	existing_remote=$(git -C "$DOTFILES_DIR" remote get-url origin 2>/dev/null || echo "")
 	if [ "$(normalize_github_remote "$existing_remote")" != "$(normalize_github_remote "$DOTFILES_REPO")" ]; then
-		echo "Error: another git repo already occupies $DOTFILES_DIR; its origin is not the dqna64-dotfiles repo." >&2
+		echo_error "Error: another git repo already occupies $DOTFILES_DIR; its origin is not the dqna64-dotfiles repo."
 		echo "  found:    ${existing_remote:-<no origin remote>}" >&2
 		echo "  expected: $DOTFILES_REPO (or any URL pointing at the same owner/repo)" >&2
 		echo "" >&2
-		echo "Pick the option that matches what's there and re-run:" >&2
-		echo "  - it IS your dotfiles clone with a stale origin -> re-point it: git -C \"$DOTFILES_DIR\" remote set-url origin \"$DOTFILES_REPO\"" >&2
-		echo "  - it's an unrelated repo you want to keep        -> install elsewhere: $reinstall_elsewhere" >&2
-		echo "  - it's disposable                               -> remove it and let install.sh re-clone." >&2
+		echo_warn "Pick the option that matches what's there and re-run:"
+		echo_warn "  - it IS your dotfiles clone with a stale origin -> re-point it: git -C \"$DOTFILES_DIR\" remote set-url origin \"$DOTFILES_REPO\""
+		echo_warn "  - it's an unrelated repo you want to keep        -> install elsewhere: $reinstall_elsewhere"
+		echo_warn "  - it's disposable                               -> remove it and let install.sh re-clone."
 		exit 1
 	fi
-	echo "Dotfiles repo already exists at $DOTFILES_DIR, skipping clone."
-	echo "  To force a fresh clone, remove or move it aside first, e.g.:"
-	echo "    mv \"$DOTFILES_DIR\" \"$DOTFILES_DIR.backup_dqna64.\$(date +%Y%m%d%H%M%S)\""
-	echo "  Or install into a different path:"
-	echo "    $reinstall_elsewhere"
-	echo "  To just pull the latest changes into the existing clone:"
-	echo "    git -C \"$DOTFILES_DIR\" pull --ff-only"
+	echo_info "Dotfiles repo already exists at $DOTFILES_DIR, skipping clone."
+	echo_note "  To force a fresh clone, remove or move it aside first, e.g.:"
+	echo_note "    mv \"$DOTFILES_DIR\" \"$DOTFILES_DIR.backup_dqna64.\$(date +%Y%m%d%H%M%S)\""
+	echo_note "  Or install into a different path:"
+	echo_note "    $reinstall_elsewhere"
+	echo_note "  To just pull the latest changes into the existing clone:"
+	echo_note "    git -C \"$DOTFILES_DIR\" pull --ff-only"
 else
 	if [ -e "$DOTFILES_DIR" ]; then
-		echo "Error: $DOTFILES_DIR exists but is not a git repo." >&2
+		echo_error "Error: $DOTFILES_DIR exists but is not a git repo."
 		exit 1
 	fi
-	echo "Cloning dotfiles repo into $DOTFILES_DIR..."
+	echo_info "Cloning dotfiles repo into $DOTFILES_DIR..."
 	git clone "$DOTFILES_REPO" "$DOTFILES_DIR"
 fi
 
@@ -275,35 +276,37 @@ fi
 
 # https://ohmyz.sh/
 
+echo ""
 ZSH="${ZSH:-$HOME/.oh-my-zsh}"
 if [ -d "$ZSH" ]; then
 	echo "oh-my-zsh already installed at $ZSH, skipping."
 else
-	echo "Installing oh-my-zsh..."
+	echo_info "Installing oh-my-zsh..."
 	# Prevent ohmyzsh installation running zsh at the end, prevent it from
 	# replacing .zshrc, preventing changing default shell
 	RUNZSH=no KEEP_ZSHRC=yes CHSH=no sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 fi
 
-echo "Downloading oh-my-zsh themes/plugins..."
+echo_info "Downloading oh-my-zsh themes/plugins..."
 ZSH_CUSTOM="${ZSH_CUSTOM:-$ZSH/custom}"
 
 if [ -d "${ZSH_CUSTOM}/themes/powerlevel10k" ]; then
 	echo "powerlevel10k already installed, skipping."
 else
-	echo "powerlevel10k..."
+	echo_info "powerlevel10k..."
 	git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "${ZSH_CUSTOM}/themes/powerlevel10k"
 fi
 
 if [ -d "${ZSH_CUSTOM}/plugins/zsh-autosuggestions" ]; then
 	echo "zsh-autosuggestions already installed, skipping."
 else
-	echo "zsh-autosuggestions..."
+	echo_info "zsh-autosuggestions..."
 	git clone https://github.com/zsh-users/zsh-autosuggestions "${ZSH_CUSTOM}/plugins/zsh-autosuggestions"
 fi
 
 # === zsh
 
+echo ""
 symlink_dotfile "$DOTFILES_DIR/zsh/.zshenv" "$HOME/.zshenv"
 symlink_dotfile "$DOTFILES_DIR/zsh/.zshrc" "$HOME/.zshrc"
 
@@ -312,10 +315,10 @@ symlink_dotfile "$DOTFILES_DIR/zsh/.zshrc" "$HOME/.zshrc"
 # gitignored so each machine can edit it independently.
 ZSH_CONFIG_FILE="$DOTFILES_DIR/zsh/zsh-config"
 if [ ! -f "$ZSH_CONFIG_FILE" ]; then
-	echo "No zsh-config found at $ZSH_CONFIG_FILE."
-	echo "Creating one from ${ZSH_CONFIG_FILE}.example..."
+	echo_info "No zsh-config found at $ZSH_CONFIG_FILE."
+	echo_info "Creating one from ${ZSH_CONFIG_FILE}.example..."
 	cp -v "${ZSH_CONFIG_FILE}.example" "$ZSH_CONFIG_FILE"
-	echo "Edit $ZSH_CONFIG_FILE to customise per-machine values (DQNA64_MACHINE, theme, etc.)."
+	echo_note "Edit $ZSH_CONFIG_FILE to customise per-machine values (DQNA64_MACHINE, theme, etc.)."
 fi
 
 ## TODO set zsh as default shell
@@ -326,6 +329,7 @@ fi
 # aliases) is handled by git/git-setup.sh, not here, because most of it
 # depends on values from git/git-identity.
 
+printf '%b' "$BLUE"
 cat <<EOF
 
 Configure git identities + per-account SSH host aliases [optional]
@@ -353,17 +357,21 @@ Configure git identities + per-account SSH host aliases [optional]
     Skip if you'll manage these files by hand.
 
 EOF
+printf '%b' "$RESET"
 
 # === karabiner
 
+echo ""
 symlink_dotfile "$DOTFILES_DIR/karabiner/karabiner.json" "$HOME/.config/karabiner/karabiner.json"
 
 # === tmux
 
+echo ""
 symlink_dotfile "$DOTFILES_DIR/tmux/.tmux.conf" "$HOME/.tmux.conf"
 
 # === yabai
 
+echo ""
 symlink_dotfile "$DOTFILES_DIR/yabai/yabairc" "$HOME/.config/yabai/yabairc"
 
 # === claude
@@ -372,6 +380,7 @@ symlink_dotfile "$DOTFILES_DIR/yabai/yabairc" "$HOME/.config/yabai/yabairc"
 # isn't symlinked here. The README has the exact `ln -sf` commands keyed by
 # $DQNA64_MACHINE.
 
+printf '%b' "$BLUE"
 cat <<EOF
 
   Optional: install per-machine Claude Code config.
@@ -384,9 +393,11 @@ cat <<EOF
     Skip if you'll manage ~/.claude/ by hand.
 
 EOF
+printf '%b' "$RESET"
 
 # === DOTFILES_DIR reminder
 
+printf '%b' "$BLUE"
 cat <<EOF
 
   Note: zsh/.zshenv auto-derives \$DOTFILES_DIR from its own location
@@ -396,6 +407,7 @@ cat <<EOF
   file (not a symlink), .zshenv falls back to \$HOME/dotfiles_dqna64.
 
 EOF
+printf '%b' "$RESET"
 
 # === Start zsh
 
@@ -404,8 +416,8 @@ EOF
 # would inherit it, hit EOF, and exit immediately without an interactive
 # shell — so we just tell the user to open a new terminal instead.
 if [ -t 0 ]; then
-	echo "Starting zsh..."
+	echo_success "Done. Starting zsh..."
 	exec zsh
 else
-	echo "Done. Open a new terminal (or run 'zsh') to start your configured shell."
+	echo_success "Done. Open a new terminal (or run 'zsh') to start your configured shell."
 fi
