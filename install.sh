@@ -319,6 +319,11 @@ if [ ! -f "$ZSH_CONFIG_FILE" ]; then
 	echo_info "Creating one from ${ZSH_CONFIG_FILE}.example..."
 	cp -v "${ZSH_CONFIG_FILE}.example" "$ZSH_CONFIG_FILE"
 	echo_note "Edit $ZSH_CONFIG_FILE to customise per-machine values (DQNA64_MACHINE, theme, etc.)."
+	echo_note "It's sourced by ~/.zshenv at shell startup, so restart zsh (or run 'exec zsh') after editing for changes to take effect."
+else
+	echo_info "Existing zsh-config found at $ZSH_CONFIG_FILE, leaving it untouched."
+	echo_note "Edit it to update per-machine values (DQNA64_MACHINE, theme, etc.); see ${ZSH_CONFIG_FILE}.example for any new options."
+	echo_note "After updating, restart zsh (or run 'exec zsh') as it's sourced by ~/.zshenv at shell startup."
 fi
 
 ## TODO set zsh as default shell

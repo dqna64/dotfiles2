@@ -55,35 +55,37 @@ fi
 # ===
 
 # === Source aliases
-# All files in $DOTFILES_DIR/aliases/ are sourced on every machine.
-# Per-machine aliases live in sibling directories named aliases.<machine>/
-# (e.g. aliases.mb_m1, aliases.mb_cnv, aliases.dvbx1). The case block below
-# selects which one to load based on $DQNA64_MACHINE.
-ALIASES_DIR="$DOTFILES_DIR/aliases"
-if [ -d "$ALIASES_DIR" ]; then
-    [ "${VERBOSITY_DQNA64:-0}" -ge 1 ] && echo "Loading aliases from $ALIASES_DIR"
-    for alias_file in "$ALIASES_DIR"/*.zsh(N); do
-        source "$alias_file"
-    done
-    unset alias_file
-else
-    echo "Warning: aliases dir not found at $ALIASES_DIR" >&2
-fi
-unset ALIASES_DIR
+# $DOTFILES_DIR/aliases/ loads on every machine. The case adds per-machine
+# dirs named aliases.<suffix>/, where <suffix> is arbitrary and several
+# machines can share a dir: every machine loads git_stuff, and the Cnv
+# devboxes DVBX1/2/3 share dvbx_cnv. Each dir's *.zsh files are sourced; a
+# listed dir that doesn't exist warns to stderr.
+#
+# Wrapped in a function so the loop/temp variables are local and need no
+# manual cleanup; aliases and functions defined by the sourced files stay
+# global. The function is left defined so aliases can be reloaded on demand.
+load_dqna64_aliases() {
+    local -a dirs=("$DOTFILES_DIR/aliases")
+    local dir file
 
-case "$DQNA64_MACHINE" in
-    MB_M1)  MACHINE_ALIASES_DIR="$DOTFILES_DIR/aliases.mb_m1" ;;
-    MB_CNV) MACHINE_ALIASES_DIR="$DOTFILES_DIR/aliases.mb_cnv" ;;
-    DVBX1)  MACHINE_ALIASES_DIR="$DOTFILES_DIR/aliases.dvbx1" ;;
-esac
-if [ -n "$MACHINE_ALIASES_DIR" ] && [ -d "$MACHINE_ALIASES_DIR" ]; then
-    [ "${VERBOSITY_DQNA64:-0}" -ge 1 ] && echo "Loading machine aliases from $MACHINE_ALIASES_DIR"
-    for alias_file in "$MACHINE_ALIASES_DIR"/*.zsh(N); do
-        source "$alias_file"
+    case "$DQNA64_MACHINE" in
+        MB_M1)               dirs+=("$DOTFILES_DIR"/aliases.{git_stuff,mb_m1}) ;;
+        MB_CNV)              dirs+=("$DOTFILES_DIR"/aliases.{git_stuff,mb_cnv}) ;;
+        DVBX1|DVBX2|DVBX3)   dirs+=("$DOTFILES_DIR"/aliases.{git_stuff,dvbx_cnv}) ;;
+    esac
+
+    for dir in "${dirs[@]}"; do
+        if [ -d "$dir" ]; then
+            [ "${VERBOSITY_DQNA64:-0}" -ge 1 ] && echo "Loading aliases from $dir"
+            for file in "$dir"/*.zsh(N); do
+                source "$file"
+            done
+        else
+            echo "Warning: alias dir not found at $dir" >&2
+        fi
     done
-    unset alias_file
-fi
-unset MACHINE_ALIASES_DIR
+}
+load_dqna64_aliases
 
 # ===
 

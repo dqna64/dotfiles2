@@ -84,34 +84,24 @@ re-source `.zshrc` after making changes to those files.
 
 ## Aliases
 
-Aliases and shell functions live in `aliases/` (cross-machine) and per-machine
-`aliases.<machine>/` directories (e.g. `aliases.mb_m1/`, `aliases.mb_cnv/`,
-`aliases.dvbx1/`). They're loaded by `zsh/.zshrc` on every interactive shell.
-
-- File extension: `.zsh` (these files are sourced into zsh, not executed).
-- All `*.zsh` files in `aliases/` are sourced on every machine.
-- Per-machine `*.zsh` files are sourced from `aliases.<machine>/` only when
-  `$DQNA64_MACHINE` matches. The mapping lives in the `case` block in
-  `zsh/.zshrc`; add a branch when wiring up a new machine.
-
-To add a new alias file: drop a `.zsh` file in the appropriate dir. No need
-to register it anywhere — `.zshrc` globs the dirs automatically.
+`zsh/.zshrc` sources every `*.zsh` in `aliases/` on all machines, plus any
+per-machine `aliases.<suffix>/` dirs. A `case` block maps `$DQNA64_MACHINE`
+to a list of suffixes, so a machine can load several dirs and machines can
+share one (e.g. `DVBX1`/`DVBX2`/`DVBX3` → `(dvbx_cnv)`). Suffixes are
+arbitrary; missing dirs are skipped. Just drop a `.zsh` file in a dir — no
+registration needed.
 
 ## Adding a new machine
 
-1. Pick an identifier (e.g. `MB_M3`).
-2. Add a branch to the **aliases** `case` block in `zsh/.zshrc` if
-   you'll create an aliases dir (`MACHINE_ALIASES_DIR=…`). Add a branch
-   in `zsh/.zshenv` if the machine needs PATH/env additions
-   (e.g. `DVBX*` block).
-3. Optionally create `aliases.<machine_lower>/` with machine-specific
-   aliases (`mb_m1`, `mb_cnv`, `dvbx1`, ...). `_` not `-`, matching the
-   aliases case block.
-4. Optionally drop `zsh/.zshrc.<machine-with-hyphens>` (`mb-m1`,
-   `mb-cnv`, `dvbx1`, …) for a machine-specific zshrc. **No
-   registration needed** — `zsh/.zshrc` auto-sources by the derived
-   filename. `-` not `_`, matching `.zshrc.mb-m1`.
-5. Add a Claude settings file (`claude/settings.<machine_lower>.json`)
+1. Pick an identifier (e.g. `MB_2026`).
+2. For per-machine aliases, add a branch to the `case` block in `zsh/.zshrc`
+   (e.g. `MB_2026) MACHINE_ALIAS_SUFFIXES=(mb_2026) ;;`) and create the matching
+   `aliases.<suffix>/` dir(s). Suffixes use `_` not `-`. For PATH/env
+   additions, add a branch in `zsh/.zshenv` (e.g. the `DVBX*` block).
+3. Optionally drop `zsh/.zshrc.<machine-with-hyphens>` (`mb-m1`, `mb-cnv`,
+   `dvbx1`, …) for a machine-specific zshrc. **No registration needed** —
+   `zsh/.zshrc` auto-sources by the derived filename (`-` not `_`).
+4. Add a Claude settings file (`claude/settings.<machine_lower>.json`)
    and register it in `claude/README.md` if Claude Code will run there.
 
 ## Gitignored, per-machine files (do not commit)
@@ -141,6 +131,9 @@ to register it anywhere — `.zshrc` globs the dirs automatically.
   and only touch paths it knows it owns (i.e. symlinks that resolve into
   `$DOTFILES_DIR`), to avoid nuking unrelated user config. Also tells the user to
   'include' directives from ~/.gitconfig and ~/.ssh/config.
+- [ ] Test out installing in a different directory than default, via
+   `./install.sh` and via curl -fsSL
+- [ ] tmux session saving
 
 ## Migrating from the bare git repo dotfiles
 
