@@ -49,10 +49,17 @@ if [[ ! -f "$GIT_IDENTITY_FILE" ]]; then
         echo "Error: $GIT_IDENTITY_FILE missing and ${GIT_IDENTITY_FILE}.example not found." >&2
     fi
     exit 1
+else
+    echo "Using existing git identity at $GIT_IDENTITY_FILE to render the gitconfig + SSH snippet."
+    echo "  To change names/emails/SSH keys/GitHub usernames, edit it and re-run this script."
 fi
 
 # shellcheck source=/dev/null
 source "$GIT_IDENTITY_FILE"
+
+# Reassure the user: git-identity and the files rendered from it are
+# gitignored, so real names/emails/keys/usernames are never committed.
+echo "Note: git-identity and the rendered gitconfig/SSH snippet are gitignored — your real details won't be committed."
 
 # Back up <file> to <file>.backup_dqna64.<ts> if it exists and is not a
 # symlink we would happily overwrite. Symlinks point at things we don't own,
