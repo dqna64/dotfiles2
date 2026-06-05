@@ -373,6 +373,40 @@ symlink_dotfile "$DOTFILES_DIR/karabiner/karabiner.json" "$HOME/.config/karabine
 echo ""
 symlink_dotfile "$DOTFILES_DIR/tmux/.tmux.conf" "$HOME/.tmux.conf"
 
+# Install TPM (tmux plugin manager), which manages the plugins declared in
+# .tmux.conf (eg tmux-resurrect, etc).
+TPM_DIR="$HOME/.tmux/plugins/tpm"
+if [ -d "$TPM_DIR" ]; then
+	echo "TPM (tmux plugin manager) already installed at $TPM_DIR, skipping."
+else
+	echo_info "Installing TPM (tmux plugin manager)..."
+	git clone https://github.com/tmux-plugins/tpm "$TPM_DIR"
+fi
+
+printf '%b' "$BLUE"
+cat <<EOF
+
+  Finish tmux plugin setup [optional]
+
+    The plugins are declared in $DOTFILES_DIR/tmux/.tmux.conf but aren't
+    installed until you ask TPM to fetch them. Inside a tmux session:
+
+      1. Reload the config (or start a fresh tmux):  tmux source ~/.tmux.conf
+      2. Install the declared plugins:               prefix + I   (capital i)
+
+    The default prefix is Ctrl-b, so that's Ctrl-b then Shift-i.
+
+    tmux-resurrect (session persistence) usage, all with the prefix:
+
+      prefix + Ctrl-s   save the current sessions/windows/panes
+      prefix + Ctrl-r   restore the last saved environment
+
+    Saved state lives in ~/.local/share/tmux/resurrect, so your layout
+    survives a reboot or tmux server restart.
+
+EOF
+printf '%b' "$RESET"
+
 # === yabai
 
 echo ""

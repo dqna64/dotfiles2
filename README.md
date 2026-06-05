@@ -131,7 +131,7 @@ registration needed.
   'include' directives from ~/.gitconfig and ~/.ssh/config.
 - [ ] Test out installing in a different directory than default, via
    `./install.sh` and via curl -fsSL
-- [ ] tmux session saving
+- [x] tmux session saving (via TPM + tmux-resurrect; see `tmux/.tmux.conf`)
 
 ## Migrating from the bare git repo dotfiles
 
