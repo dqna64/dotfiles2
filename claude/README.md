@@ -1,39 +1,36 @@
 # Claude Code config
 
-Per-machine Claude config files live here. Pick the one matching your
-machine and symlink it into `~/.claude/`. Not automated in `install.sh` —
-just run the appropriate command below by hand.
+Claude config files live here. Nothing is symlinked automatically — pick
+the one you want and symlink it into `~/.claude/`.
 
-## Files
+## 1. Pick a settings file
 
-| File | For machine (`$DQNA64_MACHINE`) |
+| File | For |
 |---|---|
-| `settings.mb_m1.json` | `MB_M1` (personal MacBook) |
-| `settings.mb_cnv.json` | `MB_CNV` (Canva MacBook) |
-| `settings.dvbx_cnv.json` | `DVBX1` / `DVBX2` / `DVBX3` (Canva devboxes) |
-| `CLAUDE.mb_cnv.md` | `MB_CNV` global instructions |
+| `settings.mb_m1.json` | Personal: `sonnet[1m]`, no telemetry. |
+| `settings.mb_cnv.json` | Canva laptop: otter telemetry + full hooks. |
+| `settings.dvbx_cnv.json` | Canva devbox: otter telemetry + lighter hooks. |
 
-## Symlink commands
+## 2. Symlink it
 
 ```bash
-# MB_M1
 ln -sf "$DOTFILES_DIR/claude/settings.mb_m1.json" "$HOME/.claude/settings.json"
-
-# MB_CNV
-ln -sf "$DOTFILES_DIR/claude/settings.mb_cnv.json" "$HOME/.claude/settings.json"
-ln -sf "$DOTFILES_DIR/claude/CLAUDE.mb_cnv.md"    "$HOME/.claude/CLAUDE.md"
-
-# DVBX1 / DVBX2 / DVBX3 (Canva devboxes share the same config)
-ln -sf "$DOTFILES_DIR/claude/settings.dvbx_cnv.json" "$HOME/.claude/settings.json"
 ```
 
-`$DOTFILES_DIR` is set by `zsh/.zshenv` (defaults to `$HOME/dotfiles_dqna64`).
+Swap in whichever file from the table you picked.
 
-## Notes
+## 3. (Optional) Global instructions
 
-- `ln -sf` overwrites the destination. Back up first if you have unsaved
-  local changes: `mv ~/.claude/settings.json ~/.claude/settings.json.bak`.
-- Editing the symlinked file in Claude Code edits the file in this repo,
-  so changes are tracked automatically.
-- To add a new machine's config: add a `settings.<machine_lower>.json`
-  here, document it in the table above, and add a symlink command.
+`CLAUDE.mb_cnv.md` holds global instructions (response style, git/PR
+conventions). Symlink it if you want them:
+
+```bash
+ln -sf "$DOTFILES_DIR/claude/CLAUDE.mb_cnv.md" "$HOME/.claude/CLAUDE.md"
+```
+
+---
+
+- `$DOTFILES_DIR` is set by `zsh/.zshenv` (defaults to `$HOME/dotfiles_dqna64`).
+- `ln -sf` overwrites the target — back up first if you have local changes.
+- Editing the symlinked file edits the repo copy, so changes are tracked.
+- New config? Drop a `settings.<suffix>.json` here and add a table row.

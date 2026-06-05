@@ -101,8 +101,6 @@ registration needed.
 3. Optionally drop `zsh/.zshrc.<machine-with-hyphens>` (`mb-m1`, `mb-cnv`,
    `dvbx1`, …) for a machine-specific zshrc. **No registration needed** —
    `zsh/.zshrc` auto-sources by the derived filename (`-` not `_`).
-4. Add a Claude settings file (`claude/settings.<machine_lower>.json`)
-   and register it in `claude/README.md` if Claude Code will run there.
 
 ## Gitignored, per-machine files (do not commit)
 

@@ -380,17 +380,19 @@ symlink_dotfile "$DOTFILES_DIR/yabai/yabairc" "$HOME/.config/yabai/yabairc"
 
 # === claude
 #
-# Claude config is per-machine (settings + CLAUDE.md vary by host), so it
-# isn't symlinked here. The README has the exact `ln -sf` commands keyed by
-# $DQNA64_MACHINE.
+# Claude config isn't symlinked automatically — the README lists the
+# available configs and the matching `ln -sf` commands.
 
 printf '%b' "$BLUE"
 cat <<EOF
 
-  Optional: install per-machine Claude Code config.
+  Optional: install Claude Code config.
 
-    See  $DOTFILES_DIR/claude/README.md  for the symlink commands
-    matching your machine (\$DQNA64_MACHINE). E.g. on MB_M1:
+    Configs live in $DOTFILES_DIR/claude/. Refer to
+    $DOTFILES_DIR/claude/README.md — it walks you through picking a
+    settings file and symlinking it (plus optional global instructions).
+
+    Quick version: pick one and symlink it. E.g.:
 
       ln -sf "$DOTFILES_DIR/claude/settings.mb_m1.json" "\$HOME/.claude/settings.json"
 
