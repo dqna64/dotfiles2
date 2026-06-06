@@ -60,6 +60,11 @@ _dqna64_warn_if_not_primary_identity() {
 # banner is shown to inform the user.
 # Slots are rendered to dotfiles_dqna64/git/dqna64-dotfiles.gitconfig by
 # dotfiles_dqna64/git/git-setup.sh; if a slot is missing, re-run git-setup.sh.
+#
+# Oh My Zsh's git plugin defines `gm` as an alias (`git merge`). It loads before
+# these alias files, so without this unalias the `gm()` line below is a parse
+# error ("near `()'") and an alias would shadow this function anyway.
+unalias gm 2>/dev/null
 gm() {
     local slot=""
     if [[ "$1" =~ '^-[0-9]+$' ]]; then
