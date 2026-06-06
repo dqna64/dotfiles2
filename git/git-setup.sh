@@ -203,8 +203,8 @@ This script does not modify ~/.gitconfig — add the following two lines
 yourself, ideally near the TOP so anything you set later in ~/.gitconfig
 can override the defaults:
 
-    [include]
-        path = $GITCONFIG_RENDERED
+[include]
+    path = $GITCONFIG_RENDERED
 
 After adding it, verify with (NOT \`--global\`, which scopes to the
 file itself and does not resolve includes):
@@ -223,7 +223,7 @@ This script does not modify ~/.ssh/config — add the following line yourself,
 ideally at (or near) the TOP of the file so the host aliases match before
 any later \`Host *\` block:
 
-    $SSH_INCLUDE_LINE
+$SSH_INCLUDE_LINE
 
 After adding it, test with:
     ssh -T git@github.com-${PRIMARY_GITHUB_USERNAME}
