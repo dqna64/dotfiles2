@@ -372,6 +372,11 @@ if [ -d "$TPM_DIR" ]; then
 	echo_note "    fetched alongside it under $HOME/.tmux/plugins/."
 	echo_note "      Remove by hand if no longer wanted:  rm -rf \"$HOME/.tmux/plugins\""
 	echo_note "    Persisted tmux-resurrect state lives in $HOME/.local/share/tmux/resurrect."
+	echo_note "    To refresh TPM plugins after changing tmux config (prefix is Ctrl-b by default):"
+	echo_note "      tmux source-file ~/.tmux.conf   # reload config first"
+	echo_note "      prefix + I        # install plugins newly listed in tmux.conf"
+	echo_note "      prefix + U        # update installed plugins"
+	echo_note "      prefix + Alt-u    # uninstall plugins no longer listed in tmux.conf"
 else
 	echo_note "  - TPM: none found at $TPM_DIR."
 fi

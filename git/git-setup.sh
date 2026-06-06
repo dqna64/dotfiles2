@@ -64,14 +64,14 @@ source "$GIT_IDENTITY_FILE"
 # during rendering. Catch it here with a clear, actionable message instead.
 #
 # We compare the set of variable NAMES each file defines (obtained robustly by
-# identity-vars.sh, which sources the file rather than regex-scraping it), never
-# values, so your real names/emails/keys are never inspected or printed.
+# shell-var-names.sh, which sources the file rather than regex-scraping it),
+# never values, so your real names/emails/keys are never inspected or printed.
 example_file="${GIT_IDENTITY_FILE}.example"
 actual_file="$GIT_IDENTITY_FILE"
-IDENTITY_VARS="$DOTFILES_DIR/utils/identity-vars.sh"
-if [[ -f "$example_file" && -f "$IDENTITY_VARS" ]]; then
-    example_vars="$(bash "$IDENTITY_VARS" "$example_file")"
-    actual_vars="$(bash "$IDENTITY_VARS" "$actual_file")"
+SHELL_VAR_NAMES="$DOTFILES_DIR/utils/shell-var-names.sh"
+if [[ -f "$example_file" && -f "$SHELL_VAR_NAMES" ]]; then
+    example_vars="$(bash "$SHELL_VAR_NAMES" "$example_file")"
+    actual_vars="$(bash "$SHELL_VAR_NAMES" "$actual_file")"
     missing_vars="$(comm -23 <(printf '%s\n' "$example_vars") <(printf '%s\n' "$actual_vars"))"
     extra_vars="$(comm -13 <(printf '%s\n' "$example_vars") <(printf '%s\n' "$actual_vars"))"
 

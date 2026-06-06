@@ -60,26 +60,35 @@ fi
     done
 }
 
-# === Warn if git-identity is missing variables its example defines
-# git/git-identity is created once from git-identity.example and then never
-# auto-updated (it holds your real values). So when the example gains or renames
-# variables (e.g. after `git pull`), your git-identity silently lacks them.
-# git-setup.sh catches this in a preflight when you run it; nag here too so you
-# notice sooner. Variable NAMES are compared (never values), obtained robustly
-# by utils/identity-vars.sh (sources each file rather than regex-scraping).
+# === Warn if an actual config is missing variables its example defines
+# Several configs are created once from a tracked *.example and then never
+# auto-updated (they hold per-machine/real values): git/git-identity (from
+# git-identity.example) and zsh/zsh-config (from zsh-config.example). When the
+# example gains or renames variables (e.g. after `git pull`), the actual file
+# silently lacks them. git-setup.sh catches the git-identity case in a preflight
+# when you run it; nag here too (and for zsh-config) so you notice sooner.
+# Variable NAMES are compared (never values), obtained robustly by
+# utils/shell-var-names.sh (sources each file rather than regex-scraping).
 # Cheap: the `-nt` mtime gate skips the work unless the example is newer.
 () {
-    local example_file="$DOTFILES_DIR/git/git-identity.example"
-    local actual_file="$DOTFILES_DIR/git/git-identity"
-    local vars_script="$DOTFILES_DIR/utils/identity-vars.sh"
-    [[ -f "$example_file" && -f "$actual_file" && -f "$vars_script" ]] || return 0
-    [[ "$example_file" -nt "$actual_file" ]] || return 0
-    local missing
-    missing="$(comm -23 <(bash "$vars_script" "$example_file") <(bash "$vars_script" "$actual_file"))"
-    [[ -n "$missing" ]] || return 0
-    print -P -u2 "%F{yellow}warning: $actual_file is missing variables defined in $example_file:%f"
-    echo "$missing" | sed 's/^/         + /' >&2
-    print -P -u2 "%F{yellow}         Update it (compare against the example), then re-run $DOTFILES_DIR/git/git-setup.sh.%f"
+    local vars_script="$DOTFILES_DIR/utils/shell-var-names.sh"
+    [[ -f "$vars_script" ]] || return 0
+    local -a pairs=(
+        "$DOTFILES_DIR/git/git-identity.example:$DOTFILES_DIR/git/git-identity"
+        "$DOTFILES_DIR/zsh/zsh-config.example:$DOTFILES_DIR/zsh/zsh-config"
+    )
+    local pair example_file actual_file missing
+    for pair in "${pairs[@]}"; do
+        example_file="${pair%%:*}"
+        actual_file="${pair#*:}"
+        [[ -f "$example_file" && -f "$actual_file" ]] || continue
+        [[ "$example_file" -nt "$actual_file" ]] || continue
+        missing="$(comm -23 <(bash "$vars_script" "$example_file") <(bash "$vars_script" "$actual_file"))"
+        [[ -n "$missing" ]] || continue
+        print -P -u2 "%F{yellow}warning: $actual_file is missing variables defined in $example_file:%f"
+        echo "$missing" | sed 's/^/         + /' >&2
+        print -P -u2 "%F{yellow}         Update it to define them (compare against the example).%f"
+    done
 }
 
 # === Oh My Zsh and Powerlevel10k theme loading

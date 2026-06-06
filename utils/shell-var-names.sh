@@ -8,23 +8,24 @@
 # assignment lines.
 #
 # Values are never printed, only variable names. Used to detect drift between
-# template config files and their rendered versions, eg:
-# - git/gitconfig.template and git/dqna64-dotfiles.gitconfig
-# - ssh/config.template and ssh/dqna64-dotfiles.conf
+# an example config file (tracked) and a user's actual config (gitignored,
+# created once from the example and never auto-updated), by comparing which
+# variable NAMES each defines. Current callers:
+# - git/git-setup.sh + zsh/.zshrc: git/git-identity.example vs git/git-identity
+# - zsh/.zshrc:                     zsh/zsh-config.example  vs zsh/zsh-config
 #
-# Usage: identity-vars.sh <file>
-# 
+# Usage: shell-var-names.sh <file>
+#
 # Example:
-# $ identity-vars.sh git/gitconfig.template
-# PRIMARY_NAME
-# PRIMARY_EMAIL
+# $ shell-var-names.sh git/git-identity.example
+# PRIMARY_ACC_SSH_ALIAS
 # PRIMARY_ACC_SSH_PRIV_KEY
+# PRIMARY_EMAIL
 # ...
-
 
 set -euo pipefail
 
-file="${1:?usage: identity-vars.sh <file>}"
+file="${1:?usage: shell-var-names.sh <file>}"
 [[ -f "$file" ]] || exit 0
 
 # Variables present in a clean bash, before vs after sourcing the file; the
