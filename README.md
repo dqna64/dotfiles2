@@ -1,6 +1,6 @@
 # dotfiles
 
-Gordons cross-machine dotfiles. Includes shared and machine-specific
+Gordon's cross-machine dotfiles. Includes shared and machine-specific
 configurations for tools like zsh, git, ssh, vscode, claude, tmux, etc
 
 The install script will create symlinks on your machine for files that are
