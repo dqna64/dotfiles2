@@ -1,4 +1,4 @@
-# Rendered by dotfiles/git/git-setup.sh into
+# Rendered by dotfiles_dqna64/git/git-setup.sh into
 # git/dqna64-dotfiles.gitconfig (next to this template, but gitignored
 # because the rendered file contains per-machine values).
 # DO NOT EDIT THE RENDERED FILE — edit git/gitconfig.template and re-run
@@ -20,6 +20,26 @@
     name = "{{PRIMARY_NAME}}"
     email = "{{PRIMARY_EMAIL}}"
 
+# Git identities as numbered slots, consumed by the `gm` shell function
+# (dotfiles_dqna64/aliases.git_stuff/git.zsh): `gm -N "msg"` authors a single
+# commit as slot N.
+# 
+# Slot 1 is the primary/default identity.
+# 
+# Read with e.g.
+# `git config dqna64-git-identities.1.email` / `dqna64-git-identities.2.name`.
+#
+# To add another identity, append a new numbered subsection here (e.g. "3"),
+# add the matching THIRD_NAME/THIRD_EMAIL placeholders + sed lines in
+# git/git-setup.sh, and the vars in git/git-identity. No changes to the `gm`
+# function needed — `gm -3` should work automatically.
+[dqna64-git-identities "1"]
+    name = "{{PRIMARY_NAME}}"
+    email = "{{PRIMARY_EMAIL}}"
+[dqna64-git-identities "2"]
+    name = "{{SECONDARY_NAME}}"
+    email = "{{SECONDARY_EMAIL}}"
+
 [core]
     excludesfile = ~/.gitignore_global
     editor = vim
@@ -39,11 +59,11 @@
 # $ git whoami     # Show repo's current user.name/user.email
 #
 # SSH key selection is no longer managed via git aliases. Instead, ~/.ssh/config
-# defines one Host alias per GitHub account, named github.com-<github-username>
-# (rendered by git/git-setup.sh from ssh/config.template — usernames come from
-# git-identity). Attach a repo to a specific account by setting its remote URL
-# to use the alias hostname, e.g.
-#   git remote set-url origin git@github.com-{{PRIMARY_GITHUB_USERNAME}}:<org>/<repo>.git
+# defines one Host alias per account, named github.com-<alias> (rendered by
+# git/git-setup.sh from ssh/config.template — the <alias> labels come from
+# PRIMARY_ACC_SSH_ALIAS/SECONDARY_ACC_SSH_ALIAS in git-identity). Attach a repo to a
+# specific account by setting its remote URL to use the alias hostname, e.g.
+#   git remote set-url origin git@github.com-{{PRIMARY_ACC_SSH_ALIAS}}:<org>/<repo>.git
 [alias]
     primary = !git config user.name "{{PRIMARY_NAME}}" && git config user.email "{{PRIMARY_EMAIL}}" && echo "Switched to primary identity: {{PRIMARY_EMAIL}}"
     secondary = !git config user.name "{{SECONDARY_NAME}}" && git config user.email "{{SECONDARY_EMAIL}}" && echo "Switched to secondary identity: {{SECONDARY_EMAIL}}"

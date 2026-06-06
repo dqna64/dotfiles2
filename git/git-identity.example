@@ -9,12 +9,14 @@ PRIMARY_EMAIL="primary@example.com"
 SECONDARY_NAME="Secondary Name"  
 SECONDARY_EMAIL="secondary@example.com"
 
-PRIMARY_REMOTE_ACCOUNT_SSH_PRIVATE_KEY="/path/to/ssh/private_key"
-SECONDARY_REMOTE_ACCOUNT_SSH_PRIVATE_KEY="/path/to/ssh/private_key"
+PRIMARY_ACC_SSH_PRIV_KEY="/path/to/ssh/private_key"
+SECONDARY_ACC_SSH_PRIV_KEY="/path/to/ssh/private_key"
 
-# GitHub usernames for each account. Used by git-setup.sh to render
-# SSH Host aliases (github.com-<username>) so remote URLs like
-# git@github.com-<username>:org/repo.git authenticate as the right
-# account. No effect outside SSH config rendering.
-PRIMARY_GITHUB_USERNAME="primary-username"
-SECONDARY_GITHUB_USERNAME="secondary-username"
+# Short label for each account's SSH Host alias. Used by git-setup.sh to
+# render aliases named github.com-<alias>, so remote URLs like
+# git@github.com-<alias>:org/repo.git pick the right SSH key (and thus
+# authenticate as the right account). The value is just a label — it must be
+# unique and free of '@'/spaces, but need not be your GitHub username (a
+# nickname like work/personal is fine). No effect outside SSH config rendering.
+PRIMARY_ACC_SSH_ALIAS="acc1"
+SECONDARY_ACC_SSH_ALIAS="acc2"

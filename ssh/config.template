@@ -14,25 +14,26 @@
 # The script never modifies ~/.ssh/config itself, so any hand-curated
 # Host blocks you keep there are preserved across re-runs.
 #
-# Per-account GitHub Host aliases, one per GitHub username. Both aliases
-# resolve to github.com but offer different keys, so multiple GitHub
-# accounts can be used in parallel without juggling ssh-agent. To attach a
-# repo to a specific account, set its remote URL to use the alias hostname:
+# Per-account GitHub Host aliases, one per account label (PRIMARY_ACC_SSH_ALIAS /
+# SECONDARY_ACC_SSH_ALIAS in git-identity). Both aliases resolve to github.com but
+# offer different keys, so multiple GitHub accounts can be used in parallel
+# without juggling ssh-agent. To attach a repo to a specific account, set its
+# remote URL to use the alias hostname:
 #
-#   git remote set-url origin git@github.com-{{PRIMARY_GITHUB_USERNAME}}:org/repo.git
-#   git remote set-url origin git@github.com-{{SECONDARY_GITHUB_USERNAME}}:user/repo.git
+#   git remote set-url origin git@github.com-{{PRIMARY_ACC_SSH_ALIAS}}:org/repo.git
+#   git remote set-url origin git@github.com-{{SECONDARY_ACC_SSH_ALIAS}}:user/repo.git
 #
 # IdentitiesOnly yes stops ssh-agent from offering any other loaded key,
 # which would otherwise authenticate as the wrong account.
 
-Host github.com-{{PRIMARY_GITHUB_USERNAME}}
+Host github.com-{{PRIMARY_ACC_SSH_ALIAS}}
     HostName github.com
     User git
-    IdentityFile {{PRIMARY_REMOTE_ACCOUNT_SSH_PRIVATE_KEY}}
+    IdentityFile {{PRIMARY_ACC_SSH_PRIV_KEY}}
     IdentitiesOnly yes
 
-Host github.com-{{SECONDARY_GITHUB_USERNAME}}
+Host github.com-{{SECONDARY_ACC_SSH_ALIAS}}
     HostName github.com
     User git
-    IdentityFile {{SECONDARY_REMOTE_ACCOUNT_SSH_PRIVATE_KEY}}
+    IdentityFile {{SECONDARY_ACC_SSH_PRIV_KEY}}
     IdentitiesOnly yes

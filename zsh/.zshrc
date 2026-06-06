@@ -31,6 +31,57 @@ Warning: dotfiles repo not found at DOTFILES_DIR=$DOTFILES_DIR
 EOF
 fi
 
+# === Warn if rendered git/ssh config has drifted from its template
+# git/git-setup.sh renders templates into custom config files (git/dqna64-dotfiles.gitconfig,
+# ssh/dqna64-dotfiles.conf) that are gitignored, and stamps each with the git object id of the
+# template it came from. Those rendered files are only regenerated when you
+# re-run git-setup.sh, so pulling an updated template leaves them stale and
+# silently wrong. Detect that here and nag to regenerate the custom config files.
+() {
+    local -a pairs=(
+        "$DOTFILES_DIR/git/gitconfig.template:$DOTFILES_DIR/git/dqna64-dotfiles.gitconfig"
+        "$DOTFILES_DIR/ssh/config.template:$DOTFILES_DIR/ssh/dqna64-dotfiles.conf"
+    )
+    local pair template_file rendered_file stamped current
+    for pair in "${pairs[@]}"; do
+        template_file="${pair%%:*}"
+        rendered_file="${pair#*:}"
+        # Missing rendered file is the "not set up yet" case, handled elsewhere.
+        [[ -f "$template_file" && -f "$rendered_file" ]] || continue
+        # Cheap gate: only do real work if the template looks newer.
+        [[ "$template_file" -nt "$rendered_file" ]] || continue
+        # Confirm with content hash so an mtime-only bump isn't a false alarm.
+        stamped="$(grep -m1 'dqna64-template-oid:' "$rendered_file" 2>/dev/null)"
+        stamped="${stamped##*: }"
+        current="$(git hash-object "$template_file" 2>/dev/null)"
+        [[ -n "$stamped" && "$stamped" == "$current" ]] && continue
+        print -P -u2 "%F{yellow}warning: $rendered_file is out of date with $template_file.%f"
+        print -P -u2 "%F{yellow}         Re-run $DOTFILES_DIR/git/git-setup.sh to regenerate it.%f"
+    done
+}
+
+# === Warn if git-identity is missing variables its example defines
+# git/git-identity is created once from git-identity.example and then never
+# auto-updated (it holds your real values). So when the example gains or renames
+# variables (e.g. after `git pull`), your git-identity silently lacks them.
+# git-setup.sh catches this in a preflight when you run it; nag here too so you
+# notice sooner. Variable NAMES are compared (never values), obtained robustly
+# by utils/identity-vars.sh (sources each file rather than regex-scraping).
+# Cheap: the `-nt` mtime gate skips the work unless the example is newer.
+() {
+    local example_file="$DOTFILES_DIR/git/git-identity.example"
+    local actual_file="$DOTFILES_DIR/git/git-identity"
+    local vars_script="$DOTFILES_DIR/utils/identity-vars.sh"
+    [[ -f "$example_file" && -f "$actual_file" && -f "$vars_script" ]] || return 0
+    [[ "$example_file" -nt "$actual_file" ]] || return 0
+    local missing
+    missing="$(comm -23 <(bash "$vars_script" "$example_file") <(bash "$vars_script" "$actual_file"))"
+    [[ -n "$missing" ]] || return 0
+    print -P -u2 "%F{yellow}warning: $actual_file is missing variables defined in $example_file:%f"
+    echo "$missing" | sed 's/^/         + /' >&2
+    print -P -u2 "%F{yellow}         Update it (compare against the example), then re-run $DOTFILES_DIR/git/git-setup.sh.%f"
+}
+
 # === Oh My Zsh and Powerlevel10k theme loading
 # omz-setup.zsh is our wrapper that sets ZSH, ZSH_THEME, plugins, then sources
 # OMZ's real loader at $ZSH/oh-my-zsh.sh. Sourced directly from the repo so

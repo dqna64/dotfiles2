@@ -51,11 +51,42 @@ if [[ ! -f "$GIT_IDENTITY_FILE" ]]; then
     exit 1
 else
     echo "Using existing git identity at $GIT_IDENTITY_FILE to render the gitconfig + SSH snippet."
-    echo "  To change names/emails/SSH keys/GitHub usernames, edit it and re-run this script."
+    echo "  To change names/emails/SSH keys/SSH host alias labels, edit it and re-run this script."
 fi
 
 # shellcheck source=/dev/null
 source "$GIT_IDENTITY_FILE"
+
+# Preflight: git-identity is created once from git-identity.example and then
+# never auto-updated (it holds your real values). So when the example gains or
+# renames variables, an existing git-identity silently lacks them — which would
+# otherwise surface much later as a cryptic `set -u` "unbound variable" abort
+# during rendering. Catch it here with a clear, actionable message instead.
+#
+# We compare the set of variable NAMES each file defines (obtained robustly by
+# identity-vars.sh, which sources the file rather than regex-scraping it), never
+# values, so your real names/emails/keys are never inspected or printed.
+example_file="${GIT_IDENTITY_FILE}.example"
+actual_file="$GIT_IDENTITY_FILE"
+IDENTITY_VARS="$DOTFILES_DIR/utils/identity-vars.sh"
+if [[ -f "$example_file" && -f "$IDENTITY_VARS" ]]; then
+    example_vars="$(bash "$IDENTITY_VARS" "$example_file")"
+    actual_vars="$(bash "$IDENTITY_VARS" "$actual_file")"
+    missing_vars="$(comm -23 <(printf '%s\n' "$example_vars") <(printf '%s\n' "$actual_vars"))"
+    extra_vars="$(comm -13 <(printf '%s\n' "$example_vars") <(printf '%s\n' "$actual_vars"))"
+
+    if [[ -n "$missing_vars" ]]; then
+        echo "Error: $actual_file is missing variables defined in $example_file:" >&2
+        echo "$missing_vars" | sed 's/^/         + /' >&2
+        if [[ -n "$extra_vars" ]]; then
+            echo "       It also defines variables NOT in the example (likely the old/renamed names):" >&2
+            echo "$extra_vars" | sed 's/^/         - /' >&2
+        fi
+        echo "       These are new or renamed. Update $actual_file to define the missing" >&2
+        echo "       variables (compare against $example_file), then re-run this script." >&2
+        exit 1
+    fi
+fi
 
 # Reassure the user: git-identity and the files rendered from it are
 # gitignored, so real names/emails/keys/usernames are never committed.
@@ -117,13 +148,21 @@ render_template() {
 
     sed -e "s|{{PRIMARY_NAME}}|${PRIMARY_NAME}|g" \
         -e "s|{{PRIMARY_EMAIL}}|${PRIMARY_EMAIL}|g" \
+        -e "s|{{PRIMARY_ACC_SSH_PRIV_KEY}}|${PRIMARY_ACC_SSH_PRIV_KEY}|g" \
+        -e "s|{{PRIMARY_ACC_SSH_ALIAS}}|${PRIMARY_ACC_SSH_ALIAS}|g" \
         -e "s|{{SECONDARY_NAME}}|${SECONDARY_NAME}|g" \
         -e "s|{{SECONDARY_EMAIL}}|${SECONDARY_EMAIL}|g" \
-        -e "s|{{PRIMARY_REMOTE_ACCOUNT_SSH_PRIVATE_KEY}}|${PRIMARY_REMOTE_ACCOUNT_SSH_PRIVATE_KEY}|g" \
-        -e "s|{{SECONDARY_REMOTE_ACCOUNT_SSH_PRIVATE_KEY}}|${SECONDARY_REMOTE_ACCOUNT_SSH_PRIVATE_KEY}|g" \
-        -e "s|{{PRIMARY_GITHUB_USERNAME}}|${PRIMARY_GITHUB_USERNAME}|g" \
-        -e "s|{{SECONDARY_GITHUB_USERNAME}}|${SECONDARY_GITHUB_USERNAME}|g" \
+        -e "s|{{SECONDARY_ACC_SSH_PRIV_KEY}}|${SECONDARY_ACC_SSH_PRIV_KEY}|g" \
+        -e "s|{{SECONDARY_ACC_SSH_ALIAS}}|${SECONDARY_ACC_SSH_ALIAS}|g" \
         "$template_file" > "$output_file"
+
+    # Stamp the rendered file with the git object id of the template it was
+    # generated from. The shell-startup drift check in aliases.git_stuff/git.zsh
+    # recomputes the template's oid and compares against this, so an upstream
+    # template change (e.g. after `git pull`) that hasn't been re-rendered gets
+    # surfaced loudly instead of silently drifting. Both gitconfig and ssh
+    # config use `#` for comments, so a trailing comment is safe for either.
+    printf '\n# dqna64-template-oid: %s\n' "$(git hash-object "$template_file")" >> "$output_file"
 
     echo "Rendered $template_file -> $output_file"
 }
@@ -146,9 +185,10 @@ if [[ -f "$USER_GITCONFIG" ]] \
 fi
 
 # Render the SSH host-aliases snippet. Each account gets its own Host alias
-# named github.com-<github-username> (with the username sourced from
-# git-identity), pointing at github.com with a specific IdentityFile, so
-# multiple GitHub accounts can be used in parallel without juggling ssh-agent.
+# named github.com-<alias> (the <alias> label sourced from
+# PRIMARY_ACC_SSH_ALIAS/SECONDARY_ACC_SSH_ALIAS in git-identity), pointing at github.com
+# with a specific IdentityFile, so multiple GitHub accounts can be used in
+# parallel without juggling ssh-agent.
 #
 # This script NEVER modifies ~/.ssh/config — that file may contain hand-
 # curated config we must not touch. We only write to files we own:
@@ -181,18 +221,19 @@ Git identity (per-repo):
    git primary        # Switch repo to primary identity
    git secondary      # Switch repo to secondary identity
    git whoami         # Show current identity
+   gm -2 "message"    # Commit as secondary identity (this commit only)
 ===
 GitHub SSH host aliases (per-remote):
-   github.com-${PRIMARY_GITHUB_USERNAME}    -> $PRIMARY_REMOTE_ACCOUNT_SSH_PRIVATE_KEY
-   github.com-${SECONDARY_GITHUB_USERNAME}  -> $SECONDARY_REMOTE_ACCOUNT_SSH_PRIVATE_KEY
+   github.com-${PRIMARY_ACC_SSH_ALIAS}    -> $PRIMARY_ACC_SSH_PRIV_KEY
+   github.com-${SECONDARY_ACC_SSH_ALIAS}  -> $SECONDARY_ACC_SSH_PRIV_KEY
 
    Attach a repo to a specific account by setting its remote URL:
-     git remote set-url origin git@github.com-${PRIMARY_GITHUB_USERNAME}:<org>/<repo>.git
-     git remote set-url origin git@github.com-${SECONDARY_GITHUB_USERNAME}:<user>/<repo>.git
+     git remote set-url origin git@github.com-${PRIMARY_ACC_SSH_ALIAS}:<org>/<repo>.git
+     git remote set-url origin git@github.com-${SECONDARY_ACC_SSH_ALIAS}:<user>/<repo>.git
 
    Verify which account a host alias authenticates as:
-     ssh -T git@github.com-${PRIMARY_GITHUB_USERNAME}
-     ssh -T git@github.com-${SECONDARY_GITHUB_USERNAME}
+     ssh -T git@github.com-${PRIMARY_ACC_SSH_ALIAS}
+     ssh -T git@github.com-${SECONDARY_ACC_SSH_ALIAS}
 ===
 EOF
 
@@ -226,8 +267,8 @@ any later \`Host *\` block:
 $SSH_INCLUDE_LINE
 
 After adding it, test with:
-    ssh -T git@github.com-${PRIMARY_GITHUB_USERNAME}
-    ssh -T git@github.com-${SECONDARY_GITHUB_USERNAME}
+    ssh -T git@github.com-${PRIMARY_ACC_SSH_ALIAS}
+    ssh -T git@github.com-${SECONDARY_ACC_SSH_ALIAS}
 ===
 EOF
 else

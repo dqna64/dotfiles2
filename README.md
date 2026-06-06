@@ -105,7 +105,7 @@ registration needed.
 ## Gitignored, per-machine files (do not commit)
 
 - `zsh/zsh-config` — machine identifier + flags.
-- `git/git-identity` — real name/email/SSH key paths/GitHub usernames.
+- `git/git-identity` — real name/email/SSH key paths/SSH host alias labels.
 - `*.backup_dqna64.*` — created by `install.sh` and `git-setup.sh` when
   an existing file is moved aside before being replaced. The marker
   keeps these distinct from any other `.backup` files you might have.
