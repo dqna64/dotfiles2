@@ -118,20 +118,66 @@ registration needed.
   count (`<repo>/.zshenv` → `:A:h`; `<repo>/zsh/sub/.zshenv` →
   `:A:h:h:h`). Dir name doesn't matter, only depth.
 
+## Uninstall
+
+`uninstall.sh` reverses `install.sh`: it removes the symlinks it created
+(`~/.zshenv`, `~/.zshrc`, `~/.tmux.conf`, etc, plus the
+`~/.gitignore_global` and any `~/.claude/*` links) and restores the most
+recent `<file>.backup_dqna64.<timestamp>` for each path. It only ever
+deletes symlinks that resolve back into `$DOTFILES_DIR`, so unrelated user
+config is never touched. It's idempotent.
+
+```bash
+~/dotfiles_dqna64/uninstall.sh --dry-run            # preview, change nothing
+~/dotfiles_dqna64/uninstall.sh                      # interactive (prompts)
+~/dotfiles_dqna64/uninstall.sh -y                   # auto-confirm the core removal (symlinks + backups); repo still prompted/kept
+~/dotfiles_dqna64/uninstall.sh -y --remove-repo     # also delete the cloned $DOTFILES_DIR
+~/dotfiles_dqna64/uninstall.sh --help               # list every flag
+```
+
+Flags can be combined; `--dry-run` (`-n`) can be added to any of the above to
+preview it. `--yes` (`-y`) and `--no` are mutually exclusive, and `--yes` never
+removes the repo on its own — pair it with `--remove-repo` (or use `--keep-repo`
+to suppress the repo prompt in an interactive run).
+
+Prompt model (all default to "no" non-interactively):
+
+- **Core dotfiles removal** (the symlinks + backup restore) is prompted, and
+  `-y` / `--yes` auto-confirms *only* this part.
+- **Out-of-tree dependencies** (`~/.oh-my-zsh`, TPM) are **not** removed —
+  they're shared tools you may use outside these dotfiles. The script just
+  reports what's present and prints by-hand removal commands.
+- **The cloned `$DOTFILES_DIR`** is **never** removed by `-y` — it requires an
+  explicit `--remove-repo`.
+
+User-owned files aren't edited: the script prints the `[include]` / `Include`
+lines to remove from `~/.gitconfig` / `~/.ssh/config` and a reminder to revert
+your login shell. Run `uninstall.sh --help` for all options.
+
 ## TODO
 
-- [ ] Add an `uninstall.sh` that reverses `install.sh`: remove the symlinks
-  it created (`~/.zshenv`, `~/.zshrc`, `~/.tmux.conf`,
-  `~/.config/karabiner/karabiner.json`, `~/.config/yabai/yabairc`, plus
-  the Claude / git / ssh symlinks), restore the most recent
-  `<file>.backup_dqna64.<timestamp>` if present, and optionally remove
-  `~/.oh-my-zsh` and the cloned `$DOTFILES_DIR`. Should be idempotent
-  and only touch paths it knows it owns (i.e. symlinks that resolve into
-  `$DOTFILES_DIR`), to avoid nuking unrelated user config. Also tells the user to
-  'include' directives from ~/.gitconfig and ~/.ssh/config.
 - [ ] Test out installing in a different directory than default, via
    `./install.sh` and via curl -fsSL
 - [x] tmux session saving (via TPM + tmux-resurrect; see `tmux/.tmux.conf`)
+
+### `uninstall.sh` review (issues + improvements)
+
+Found during a review of `uninstall.sh`. Roughly highest-impact first.
+Completed items have been moved to the review plan in `$AGENT_PLANS`
+(`dotfiles-repo-review.md`, "Jun 6 — uninstall.sh hardening"). Remaining:
+
+- [ ] **No end-of-run summary.** Consider printing a tally (symlinks removed,
+  backups restored, things kept/removed) so the user can see at a glance what
+  changed.
+- [ ] **Add a safe test harness.** Manual testing already caused real damage
+  once (an inherited `ZSH` env var pointed `rm -rf` at the real `~/.oh-my-zsh`).
+  Add a scripted test that runs with an isolated `HOME`, `env -i`, and `ZSH`
+  unset, exercising: symlink-into-repo removal + restore, foreign-symlink
+  skip, real-file skip, empty-parent-dir cleanup, and the `--remove-repo` path.
+- [ ] **`-y` + repo removal ordering note.** Self-deleting `$DOTFILES_DIR`
+  while running from inside it works because the block is last and `cd`s out
+  first, but it's fragile — worth a comment/guard (already partially there)
+  and a test.
 
 ## Migrating from the bare git repo dotfiles
 
