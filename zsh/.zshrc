@@ -9,6 +9,7 @@
 # Initialization code that may require console input (password prompts, [y/n]
 # confirmations, etc.) must go above this block; everything else may go below.
 if [[ "$ENABLE_P10K_INSTANT_PROMPT" == "true" && -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  [ "${VERBOSITY_DQNA64:-0}" -ge 1 ] && echo "Enabling Powerlevel10k instant prompt"
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
@@ -37,6 +38,7 @@ fi
 # missing (broken DOTFILES_DIR or partial install).
 OMZ_SETUP="$DOTFILES_DIR/zsh/omz-setup.zsh"
 if [ -f "$OMZ_SETUP" ]; then
+    [ "${VERBOSITY_DQNA64:-0}" -ge 1 ] && echo "Loading Oh My Zsh from $OMZ_SETUP"
     source "$OMZ_SETUP"
 else
     echo "Warning: omz-setup not found at $OMZ_SETUP" >&2
@@ -47,8 +49,10 @@ unset OMZ_SETUP
 # Must be sourced AFTER theme loading by oh my zsh
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 if [[ $ZSH_THEME_MY == "p10k" ]]; then
+  [ "${VERBOSITY_DQNA64:-0}" -ge 1 ] && echo "Setting prompt theme: p10k"
   [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 elif [[ $ZSH_THEME_MY == "starship" ]]; then
+  [ "${VERBOSITY_DQNA64:-0}" -ge 1 ] && echo "Setting prompt theme: starship"
   eval "$(starship init zsh)"
 fi
 
@@ -115,6 +119,7 @@ fi
 if [[ "$ENABLE_YABAI_DQNA64" == "true" ]]; then
     YABAI_DIR="$DOTFILES_DIR/yabai"
     if [ -x "$YABAI_DIR/start.sh" ]; then
+        [ "${VERBOSITY_DQNA64:-0}" -ge 1 ] && echo "Starting yabai from $YABAI_DIR/start.sh"
         "$YABAI_DIR/start.sh"
     else
         echo "Warning: yabai start script not found/executable at $YABAI_DIR/start.sh" >&2
