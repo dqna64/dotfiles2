@@ -25,6 +25,29 @@ conventions). Symlink it if you want them:
 ln -sf "$DOTFILES_DIR/claude/CLAUDE.mb_cnv.md" "$HOME/.claude/CLAUDE.md"
 ```
 
+## 4. (Optional) Output styles
+
+`output-styles/` contains named output style definitions. Switch styles
+inside a session with `/config` → "Output style". Symlink the whole
+directory so Claude Code picks them up:
+
+```bash
+ln -sf "$DOTFILES_DIR/claude/output-styles" "$HOME/.claude/output-styles"
+```
+
+To add a new style, drop a markdown file in `output-styles/` with the
+frontmatter:
+
+```markdown
+---
+name: Brief
+description: Terse responses, no fluff
+keep-coding-instructions: true
+---
+
+Respond as concisely as possible. No preamble, no summaries, no filler phrases.
+```
+
 ---
 
 - `$DOTFILES_DIR` is set by `zsh/.zshenv` (defaults to `$HOME/dotfiles_dqna64`).
