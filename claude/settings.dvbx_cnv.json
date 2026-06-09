@@ -1,4 +1,7 @@
 {
+  "enabledPlugins": {
+    "otter-tools@otter-marketplace": true
+  },
   "env": {
     "CLAUDE_CODE_ENABLE_TELEMETRY": "1",
     "OTEL_EXPORTER_OTLP_ENDPOINT": "http://localhost:4317",
@@ -7,44 +10,128 @@
     "OTEL_METRICS_EXPORTER": "otlp"
   },
   "hooks": {
-    "PostToolUse": [
+    "Notification": [
       {
-        "matcher": "",
         "hooks": [
           {
-            "type": "command",
-            "command": "/usr/local/bin/otter agent-hook --agent claude-code --hook-event PostToolUse"
+            "command": "/usr/local/bin/otter agent-hook --agent claude-code --hook-event Notification 2\u003e/dev/null || true",
+            "type": "command"
           }
-        ]
+        ],
+        "matcher": ""
+      }
+    ],
+    "PostCompact": [
+      {
+        "hooks": [
+          {
+            "command": "/usr/local/bin/otter agent-hook --agent claude-code --hook-event PostCompact 2\u003e/dev/null || true",
+            "type": "command"
+          }
+        ],
+        "matcher": ""
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "/usr/local/bin/otter agent-hook --agent claude-code --hook-event PostToolUse",
+            "type": "command"
+          }
+        ],
+        "matcher": ""
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "hooks": [
+          {
+            "command": "/usr/local/bin/otter agent-hook --agent claude-code --hook-event PostToolUseFailure 2\u003e/dev/null || true",
+            "type": "command"
+          }
+        ],
+        "matcher": ""
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "command": "/usr/local/bin/otter agent-hook --agent claude-code --hook-event PreCompact 2\u003e/dev/null || true",
+            "type": "command"
+          }
+        ],
+        "matcher": ""
       }
     ],
     "PreToolUse": [
       {
-        "matcher": "",
         "hooks": [
           {
-            "type": "command",
-            "command": "/usr/local/bin/otter agent-hook --agent claude-code --hook-event PreToolUse"
+            "command": "/usr/local/bin/otter agent-hook --agent claude-code --hook-event PreToolUse",
+            "type": "command"
           }
-        ]
+        ],
+        "matcher": ""
       }
     ],
     "SessionStart": [
       {
-        "matcher": "",
         "hooks": [
           {
-            "type": "command",
-            "command": "/usr/local/bin/otter agent-hook --agent claude-code --hook-event SessionStart"
+            "command": "/usr/local/bin/otter agent-hook --agent claude-code --hook-event SessionStart",
+            "type": "command"
           }
-        ]
+        ],
+        "matcher": ""
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "command": "/usr/local/bin/otter agent-hook --agent claude-code --hook-event Stop 2\u003e/dev/null || true",
+            "type": "command"
+          }
+        ],
+        "matcher": ""
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "command": "/usr/local/bin/otter agent-hook --agent claude-code --hook-event SubagentStart 2\u003e/dev/null || true",
+            "type": "command"
+          }
+        ],
+        "matcher": ""
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "command": "/usr/local/bin/otter agent-hook --agent claude-code --hook-event SubagentStop 2\u003e/dev/null || true",
+            "type": "command"
+          }
+        ],
+        "matcher": ""
+      }
+    ],
+    "UserPromptExpansion": [
+      {
+        "hooks": [
+          {
+            "command": "/usr/local/bin/otter agent-hook --agent claude-code --hook-event UserPromptExpansion 2\u003e/dev/null || true",
+            "type": "command"
+          }
+        ],
+        "matcher": ""
       }
     ]
   },
-  "enabledPlugins": {
-    "otter-tools@otter-marketplace": true
-  },
-  "theme": "dark",
   "permissions": {
     "additionalDirectories": [],
     "allow": [
@@ -88,5 +175,6 @@
       "Bash(printf *)",
       "Bash(date *)"
     ]
-  }
+  },
+  "theme": "dark"
 }
