@@ -133,9 +133,7 @@
     ]
   },
   "permissions": {
-    "additionalDirectories": [
-      "$AGENT_PLANS"
-    ],
+    "additionalDirectories": [],
     "allow": [
       "Bash(git *)",
       "Bash(npm *)",

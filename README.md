@@ -87,9 +87,9 @@ re-source `.zshrc` after making changes to those files.
 `zsh/.zshrc` sources every `*.zsh` in `aliases/` on all machines, plus any
 per-machine `aliases.<suffix>/` dirs. A `case` block maps `$DQNA64_MACHINE`
 to a list of suffixes, so a machine can load several dirs and machines can
-share one (e.g. `DVBX1`/`DVBX2`/`DVBX3` → `(dvbx_cnv)`). Suffixes are
-arbitrary; missing dirs are skipped. Just drop a `.zsh` file in a dir — no
-registration needed.
+share one (e.g. `DVBX1`/`DVBX2`/`DVBX3`/ `DVBX4` / `DVBX5` → `(dvbx_cnv)`).
+Suffixes are arbitrary; missing dirs are skipped. Just drop a `.zsh` file
+in a dir — no registration needed.
 
 ## Adding a new machine
 
@@ -98,9 +98,9 @@ registration needed.
    (e.g. `MB_2026) MACHINE_ALIAS_SUFFIXES=(mb_2026) ;;`) and create the matching
    `aliases.<suffix>/` dir(s). Suffixes use `_` not `-`. For PATH/env
    additions, add a branch in `zsh/.zshenv` (e.g. the `DVBX*` block).
-3. Optionally drop `zsh/.zshrc.<machine-with-hyphens>` (`mb-m1`, `mb-cnv`,
-   `dvbx1`, …) for a machine-specific zshrc. **No registration needed** —
-   `zsh/.zshrc` auto-sources by the derived filename (`-` not `_`).
+3. Optionally drop `zsh/.zshrc.<machine>` (`mb_m1`, `mb_cnv`, `dvbx1`, …,
+   i.e. `$DQNA64_MACHINE` lowercased) for a machine-specific zshrc. **No
+   registration needed** — `zsh/.zshrc` auto-sources by the derived filename.
 
 ## Gitignored, per-machine files (do not commit)
 

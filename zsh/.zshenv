@@ -54,19 +54,16 @@ unset ZSH_CONFIG_FILE
 # on this env var to find its config file.
 export RIPGREP_CONFIG_PATH="$DOTFILES_DIR/ripgrep/ripgreprc"
 
+# === User-installed scripts/binaries
+# Prepended last so they win over earlier entries.
+[ -d "$HOME/.local/bin" ]    && export PATH="$HOME/.local/bin:$PATH"
+
 # === Cnv devbox-specific exports
-# Active only when DQNA64_MACHINE identifies a Cnv devbox. Each PATH
-# entry is guarded so a stale DQNA64_MACHINE on a non-devbox doesn't
-# pollute PATH with non-existent dirs.
 case "$DQNA64_MACHINE" in
-	DVBX1|DVBX2|DVBX3)
+	MB_CNV|DVBX1|DVBX2|DVBX3|DVBX4|DVBX5)
 		# Prepend $CNV_WORK_BIN_PATH to PATH, if set in zsh-config.
 		if [ -n "$CNV_WORK_BIN_PATH" ] && [ -d "$CNV_WORK_BIN_PATH" ]; then
 			export PATH="$CNV_WORK_BIN_PATH:$PATH"
 		fi
-
-		# Some binaries that are automatically installed on cnv devboxes.
-		[ -d "$HOME/.local/bin" ]    && export PATH="$HOME/.local/bin:$PATH"
-		[ -d "$HOME/.opencode/bin" ] && export PATH="$HOME/.opencode/bin:$PATH"
 		;;
 esac

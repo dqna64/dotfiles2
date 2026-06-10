@@ -8,10 +8,12 @@ function mkcd() {
 }
 
 # SSH into a devbox and attach to a tmux session by prefix.
-# Usage: sd <1|2|3> [tmux-session-prefix]
+# Usage: sd <1|2|3|4|5> [tmux-session-prefix]
 #   1 -> coder.gordnh-devbox-1
 #   2 -> main.gordons-devbox-forge.gordonh.coder
 #   3 -> main.gordons-qagent-devbox.gordonh.coder
+#   4 -> gordons-dvbx4.coder
+#   5 -> (no host yet)
 # If no session prefix is given, lists the sessions on the host and replaces
 # the remote shell with an interactive shell.
 # If a session prefix is given, attempts to attach to the session.
@@ -24,7 +26,9 @@ function sd() {
     1) host="coder.gordnh-devbox-1" ;;
     2) host="main.gordons-devbox-forge.gordonh.coder" ;;
     3) host="main.gordons-qagent-devbox.gordonh.coder" ;;
-    *) echo "usage: sd <1|2|3> [tmux-session-prefix]" >&2; return 1 ;;
+    4) host="gordons-dvbx4.coder" ;;
+    5) echo "sd: no host configured for devbox 5 yet" >&2; return 1 ;;
+    *) echo "usage: sd <1|2|3|4|5> [tmux-session-prefix]" >&2; return 1 ;;
   esac
   # Look the login shell up from /etc/passwd instead.
   # Eg '/bin/zsh' or '/bin/bash'

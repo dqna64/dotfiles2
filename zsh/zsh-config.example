@@ -2,7 +2,7 @@
 # Used elsewhere (e.g. zsh/.zshenv) to enable machine-specific behaviour
 # such as Canva devbox PATH additions.
 # Options (extend as needed):
-#   DVBX1, DVBX2, DVBX3  - Canva devboxes
+#   DVBX1 .. DVBX5  - Canva devboxes
 #   MB_M1         - personal MacBook
 #   MB_CNV        - work Macbook
 # Leave unset or use a non-matching value to disable all machine-specific blocks.
@@ -32,10 +32,14 @@ ENABLE_YABAI_DQNA64=false # true or false
 export VERBOSITY_DQNA64=1
 
 # === Path to CNV work binaries
+# E.g. "$HOME/.local/bin/cnv"
 
 export CNV_WORK_BIN_PATH=
 
 # === Path for agents to store and read plans
+# CLAUDE.*.md files in these dotfiles may tell agents to reference this path
+# as the place to read and write plans.
+# Set it to the path where you keep your plans, e.g. AGENT_PLANS="$HOME/.agent/plans".
 
 export AGENT_PLANS=
 

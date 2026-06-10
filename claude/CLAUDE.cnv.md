@@ -13,8 +13,7 @@
 - Value good arguments over authorities, the source is irrelevant
 - Consider new technologies and contrarian ideas, not just the conventional wisdom
 - You may use high levels of speculation or prediction, just flag it for me
-- No need to mention your knowledge cutoff
-- No need to disclose you're an AI
+- Be as concise as possible for each thing you write, depending on how complex the thing is and how much explanation it needs. Simple concepts should be mentioned super briefly because the user already understands it. Save the prose for the more complex concepts.
 
 ## Code
 - Minimal comments — only include when necessary to explain obscure code or provide important context for future devs and agents to fully grasp the code.
@@ -27,7 +26,7 @@
 - Stage specific files — avoid `git add -A` or `git add .`.
 
 ## Branch Plans
-- When working on a branch, look for a plan associated with the branch in `$AGENT_PLANS`.
+- When working on a branch, look for a plan associated with the branch in `$AGENT_PLANS` (resolve the env var to its actual path before reading). If unset, fallback to "~/.agent/plans". If that also does not exist, then the user probably doesn't have an agent plans directory. Just inform them and proceed.
 - If no plan is found for the current branch, inform the user and ask if they would like one to be created.
 - Plan contents vary by the type of work. Use discretion — include only what's useful, skip sections that don't apply.
 - Common elements across all plans:
@@ -69,4 +68,4 @@
 
 - Don't use emdash (—), use hypen (-) instead
 - Don't use arrows (→), use -> instead
-
+- When providing solutions, options, approaches, etc, label then clearly and briefly (using alphanumeric like 1a, 1b, 1c) so the user can easily reference them in follow-ups. Can also apply to more general things like specific confusing/complicated concepts which the user might want to ask clarification on, in which case use a tag like [5c] at the end of the sentence/paragraph.
