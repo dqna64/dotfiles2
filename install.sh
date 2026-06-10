@@ -430,6 +430,10 @@ cat <<EOF
 
       ln -sf "$DOTFILES_DIR/claude/settings.mb_m1.json" "\$HOME/.claude/settings.json"
 
+    Global instructions for Claude:
+
+      ln -sf "$DOTFILES_DIR/claude/CLAUDE.cnv.md" "\$HOME/.claude/CLAUDE.md"
+
     To share the global instructions with Cursor (one source of truth
     for both), symlink your chosen CLAUDE.*.md as a global Cursor rule:
 
