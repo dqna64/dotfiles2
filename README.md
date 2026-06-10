@@ -122,7 +122,8 @@ registration needed.
 
 `uninstall.sh` reverses `install.sh`: it removes the symlinks it created
 (`~/.zshenv`, `~/.zshrc`, `~/.tmux.conf`, etc, plus the
-`~/.gitignore_global` and any `~/.claude/*` links) and restores the most
+`~/.gitignore_global`, any `~/.claude/*` links, and the optional
+`~/.cursor/rules/claude.mdc` link) and restores the most
 recent `<file>.backup_dqna64.<timestamp>` for each path. It only ever
 deletes symlinks that resolve back into `$DOTFILES_DIR`, so unrelated user
 config is never touched. It's idempotent.

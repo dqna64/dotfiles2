@@ -18,11 +18,11 @@ Swap in whichever file from the table you picked.
 
 ## 3. (Optional) Global instructions
 
-`CLAUDE.mb_cnv.md` holds global instructions (response style, git/PR
+`CLAUDE.cnv.md` holds global instructions (response style, git/PR
 conventions). Symlink it if you want them:
 
 ```bash
-ln -sf "$DOTFILES_DIR/claude/CLAUDE.mb_cnv.md" "$HOME/.claude/CLAUDE.md"
+ln -sf "$DOTFILES_DIR/claude/CLAUDE.cnv.md" "$HOME/.claude/CLAUDE.md"
 ```
 
 ## 4. (Optional) Output styles
@@ -46,7 +46,25 @@ keep-coding-instructions: true
 ---
 
 Respond as concisely as possible. No preamble, no summaries, no filler phrases.
+
 ```
+## 5. (Optional) Use the same instructions in Cursor
+
+Cursor reads global `.mdc` rule files from `~/.cursor/rules/`. Symlink your
+chosen `CLAUDE.*.md`:
+
+```bash
+mkdir -p "$HOME/.cursor/rules"
+ln -sf "$DOTFILES_DIR/claude/CLAUDE.cnv.md" "$HOME/.cursor/rules/claude.mdc"
+```
+
+Notes:
+
+- No YAML frontmatter is needed (or wanted) for global `~/.cursor/rules/*.mdc`
+  files
+- If a future Cursor version stops honoring global `.mdc` loading from `~/.cursor/rules/`,
+  fall back to pasting the file's contents into Settings → Rules → User Rules,
+  or to a project-level `.cursor/rules/` rule.
 
 ---
 

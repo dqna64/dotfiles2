@@ -430,7 +430,11 @@ cat <<EOF
 
       ln -sf "$DOTFILES_DIR/claude/settings.mb_m1.json" "\$HOME/.claude/settings.json"
 
-    Skip if you'll manage ~/.claude/ by hand.
+    To share the global instructions with Cursor (one source of truth
+    for both), symlink your chosen CLAUDE.*.md as a global Cursor rule:
+
+      mkdir -p "\$HOME/.cursor/rules"
+      ln -sf "$DOTFILES_DIR/claude/CLAUDE.cnv.md" "\$HOME/.cursor/rules/claude.mdc"
 
 EOF
 printf '%b' "$RESET"

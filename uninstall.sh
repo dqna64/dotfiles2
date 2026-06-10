@@ -7,7 +7,8 @@
 # What it does, in order:
 #   1. For each symlink install.sh / git-setup.sh creates (~/.zshrc, ~/.zshenv,
 #      ~/.tmux.conf, ~/.config/karabiner/karabiner.json, ~/.config/yabai/yabairc,
-#      ~/.gitignore_global, and the optional ~/.claude/* links), remove it ONLY
+#      ~/.gitignore_global, and the optional ~/.claude/* and
+#      ~/.cursor/rules/claude.mdc links), remove it ONLY
 #      if it is a symlink resolving into $DOTFILES_DIR — i.e. one we know we own.
 #      Real files, directories, and symlinks pointing elsewhere are left alone.
 #   2. Restore the most recent <file>.backup_dqna64.<timestamp> for that path, if
@@ -344,6 +345,10 @@ if decide "" "Remove the dotfiles symlinks (resolving into $DOTFILES_DIR) and re
 	# Optional symlinks the user may have created by hand following claude/README.md.
 	remove_dotfile_symlink "$HOME/.claude/settings.json"
 	remove_dotfile_symlink "$HOME/.claude/CLAUDE.md"
+	# Optional Cursor global-rule symlink (claude/README.md). Like the ~/.claude
+	# links above this is hand-created, so we only drop the symlink and leave
+	# the user-managed ~/.cursor/rules dir (it may hold other rules) in place.
+	remove_dotfile_symlink "$HOME/.cursor/rules/claude.mdc"
 else
 	echo_note "Skipping symlink removal."
 fi
