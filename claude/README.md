@@ -48,7 +48,26 @@ keep-coding-instructions: true
 Respond as concisely as possible. No preamble, no summaries, no filler phrases.
 
 ```
-## 5. (Optional) Use the same instructions in Cursor
+## 5. (Optional) Agent skills
+
+`skills/` holds Agent Skills (each a `<skill-name>/SKILL.md`) shared between
+Claude Code and Cursor. This is the single source of truth — symlink each
+skill into both agents' skill dirs so editing one repo copy updates both:
+
+```bash
+mkdir -p "$HOME/.claude/skills" "$HOME/.cursor/skills"
+for skill in "$DOTFILES_DIR"/claude/skills/*/; do
+  name=$(basename "$skill")
+  ln -sn "$skill" "$HOME/.claude/skills/$name"
+  ln -sn "$skill" "$HOME/.cursor/skills/$name"
+done
+```
+
+Per-skill symlinks (not the whole dir) so locally-installed skills in those
+locations stay untouched. Existing entries are left alone (the loop
+just prints "File exists" and moves on).
+
+## 6. (Optional) Cursor global rules
 
 Cursor reads global `.mdc` rule files from `~/.cursor/rules/`. Symlink your
 chosen `CLAUDE.*.md`:
