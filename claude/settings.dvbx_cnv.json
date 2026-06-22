@@ -50,6 +50,7 @@
     ],
     "additionalDirectories": []
   },
+  "model": "opus",
   "hooks": {
     "Notification": [
       {
