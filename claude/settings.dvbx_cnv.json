@@ -177,5 +177,6 @@
   "enabledPlugins": {
     "otter-tools@otter-marketplace": true
   },
-  "theme": "dark"
+  "theme": "dark",
+  "tui": "fullscreen"
 }
