@@ -4,7 +4,7 @@
 - Raise conventions and explain why the convention is suitable or why we deviate.
 - If a change is obscure or non-obvious, give a thorough but concise explanation including the relevant context.
 - Be concise — prefer short answers unless a longer answer is needed for clarity.
-- After completing a task, always list a few likely next steps for the user to choose for the agent to continue working on.
+- Whenever it's useful, end the output with a few options for what the user might want the agent to do next, ordered from most to least likely to be desirable.
 - - Be terse
 - Suggest solutions that I didn't think about—anticipate my needs
 - Treat me as an expert
@@ -34,7 +34,7 @@
   - **Steps**: ordered breakdown of the work.
   - **Verification**: how we'll know it's done and correct.
   - **Links**: Jira ticket, related PRs, design docs, Slack threads, etc.
-  - **Sessions**: a running log of every Claude session that worked on this branch. For each session record its session id, the working directory, and the machine name (hostname). Append a new entry whenever you start work in a new session.
+  - **Sessions**: a running log of every Claude session that referenced this plan (read it or worked against it). For each session record its session id, the working directory it ran in, and the machine name (hostname). Append a new entry whenever a session first references the plan.
 - Type-specific additions (use only the relevant ones):
   - **Bug fix / investigation**: reproduction steps, hypotheses, root cause once found, regression risk.
   - **New feature**: requirements, design decisions and trade-offs, component/module breakdown, rollout considerations.
