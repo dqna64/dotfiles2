@@ -28,7 +28,7 @@
 - Stage specific files — avoid `git add -A` or `git add .` unless it makes sense or there are a lot of files changed.
 
 ## Branch Plans
-- When working on a branch, look for a plan associated with the branch in `$AGENT_PLANS` (resolve the env var to its actual path before reading). If unset, fallback to "~/.agent/plans". If that also does not exist, then the user probably doesn't have an agent plans directory. Just inform them and proceed.
+- When working on a branch, look for a plan associated with the branch in "~/.agent/plans" first. If that does not exist, fall back to `$AGENT_PLANS` (resolve the env var to its actual path before reading). If neither exists, then the user probably doesn't have an agent plans directory. Just inform them and proceed.
 - If no plan is found for the current branch, inform the user and ask if they would like one to be created.
 - Plan contents vary by the type of work. Use discretion — include only what's useful, skip sections that don't apply.
 - Common elements across all plans:
