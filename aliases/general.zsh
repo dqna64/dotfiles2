@@ -7,6 +7,9 @@ function mkcd() {
   mkdir -p "$@" && cd "$_";
 }
 
+# Attach to tmux and immediately open the session/window tree picker.
+alias tmls='tmux attach \; choose-tree -s'
+
 # SSH into a devbox and attach to a tmux session by prefix.
 # Usage: sd <1|2|3|4|5> [tmux-session-prefix]
 #   1 -> coder.gordnh-devbox-1
