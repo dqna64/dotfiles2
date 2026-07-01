@@ -1,8 +1,5 @@
 {
   "defaultMode": "auto",
-  "enabledPlugins": {
-    "otter-tools@otter-marketplace": true
-  },
   "env": {
     "CLAUDE_CODE_ENABLE_TELEMETRY": "1",
     "OTEL_EXPORTER_OTLP_ENDPOINT": "http://localhost:4317",
@@ -13,123 +10,123 @@
   "hooks": {
     "Notification": [
       {
+        "matcher": "",
         "hooks": [
           {
-            "command": "/usr/local/bin/otter agent-hook --agent claude-code --hook-event Notification",
-            "type": "command"
+            "type": "command",
+            "command": "/usr/local/bin/otter agent-hook --agent claude-code --hook-event Notification 2>/dev/null || true"
           }
-        ],
-        "matcher": ""
+        ]
       }
     ],
     "PostCompact": [
       {
+        "matcher": "",
         "hooks": [
           {
-            "command": "/usr/local/bin/otter agent-hook --agent claude-code --hook-event PostCompact",
-            "type": "command"
+            "type": "command",
+            "command": "/usr/local/bin/otter agent-hook --agent claude-code --hook-event PostCompact 2>/dev/null || true"
           }
-        ],
-        "matcher": ""
+        ]
       }
     ],
     "PostToolUse": [
       {
+        "matcher": "",
         "hooks": [
           {
-            "command": "otter agent-hook --agent claude-code --hook-event PostToolUse",
-            "type": "command"
+            "type": "command",
+            "command": "/usr/local/bin/otter agent-hook --agent claude-code --hook-event PostToolUse 2>/dev/null || true"
           }
-        ],
-        "matcher": ""
+        ]
       }
     ],
     "PostToolUseFailure": [
       {
+        "matcher": "",
         "hooks": [
           {
-            "command": "/usr/local/bin/otter agent-hook --agent claude-code --hook-event PostToolUseFailure",
-            "type": "command"
+            "type": "command",
+            "command": "/usr/local/bin/otter agent-hook --agent claude-code --hook-event PostToolUseFailure 2>/dev/null || true"
           }
-        ],
-        "matcher": ""
+        ]
       }
     ],
     "PreCompact": [
       {
+        "matcher": "",
         "hooks": [
           {
-            "command": "/usr/local/bin/otter agent-hook --agent claude-code --hook-event PreCompact",
-            "type": "command"
+            "type": "command",
+            "command": "/usr/local/bin/otter agent-hook --agent claude-code --hook-event PreCompact 2>/dev/null || true"
           }
-        ],
-        "matcher": ""
+        ]
       }
     ],
     "PreToolUse": [
       {
+        "matcher": "",
         "hooks": [
           {
-            "command": "otter agent-hook --agent claude-code --hook-event PreToolUse",
-            "type": "command"
+            "type": "command",
+            "command": "/usr/local/bin/otter agent-hook --agent claude-code --hook-event PreToolUse 2>/dev/null || true"
           }
-        ],
-        "matcher": ""
+        ]
       }
     ],
     "SessionStart": [
       {
+        "matcher": "",
         "hooks": [
           {
-            "command": "/usr/local/bin/otter agent-hook --agent claude-code --hook-event SessionStart",
-            "type": "command"
+            "type": "command",
+            "command": "/usr/local/bin/otter agent-hook --agent claude-code --hook-event SessionStart 2>/dev/null || true"
           }
-        ],
-        "matcher": ""
+        ]
       }
     ],
     "Stop": [
       {
+        "matcher": "",
         "hooks": [
           {
-            "command": "/usr/local/bin/otter agent-hook --agent claude-code --hook-event Stop",
-            "type": "command"
+            "type": "command",
+            "command": "/usr/local/bin/otter agent-hook --agent claude-code --hook-event Stop 2>/dev/null || true"
           }
-        ],
-        "matcher": ""
+        ]
       }
     ],
     "SubagentStart": [
       {
+        "matcher": "",
         "hooks": [
           {
-            "command": "/usr/local/bin/otter agent-hook --agent claude-code --hook-event SubagentStart",
-            "type": "command"
+            "type": "command",
+            "command": "/usr/local/bin/otter agent-hook --agent claude-code --hook-event SubagentStart 2>/dev/null || true"
           }
-        ],
-        "matcher": ""
+        ]
       }
     ],
     "SubagentStop": [
       {
+        "matcher": "",
         "hooks": [
           {
-            "command": "/usr/local/bin/otter agent-hook --agent claude-code --hook-event SubagentStop",
-            "type": "command"
+            "type": "command",
+            "command": "/usr/local/bin/otter agent-hook --agent claude-code --hook-event SubagentStop 2>/dev/null || true"
           }
-        ],
-        "matcher": ""
+        ]
       }
     ],
     "UserPromptExpansion": [
       {
+        "matcher": "",
         "hooks": [
           {
-            "command": "/usr/local/bin/otter agent-hook --agent claude-code --hook-event UserPromptExpansion",
-            "type": "command"
+            "type": "command",
+            "command": "/usr/local/bin/otter agent-hook --agent claude-code --hook-event UserPromptExpansion 2>/dev/null || true"
           }
-        ],
-        "matcher": ""
+        ]
       }
     ]
   },
@@ -176,5 +173,8 @@
       "Bash(printf *)",
       "Bash(date *)"
     ]
+  },
+  "enabledPlugins": {
+    "otter-tools@otter-marketplace": true
   }
 }
