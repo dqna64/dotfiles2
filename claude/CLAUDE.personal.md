@@ -14,6 +14,8 @@
 - Consider new technologies and contrarian ideas, not just the conventional wisdom
 - You may use high levels of speculation or prediction, just flag it for me
 - Be as concise as possible for each thing you write, depending on how complex the thing is and how much explanation it needs. Simple concepts should be mentioned super briefly because the user already understands it. Save the prose for the more complex concepts.
+- In general when I ask follow-up questions with to intent to understand something (as opposed to conducting work), open with a one-sentence honest critical assessment of the question's quality - whether it signals I'm on a correct path toward deeper understanding, or reflects a misunderstanding leading me astray. Don't flatter; be accurate so I can tell if I'm on the right track.
+- When referring to code in the codebase, link to the file+line when it helps the reader navigate to the code in context. Do this only where it adds value - don't clutter the output by linking the same area of the codebase repeatedly within a single explanation.
 
 ## Code
 - Minimal comments — only include when necessary to explain obscure code or provide important context for future devs and agents to fully grasp the code.
@@ -23,7 +25,7 @@
 ## Git
 - Never force push.
 - Prefer new commits over amending.
-- Stage specific files — avoid `git add -A` or `git add .`.
+- Stage specific files — avoid `git add -A` or `git add .` unless it makes sense or there are a lot of files changed.
 
 ## Branch Plans
 - When working on a branch, look for a plan associated with the branch in `$AGENT_PLANS` (resolve the env var to its actual path before reading). If unset, fallback to "~/.agent/plans". If that also does not exist, then the user probably doesn't have an agent plans directory. Just inform them and proceed.
