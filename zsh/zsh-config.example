@@ -43,5 +43,24 @@ export CNV_WORK_BIN_PATH=
 
 export AGENT_PLANS=
 
-# ===
+# === Openrouter
+
+export OPENROUTER_API_KEY=
+
+# To fully set up Claude Code to route to your Openrouter account, also configure
+# Anthropic section...
+# ... then in Claude Code run /login
+
+# === Anthropic
+
+# Set to "https://openrouter.ai/api/v1" if you want to route Anthropic API to Openrouter
+export ANTHROPIC_BASE_URL=
+# Set to "$OPENROUTER_API_KEY" if you want to route claude code to your Openrouter account
+export ANTHROPIC_AUTH_TOKEN=
+# If you want to route claude code to Openrouter, you MUST explicitly set this
+# to empty ("")
+export ANTHROPIC_API_KEY=
+
+
+
 
