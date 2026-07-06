@@ -31,7 +31,7 @@ Design implications to uphold:
   yabai, karabiner) behind an OS check (`is_macos`) or a config flag, and make
   them no-ops/skips elsewhere. Prefer POSIX-portable shell; don't rely on
   GNU-only or BSD-only flags without a fallback (see `canonicalize_path` in
-  `uninstall.sh` for the kind of portability care expected).
+  `utils/common.sh` for the kind of portability care expected).
 - **Sensible defaults, zero-fuss to run.** The common path on a fresh machine
   should "just work" with defaults — no required edits before the first run.
   Anything machine-specific should have a reasonable default and only need
@@ -75,6 +75,11 @@ has config**. Preserve these invariants in any change:
    `echo_error`, `echo_note`, `echo_success`) rather than bare `echo` for
    anything the user should notice. Prefer actionable messages ("run X to fix")
    over bare errors.
+6. **Reversible.** Every action `install.sh` takes must be undoable by
+   `uninstall.sh` (or, for out-of-tree deps it deliberately won't remove,
+   documented with the exact by-hand removal steps). When you add a new install
+   step, add the matching teardown — never leave the machine in a state the
+   uninstaller can't return to its pre-install shape.
 
 ### `install.sh` specifically
 
@@ -93,8 +98,8 @@ has config**. Preserve these invariants in any change:
 - Must be **idempotent**.
 - Must **not be destructive** to anything outside this repo. Concretely: it only
   removes symlinks that **resolve back into `$DOTFILES_DIR`** (see
-  `path_inside_dotfiles` + `canonicalize_path`); real files, foreign symlinks,
-  and directories are reported and left alone.
+  `path_inside` + `canonicalize_path` in `utils/common.sh`); real files, foreign
+  symlinks, and directories are reported and left alone.
 - **Bias hard toward asking** before any destructive or surprising action.
   - Core symlink removal + backup restore is prompted (and is what `--yes`
     auto-confirms).
