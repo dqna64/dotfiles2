@@ -51,21 +51,39 @@ Respond as concisely as possible. No preamble, no summaries, no filler phrases.
 ## 5. (Optional) Agent skills
 
 `skills/` holds Agent Skills (each a `<skill-name>/SKILL.md`) shared between
-Claude Code and Cursor. This is the single source of truth — symlink each
-skill into both agents' skill dirs so editing one repo copy updates both:
+Claude Code and Cursor. This is the single source of truth — `sync-skills.sh`
+symlinks each skill into both agents' skill dirs so editing one repo copy
+updates both:
 
 ```bash
-mkdir -p "$HOME/.claude/skills" "$HOME/.cursor/skills"
-for skill in "$DOTFILES_DIR"/claude/skills/*/; do
-  name=$(basename "$skill")
-  ln -sn "$skill" "$HOME/.claude/skills/$name"
-  ln -sn "$skill" "$HOME/.cursor/skills/$name"
-done
+"$DOTFILES_DIR/claude/sync-skills.sh"
 ```
 
-Per-skill symlinks (not the whole dir) so locally-installed skills in those
-locations stay untouched. Existing entries are left alone (the loop
-just prints "File exists" and moves on).
+Run this once after install, then again whenever you want to sync new/deleted
+skills from remote to your machine.
+Pass `-n`/`--dry-run` to preview.
+
+What it does and why it's safe:
+
+- **Per-skill symlinks** into `~/.claude/skills` and `~/.cursor/skills` (not the
+  whole dir), so locally-installed skills in those locations stay untouched.
+- **Idempotent**: links already correct are left alone; only new skills get
+  linked on a re-run.
+- **Non-destructive**: a real file/dir or foreign symlink in the way is moved to
+  `*.backup_dqna64.<timestamp>`, never overwritten.
+- **Prunes** stale links (skills you renamed/removed in the repo).
+- **Edits/pulls need no re-run** — the symlinks point straight at the repo.
+
+To remove the skills from a machine, run the reverse script (also invoked by
+`uninstall.sh`):
+
+```bash
+"$DOTFILES_DIR/claude/unsync-skills.sh"
+```
+
+It drops only the links resolving back into the repo, restores anything
+`sync-skills.sh` moved aside, and removes the skill dirs if they end up empty —
+leaving foreign skills untouched. `-n`/`--dry-run` to preview.
 
 ## 6. (Optional) Cursor global rules
 
