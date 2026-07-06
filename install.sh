@@ -78,6 +78,10 @@ symlink_dotfile() {
 
 	if [ -e "$dst" ] || [ -L "$dst" ]; then
 		local backup
+		# Canonical naming lives in utils/common.sh (dotfiles_backup_path), but
+		# install.sh stays self-contained: in a `curl | bash` bootstrap this
+		# runs before the repo is cloned, so the lib isn't on disk yet.
+		# MAKE SURE TO keep this format identical to the one in common.sh.
 		backup="$dst.backup_dqna64.$(date +%Y%m%d%H%M%S)"
 		echo_warn "Backing up existing $dst to $backup..."
 		mv "$dst" "$backup"
@@ -439,6 +443,12 @@ cat <<EOF
 
       mkdir -p "\$HOME/.cursor/rules"
       ln -sf "$DOTFILES_DIR/claude/CLAUDE.cnv.md" "\$HOME/.cursor/rules/claude.mdc"
+
+    Agent Skills (shared by Claude Code + Cursor) are opt-in. To link the
+    repo's skills into ~/.claude/skills and ~/.cursor/skills, and to pick up
+    new ones later, run (re-runnable; --dry-run to preview):
+
+      $DOTFILES_DIR/claude/sync-skills.sh
 
 EOF
 printf '%b' "$RESET"

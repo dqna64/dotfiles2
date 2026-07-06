@@ -25,6 +25,18 @@ set -euo pipefail
 # works whether invoked directly, via install.sh, or from any cwd.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOTFILES_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# Shared helpers — we only use dotfiles_backup_path here (the single source of
+# truth for the backup_dqna64 naming scheme), but sourcing keeps that marker
+# defined in one place across all the cloned-repo scripts.
+COMMON_LIB="$DOTFILES_DIR/utils/common.sh"
+if [[ ! -r "$COMMON_LIB" ]]; then
+    echo "Error: required helper library not found at $COMMON_LIB" >&2
+    exit 1
+fi
+# shellcheck source=../utils/common.sh
+. "$COMMON_LIB"
+
 GIT_DIR="$DOTFILES_DIR/git"
 SSH_TEMPLATE_DIR="$DOTFILES_DIR/ssh"
 GIT_IDENTITY_FILE="$GIT_DIR/git-identity"
@@ -101,7 +113,7 @@ backup_if_present() {
     local file="$1"
     if [[ -e "$file" || -L "$file" ]]; then
         local backup
-        backup="$file.backup_dqna64.$(date +%Y%m%d%H%M%S)"
+        backup="$(dotfiles_backup_path "$file")"
         echo "Backing up existing $file to $backup..."
         mv "$file" "$backup"
     fi

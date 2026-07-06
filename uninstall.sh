@@ -7,8 +7,10 @@
 # What it does, in order:
 #   1. For each symlink install.sh / git-setup.sh creates (~/.zshrc, ~/.zshenv,
 #      ~/.tmux.conf, ~/.config/karabiner/karabiner.json, ~/.config/yabai/yabairc,
-#      ~/.gitignore_global, and the optional ~/.claude/* and
-#      ~/.cursor/rules/claude.mdc links), remove it ONLY
+#      ~/.gitignore_global, the optional ~/.claude/* and
+#      ~/.cursor/rules/claude.mdc links, and the per-skill links under
+#      ~/.claude/skills and ~/.cursor/skills created by claude/sync-skills.sh),
+#      remove it ONLY
 #      if it is a symlink resolving into $DOTFILES_DIR — i.e. one we know we own.
 #      Real files, directories, and symlinks pointing elsewhere are left alone.
 #   2. Restore the most recent <file>.backup_dqna64.<timestamp> for that path, if
@@ -64,6 +66,17 @@ echo_error() {
 echo_note() {
 	echo -e "${BLUE}$*${RESET}"
 }
+
+# Shared safety helpers (do_cmd, canonicalize_path, path_inside,
+# restore_latest_backup, remove_dir_if_empty). uninstall.sh always runs from a
+# clone on disk, so the lib is guaranteed present next to it.
+COMMON_LIB="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/utils/common.sh"
+if [ ! -r "$COMMON_LIB" ]; then
+	echo_error "Error: required helper library not found at $COMMON_LIB"
+	exit 1
+fi
+# shellcheck source=utils/common.sh
+. "$COMMON_LIB"
 
 # === Options
 
@@ -121,16 +134,10 @@ if [ "$ASSUME_YES" = "true" ] && [ "$ASSUME_NO" = "true" ]; then
 fi
 
 # === Helpers
-
-# do_cmd <command...>
-# Run a command, or just print it under --dry-run.
-do_cmd() {
-	if [ "$DRY_RUN" = "true" ]; then
-		echo_note "[dry-run] $*"
-	else
-		"$@"
-	fi
-}
+#
+# do_cmd, canonicalize_path, path_inside, restore_latest_backup, and
+# remove_dir_if_empty come from utils/common.sh (sourced above). The prompt
+# helpers below are uninstall-specific.
 
 # confirm <prompt> [honor_assume_yes]
 # Ask a yes/no question. Honours --yes / --no; defaults to "no" both when
@@ -164,72 +171,6 @@ decide() {
 	esac
 }
 
-# canonicalize_path <path>
-# Fully resolve <path> to an absolute path, following symlink chains (not just
-# one hop) and canonicalising any symlinked path components. macOS's stock
-# readlink has no portable -f/realpath, so we walk the chain by hand. The max
-# counter guards against symlink loops (ELOOP) so we never hang.
-canonicalize_path() {
-	local path="$1" link max=40
-	while [ -L "$path" ] && [ "$max" -gt 0 ]; do
-		link="$(readlink "$path")"
-		case "$link" in
-			/*) path="$link" ;;
-			*)  path="$(cd "$(dirname "$path")" >/dev/null 2>&1 && pwd -P)/$link" ;;
-		esac
-		max=$((max - 1))
-	done
-	local dir
-	if dir="$(cd "$(dirname "$path")" >/dev/null 2>&1 && pwd -P)"; then
-		path="$dir/$(basename "$path")"
-	fi
-	printf '%s\n' "$path"
-}
-
-# path_inside_dotfiles <path>
-# True if <path> is $DOTFILES_DIR or lives under it. Used so we only ever
-# delete symlinks that resolve back into the repo we're uninstalling.
-path_inside_dotfiles() {
-	local p="$1"
-	[ "$p" = "$DOTFILES_DIR" ] || [ "${p#"$DOTFILES_DIR"/}" != "$p" ]
-}
-
-# restore_latest_backup <dst> [assume_free]
-# Move the newest <dst>.backup_dqna64.<timestamp> back to <dst>, but only if
-# <dst> is now free. Backups sort chronologically because the timestamp is
-# YYYYMMDDHHMMSS, so the lexically-last glob match is the most recent.
-#
-# assume_free (default false): the caller already removed (or, under --dry-run,
-# would remove) whatever was at <dst>, so the path is about to be free. We only
-# honour it under --dry-run, where the rm was skipped and the live check below
-# would otherwise see the still-present symlink and wrongly report "not
-# restoring" — hiding the restore a real run would perform. In a real run the
-# rm has already happened, so the live filesystem check stays authoritative.
-restore_latest_backup() {
-	local dst="$1"
-	local assume_free="${2:-false}"
-	local backups=( "$dst".backup_dqna64.* )
-
-	if [ ${#backups[@]} -eq 0 ]; then
-		return 0
-	fi
-
-	local latest="${backups[${#backups[@]}-1]}"
-
-	if ! { [ "$DRY_RUN" = "true" ] && [ "$assume_free" = "true" ]; } \
-		&& { [ -e "$dst" ] || [ -L "$dst" ]; }; then
-		echo_warn "  Not restoring: $dst still exists. Newest backup left at $latest"
-		return 0
-	fi
-
-	echo_info "  Restoring $latest -> $dst"
-	do_cmd mv "$latest" "$dst"
-
-	if [ ${#backups[@]} -gt 1 ]; then
-		echo_note "  ($((${#backups[@]} - 1)) older backup(s) for this path left in place.)"
-	fi
-}
-
 # remove_dotfile_symlink <dst>
 # Remove <dst> only if it's a symlink resolving into $DOTFILES_DIR, then try to
 # restore the most recent backup. Anything else is reported and left untouched.
@@ -244,7 +185,7 @@ remove_dotfile_symlink() {
 		local target
 		target="$(canonicalize_path "$dst")"
 
-		if path_inside_dotfiles "$target"; then
+		if path_inside "$DOTFILES_DIR" "$target"; then
 			echo_info "Removing symlink $dst -> $target"
 			do_cmd rm "$dst"
 			restore_latest_backup "$dst" true
@@ -264,29 +205,6 @@ remove_dotfile_symlink() {
 	# Nothing at $dst (already removed / never installed). A leftover backup can
 	# still be restored to bring the path back to its pre-install state.
 	restore_latest_backup "$dst"
-}
-
-# remove_dir_if_empty <dir>
-# Remove a parent directory install.sh created with `mkdir -p` (e.g.
-# ~/.config/karabiner, ~/.config/yabai) once its symlink is gone — but only if
-# it's now empty. `rmdir` only succeeds on an empty directory, so a dir still
-# holding a leftover backup, a user file, or a restored real config is left
-# untouched. Symlinked dirs are skipped (we don't follow them).
-remove_dir_if_empty() {
-	local dir="$1"
-
-	[ -d "$dir" ] && [ ! -L "$dir" ] || return 0
-
-	if [ "$DRY_RUN" = "true" ]; then
-		# The symlink wasn't actually removed under --dry-run, so the dir
-		# won't be empty yet; just announce the intent without touching it.
-		echo_note "[dry-run] rmdir $dir (only if empty once its symlink is gone)"
-		return 0
-	fi
-
-	if rmdir "$dir" 2>/dev/null; then
-		echo_info "Removed now-empty directory $dir"
-	fi
 }
 
 # === Resolve DOTFILES_DIR
@@ -349,6 +267,21 @@ if decide "" "Remove the dotfiles symlinks (resolving into $DOTFILES_DIR) and re
 	# links above this is hand-created, so we only drop the symlink and leave
 	# the user-managed ~/.cursor/rules dir (it may hold other rules) in place.
 	remove_dotfile_symlink "$HOME/.cursor/rules/claude.mdc"
+
+	# Agent Skills the user opted into via claude/sync-skills.sh. Delegate to its
+	# dedicated reverse script (also runnable standalone) so the skill-removal
+	# logic lives in one place. It only drops links resolving into the repo,
+	# restores backups, and rmdirs the skill dirs if empty. Forward --dry-run.
+	unsync_skills="$DOTFILES_DIR/claude/unsync-skills.sh"
+	if [ -x "$unsync_skills" ]; then
+		unsync_args=()
+		[ "$DRY_RUN" = "true" ] && unsync_args+=(--dry-run)
+		# Guard the array expansion: under `set -u`, bash 3.2 (macOS default)
+		# treats "${arr[@]}" on an empty array as an unbound variable.
+		DOTFILES_DIR="$DOTFILES_DIR" "$unsync_skills" ${unsync_args[@]+"${unsync_args[@]}"}
+	else
+		echo_warn "Skipping skill removal: $unsync_skills not found or not executable."
+	fi
 else
 	echo_note "Skipping symlink removal."
 fi

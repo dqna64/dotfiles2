@@ -50,7 +50,7 @@ re-source `.zshrc` after making changes to those files.
 
 2. **Edit `zsh/zsh-config`** (bootstrapped from `zsh-config.example` by
    `install.sh`). Set `DQNA64_MACHINE` to one of `MB_M1`, `MB_CNV`,
-   `DVBX1`, … and toggle the per-machine flags (`ENABLE_YABAI_DQNA64`,
+   `DVBX1`, ... and toggle the per-machine flags (`ENABLE_YABAI_DQNA64`,
    `ZSH_THEME_MY`, etc.). This file is gitignored.
 
 3. **(Optional) Configure git identities + SSH host aliases.** Edit
@@ -160,6 +160,10 @@ your login shell. Run `uninstall.sh --help` for all options.
 - [ ] Test out installing in a different directory than default, via
    `./install.sh` and via curl -fsSL
 - [x] tmux session saving (via TPM + tmux-resurrect; see `tmux/.tmux.conf`)
+- [ ] Duplicated contants prone to drift due to not using a single source between install.sh
+    and everything else. Includes:
+  - `DOTFILES_DIR`
+  - `dotfiles_backup_path` (`backup_dqna64`)
 
 ### `uninstall.sh` review (issues + improvements)
 
