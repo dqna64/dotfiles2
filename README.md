@@ -124,7 +124,9 @@ in a dir — no registration needed.
 (`~/.zshenv`, `~/.zshrc`, `~/.tmux.conf`, etc, plus the
 `~/.gitignore_global`, any `~/.claude/*` links, and the optional
 `~/.cursor/rules/claude.mdc` link) and restores the most
-recent `<file>.backup_dqna64.<timestamp>` for each path. It only ever
+recent `<file>.backup_dqna64.<timestamp>` for each path. It also delegates to
+`claude/unsync-skills.sh` to drop any per-skill links under `~/.claude/skills`
+and `~/.cursor/skills` you opted into via `claude/sync-skills.sh`. It only ever
 deletes symlinks that resolve back into `$DOTFILES_DIR`, so unrelated user
 config is never touched. It's idempotent.
 

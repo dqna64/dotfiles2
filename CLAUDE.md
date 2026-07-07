@@ -61,7 +61,10 @@ has config**. Preserve these invariants in any change:
    `<file>.backup_dqna64.<YYYYMMDDHHMMSS>` rather than clobbering it. The
    `backup_dqna64` marker is load-bearing: it's matched by `.gitignore` and by
    `uninstall.sh`'s restore logic. Don't invent a different backup naming
-   scheme.
+   scheme — use `dotfiles_backup_path` in `utils/common.sh` (the single source
+   of truth). `install.sh` keeps a deliberate hand-copy of the format because in
+   a `curl | bash` bootstrap it runs before the repo (and `common.sh`) is on
+   disk; if you touch the format, keep both in sync.
 3. **Respect what's already there.** Detect existing files/configs/clones and
    adapt. Distinguish "our symlink", "a real file the user owns", and "a symlink
    pointing elsewhere" — and only ever touch the first.
@@ -110,6 +113,10 @@ has config**. Preserve these invariants in any change:
   - All prompts default to **"no"** when non-interactive.
 - Always support `--dry-run` (`-n`) for previewing without changes; route real
   filesystem mutations through `do_cmd` so dry-run is honored automatically.
+- Agent-skill links (opted into via `claude/sync-skills.sh`) are torn down by
+  delegating to `claude/unsync-skills.sh` — the skill-removal logic lives there
+  in one place, and `uninstall.sh` forwards `--dry-run`. Keep that delegation
+  rather than duplicating the link-removal loop.
 
 ## Conventions to follow
 
@@ -117,6 +124,20 @@ has config**. Preserve these invariants in any change:
   location (the checkout they run from), allow a `DOTFILES_DIR=…` env override,
   and fall back to `$HOME/dotfiles_dqna64`. `zsh/.zshenv` re-derives it from the
   `~/.zshenv` symlink at shell startup. Don't hardcode `$HOME/dotfiles_dqna64`.
+- **Shared helpers live in `utils/common.sh`.** The safety-critical primitives
+  (`dotfiles_backup_path`, `do_cmd`, `canonicalize_path`, `path_inside`,
+  `restore_latest_backup`, `remove_dir_if_empty`) have one implementation there.
+  Scripts that always run from a clone on disk — `uninstall.sh`,
+  `git/git-setup.sh`, `claude/sync-skills.sh`, `claude/unsync-skills.sh` — source
+  it (via a `BASH_SOURCE`-relative path) instead of redefining them. `install.sh`
+  is the deliberate exception: it must stay fully self-contained for the
+  `curl | bash` bootstrap, so it keeps its own copies. Callers must define the
+  `echo_*` helpers and `shopt -s nullglob` before calling into the lib (see the
+  contract comment at the top of `common.sh`).
+- **`utils/` also holds standalone helpers.** `check-repo-freshness.sh` warns at
+  shell startup when a local clone is behind upstream (local-only check on the
+  hot path; throttled background `git fetch`), and exits silently for every
+  not-applicable case. Generic — point it at any clone.
 - **Don't commit per-machine / secret files.** These are gitignored and
   bootstrapped from tracked `*.example` files: `zsh/zsh-config`,
   `git/git-identity`, the rendered `git/dqna64-dotfiles.gitconfig` and
