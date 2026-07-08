@@ -18,7 +18,7 @@ version: 1.0.0
 - Type-specific additions (use only the relevant ones):
   - **Bug fix / investigation**: reproduction steps, hypotheses, root cause once found, regression risk.
   - **New feature**: requirements, design decisions and trade-offs, component/module breakdown, rollout considerations.
-  - **Small adjustment**: usually just goal, steps, and verification — keep it short.
+  - **Small adjustment**: usually just goal, steps, and verification - keep it short.
   - **Refactor**: scope and boundaries, before/after shape, behavior-preservation strategy, regression risk.
   - **Writing tests**: what's being covered, current coverage gaps, test cases to add, fixtures/mocks needed.
-- Keep the plan a living document — update it as work progresses (e.g. add the root cause once a bug is diagnosed, record changes as we implement the solution).
+- Keep the plan a living document - update it as work progresses (e.g. add the root cause once a bug is diagnosed, record changes as we implement the solution).
