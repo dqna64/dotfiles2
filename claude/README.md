@@ -18,11 +18,17 @@ Swap in whichever file from the table you picked.
 
 ## 3. (Optional) Global instructions
 
-`CLAUDE.cnv.md` holds global instructions (response style, git/PR
-conventions). Symlink it if you want them:
+`CLAUDE.base.md` holds the global instructions (response style, git/PR
+conventions) and is the single source of truth. `CLAUDE.cnv.md` (Canva
+machines) and `CLAUDE.personal.md` (personal machines) are repo-tracked
+symlinks to it — machines link to the name matching their type, so if one
+machine type ever needs different instructions, replace just that repo
+symlink with a real file (start from a copy of `CLAUDE.base.md`) and no
+machine has to re-link.
 
 ```bash
-ln -sf "$DOTFILES_DIR/claude/CLAUDE.cnv.md" "$HOME/.claude/CLAUDE.md"
+ln -sf "$DOTFILES_DIR/claude/CLAUDE.cnv.md" "$HOME/.claude/CLAUDE.md"      # Canva machines
+ln -sf "$DOTFILES_DIR/claude/CLAUDE.personal.md" "$HOME/.claude/CLAUDE.md" # personal machines
 ```
 
 ## 4. (Optional) Output styles
