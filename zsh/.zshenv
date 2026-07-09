@@ -58,7 +58,11 @@ export RIPGREP_CONFIG_PATH="$DOTFILES_DIR/ripgrep/ripgreprc"
 # Prepended last so they win over earlier entries.
 [ -d "$HOME/.local/bin" ]    && export PATH="$HOME/.local/bin:$PATH"
 
-# === Cnv devbox-specific exports
+# === Cnv-specific exports
+
+# This is automatically added by cnv ansible, keep this here unconditionally.
+. "$HOME/.cargo/env"
+
 case "$DQNA64_MACHINE" in
 	MB_CNV|DVBX1|DVBX2|DVBX3|DVBX4|DVBX5)
 		# Prepend $CNV_WORK_BIN_PATH to PATH, if set in zsh-config.
