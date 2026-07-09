@@ -321,16 +321,25 @@ fi
 
 # === Manual follow-ups we won't do automatically
 
+# TODO: automate removal of the gitconfig and ssh config blocks
+# using the markers
+
 printf '%b' "$BLUE"
 cat <<EOF
 
 Manual follow-ups (uninstall.sh won't touch user-owned files):
 
-  - ~/.gitconfig: remove the [include] block git-setup.sh told you to add:
+  - ~/.gitconfig: remove the DQNA64 DOTFILES block git-setup.sh told you to
+    add:
+        # --- START DQNA64 DOTFILES ... --- #
         [include]
             path = $DOTFILES_DIR/git/dqna64-dotfiles.gitconfig
-  - ~/.ssh/config: remove the Include line for the rendered SSH snippet:
+        # --- END DQNA64 DOTFILES --- #
+  - ~/.ssh/config: remove the DQNA64 DOTFILES block for the rendered SSH
+    snippet:
+        # --- START DQNA64 DOTFILES ... --- #
         Include $DOTFILES_DIR/ssh/dqna64-dotfiles.conf
+        # --- END DQNA64 DOTFILES --- #
   - Login shell: install.sh may have run 'chsh -s \$(command -v zsh)'. If you
     want a different default shell back, run e.g.:  chsh -s /bin/bash
   - powerlevel10k leftovers (only if you used the p10k theme):

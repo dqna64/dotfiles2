@@ -70,13 +70,17 @@ re-source `.zshrc` after making changes to those files.
 
    ```ini
    # in ~/.gitconfig (path printed by git-setup.sh based on $DOTFILES_DIR)
+   # --- START DQNA64 DOTFILES ... --- #
    [include]
        path = ~/dotfiles_dqna64/git/dqna64-dotfiles.gitconfig
+   # --- END DQNA64 DOTFILES --- #
    ```
 
    ```
    # in ~/.ssh/config (path printed by git-setup.sh based on $DOTFILES_DIR)
+   # --- START DQNA64 DOTFILES ... --- #
    Include ~/dotfiles_dqna64/ssh/dqna64-dotfiles.conf
+   # --- END DQNA64 DOTFILES --- #
    ```
 
 4. **(Optional) Symlink Claude / VS Code / Cursor config** following the
