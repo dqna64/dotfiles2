@@ -129,8 +129,9 @@ in a dir — no registration needed.
 `~/.gitignore_global`, any `~/.claude/*` links, and the optional
 `~/.cursor/rules/claude.mdc` link) and restores the most
 recent `<file>.backup_dqna64.<timestamp>` for each path. It also delegates to
-`claude/unsync-skills.sh` to drop any per-skill links under `~/.claude/skills`
-and `~/.cursor/skills` you opted into via `claude/sync-skills.sh`. It only ever
+`claude/unsync-agent-links.sh` to drop any per-item links under `~/.claude/skills`,
+`~/.cursor/skills`, and `~/.claude/output-styles` you opted into via
+`claude/sync-agent-links.sh`. It only ever
 deletes symlinks that resolve back into `$DOTFILES_DIR`, so unrelated user
 config is never touched. It's idempotent.
 

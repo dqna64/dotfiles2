@@ -444,11 +444,12 @@ cat <<EOF
       mkdir -p "\$HOME/.cursor/rules"
       ln -sf "$DOTFILES_DIR/claude/CLAUDE.cnv.md" "\$HOME/.cursor/rules/claude.mdc"
 
-    Agent Skills (shared by Claude Code + Cursor) are opt-in. To link the
-    repo's skills into ~/.claude/skills and ~/.cursor/skills, and to pick up
-    new ones later, run (re-runnable; --dry-run to preview):
+    Agent Skills (shared by Claude Code + Cursor) and Claude output styles
+    are opt-in. To link the repo's skills into ~/.claude/skills and
+    ~/.cursor/skills and its output styles into ~/.claude/output-styles, and
+    to pick up new ones later, run (re-runnable; --dry-run to preview):
 
-      $DOTFILES_DIR/claude/sync-skills.sh
+      $DOTFILES_DIR/claude/sync-agent-links.sh
 
 EOF
 printf '%b' "$RESET"

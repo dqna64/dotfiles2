@@ -8,8 +8,9 @@
 #   1. For each symlink install.sh / git-setup.sh creates (~/.zshrc, ~/.zshenv,
 #      ~/.tmux.conf, ~/.config/karabiner/karabiner.json, ~/.config/yabai/yabairc,
 #      ~/.gitignore_global, the optional ~/.claude/* and
-#      ~/.cursor/rules/claude.mdc links, and the per-skill links under
-#      ~/.claude/skills and ~/.cursor/skills created by claude/sync-skills.sh),
+#      ~/.cursor/rules/claude.mdc links, and the per-item links under
+#      ~/.claude/skills, ~/.cursor/skills, and ~/.claude/output-styles created
+#      by claude/sync-agent-links.sh),
 #      remove it ONLY
 #      if it is a symlink resolving into $DOTFILES_DIR — i.e. one we know we own.
 #      Real files, directories, and symlinks pointing elsewhere are left alone.
@@ -268,19 +269,20 @@ if decide "" "Remove the dotfiles symlinks (resolving into $DOTFILES_DIR) and re
 	# the user-managed ~/.cursor/rules dir (it may hold other rules) in place.
 	remove_dotfile_symlink "$HOME/.cursor/rules/claude.mdc"
 
-	# Agent Skills the user opted into via claude/sync-skills.sh. Delegate to its
-	# dedicated reverse script (also runnable standalone) so the skill-removal
-	# logic lives in one place. It only drops links resolving into the repo,
-	# restores backups, and rmdirs the skill dirs if empty. Forward --dry-run.
-	unsync_skills="$DOTFILES_DIR/claude/unsync-skills.sh"
-	if [ -x "$unsync_skills" ]; then
+	# Agent skills + output styles the user opted into via
+	# claude/sync-agent-links.sh. Delegate to its dedicated reverse script (also
+	# runnable standalone) so the link-removal logic lives in one place. It only
+	# drops links resolving into the repo and restores backups, leaving the
+	# tool-owned target dirs in place. Forward --dry-run.
+	unsync_links="$DOTFILES_DIR/claude/unsync-agent-links.sh"
+	if [ -x "$unsync_links" ]; then
 		unsync_args=()
 		[ "$DRY_RUN" = "true" ] && unsync_args+=(--dry-run)
 		# Guard the array expansion: under `set -u`, bash 3.2 (macOS default)
 		# treats "${arr[@]}" on an empty array as an unbound variable.
-		DOTFILES_DIR="$DOTFILES_DIR" "$unsync_skills" ${unsync_args[@]+"${unsync_args[@]}"}
+		DOTFILES_DIR="$DOTFILES_DIR" "$unsync_links" ${unsync_args[@]+"${unsync_args[@]}"}
 	else
-		echo_warn "Skipping skill removal: $unsync_skills not found or not executable."
+		echo_warn "Skipping agent-link removal: $unsync_links not found or not executable."
 	fi
 else
 	echo_note "Skipping symlink removal."
