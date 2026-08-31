@@ -17,8 +17,8 @@
 #   2. Restore the most recent <file>.backup_dqna64.<timestamp> for that path, if
 #      one exists and the path is now free. Older backups are left in place.
 #   3. Report (but do NOT remove) the out-of-tree dependencies install.sh
-#      fetched — oh-my-zsh (+ its custom themes/plugins) and TPM — with by-hand
-#      removal instructions.
+#      fetched — oh-my-zsh (+ its custom themes/plugins) and TPM —
+#      with by-hand removal instructions.
 #   4. Print the manual follow-ups it can't safely do for you: the [include] /
 #      Include lines git-setup.sh told you to add to ~/.gitconfig / ~/.ssh/config,
 #      reverting your login shell, and powerlevel10k leftovers (~/.p10k.zsh +

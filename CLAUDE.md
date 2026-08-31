@@ -119,6 +119,23 @@ has config**. Preserve these invariants in any change:
   one place, and `uninstall.sh` forwards `--dry-run`. Keep that delegation
   rather than duplicating the link-removal loop.
 
+## Machine logs (`machine-logs/`)
+
+A log of software installed or configured outside this repo. Maintaining it is
+global agent behaviour, driven by `claude/CLAUDE.base.md` (symlinked to
+`~/.claude/CLAUDE.md`) and `claude/skills/machine-logs/SKILL.md`, so it applies
+in every repo, not just this one.
+
+What this repo owns is small:
+
+- `$MACHINE_LOG_FILE` is the log's path, set by hand in `zsh/zsh-config`. Never
+  derive or guess it, and don't assume where the log lives - that's the user's
+  choice, and nothing here constrains it. Keeping the path valid is the user's
+  business too.
+- `install.sh` reports that path. It creates nothing, clones nothing, and links
+  nothing into `$HOME`.
+- `machine-logs/` holds `machine.md.example` (the template) and a README.
+
 ## Conventions to follow
 
 - **Repo location is dynamic.** Scripts resolve `$DOTFILES_DIR` from their own
@@ -156,6 +173,8 @@ has config**. Preserve these invariants in any change:
 - **Rendered-template drift.** `git/git-setup.sh` stamps rendered files with the
   template's git object id (`dqna64-template-oid:`), and `zsh/.zshrc` warns when
   a template changes without re-rendering. Preserve this if you touch templating.
+- **The machine log's location is `$MACHINE_LOG_FILE`**, set by hand; nothing
+  derives it. See "Machine logs" above.
 - **Adding machines / aliases** is registration-free by design: drop a `.zsh`
   file in an `aliases*/` dir, or a `zsh/.zshrc.<machine>` file, and it's
   auto-sourced. See `README.md` → "Adding a new machine". Keep this property.

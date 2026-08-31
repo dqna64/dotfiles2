@@ -1,0 +1,22 @@
+# Machine log - <MACHINE>
+
+Running log of things installed or configured **outside** the dotfiles repo on
+this machine: brew formulae/casks, manual installs, SDK/toolchain setup, GUI app
+settings, OS permissions granted. Newest entries at the bottom.
+
+Maintained by hand and by agents - see the dotfiles repo's
+`claude/skills/machine-logs/SKILL.md` for the entry format.
+
+<!--
+Entry format (newest at the bottom):
+
+## <what was installed> [YY/MM/DD]
+
+```sh
+$ <the exact command(s) run>
+```
+
+- Where it landed (paths, binaries) and anything non-obvious about the install.
+- Why it was needed (the project or task that prompted it).
+- Follow-up config: PATH/env changes, app settings, OS permissions granted.
+-->

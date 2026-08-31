@@ -43,6 +43,14 @@ export CNV_WORK_BIN_PATH=
 
 export AGENT_PLANS=
 
+# === Machine log
+# Optional log of software installed outside these dotfiles (brew formulae,
+# manual installs, toolchains, GUI app settings, OS permissions).
+# Path to this machine's log, read by install.sh and by agents.
+# A starting template is at machine-logs/machine.md.example.
+
+export MACHINE_LOG_FILE=
+
 # === Openrouter
 
 export OPENROUTER_API_KEY=

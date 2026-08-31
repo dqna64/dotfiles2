@@ -106,6 +106,18 @@ in a dir — no registration needed.
    i.e. `$DQNA64_MACHINE` lowercased) for a machine-specific zshrc. **No
    registration needed** — `zsh/.zshrc` auto-sources by the derived filename.
 
+## Machine logs
+
+Log of software installed **outside** this repo (brew formulae, manual installs,
+toolchains, OS permissions, PATH/env changes made elsewhere), so you can answer
+"how did I install this" months later.
+
+It lives wherever you put it - `MACHINE_LOG_FILE` in `zsh/zsh-config` names the
+path, and `install.sh` and agents both read that. Claude and Cursor append to it
+in **every** repo, not just this one: the trigger is in the global
+`claude/CLAUDE.base.md`, the detail in `claude/skills/machine-logs/`. Setup:
+[`machine-logs/README.md`](machine-logs/README.md).
+
 ## Gitignored, per-machine files (do not commit)
 
 - `zsh/zsh-config` — machine identifier + flags.

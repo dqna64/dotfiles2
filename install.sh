@@ -91,6 +91,33 @@ symlink_dotfile() {
 	ln -s "$src" "$dst"
 }
 
+# zsh_config_value <name>
+#
+# Print the value assigned to <name> in $ZSH_CONFIG_FILE (zsh/zsh-config), or
+# nothing if the file or the variable is absent. Reads the file rather than
+# sourcing it: zsh-config exports a lot we don't want leaking into this script.
+#
+# Takes the LAST assignment, drops a trailing comment, trims whitespace and one
+# layer of surrounding quotes. A leading ~ or $HOME is expanded (paths are the
+# common case); nothing else is, since we deliberately don't eval user config.
+#
+# Canonical version lives in utils/common.sh; install.sh keeps its own copy to
+# stay self-contained for the `curl | bash` bootstrap. Keep the two in sync.
+zsh_config_value() {
+	local name="$1" raw
+	[ -f "${ZSH_CONFIG_FILE:-}" ] || return 0
+
+	raw="$(sed -n "s/^[[:space:]]*\\(export[[:space:]][[:space:]]*\\)\\{0,1\\}$name=//p" "$ZSH_CONFIG_FILE" \
+		| tail -n 1 \
+		| sed -e 's/[[:space:]]*#.*$//' \
+		      -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' \
+		      -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'\$/\1/")"
+
+	raw="${raw/#\~/$HOME}"
+	raw="${raw/#\$HOME/$HOME}"
+	printf '%s' "$raw"
+}
+
 is_macos() {
 	[ "$(uname -s)" = "Darwin" ]
 }
@@ -330,6 +357,27 @@ else
 	echo_note "Edit it to update per-machine values (DQNA64_MACHINE, theme, etc.); see ${ZSH_CONFIG_FILE}.example for any new options."
 	echo_note "After updating, restart zsh (or run 'exec zsh') as it's sourced by ~/.zshenv at shell startup."
 fi
+
+# === machine-logs
+#
+# Optional log of software installed outside this repo (brew formulae, manual
+# installs, toolchains, OS permissions). $MACHINE_LOG_FILE is its path; agents
+# read the same var. Creating the file, and keeping the path valid, is the
+# user's business - this just reports what's configured.
+
+echo ""
+machine_log_file="${MACHINE_LOG_FILE:-$(zsh_config_value MACHINE_LOG_FILE)}"
+
+if [ -n "$machine_log_file" ]; then
+	echo_info "Machine log: $machine_log_file"
+	echo_note "Agents with the 'machine-logs' skill read and append to it."
+else
+	echo_note "MACHINE_LOG_FILE is not set; no machine log configured (optional)."
+	echo_note "To use one, set its path in $ZSH_CONFIG_FILE:"
+	echo_note "      export MACHINE_LOG_FILE=\"/path/to/log.md\""
+	echo_note "Template: $DOTFILES_DIR/machine-logs/machine.md.example"
+fi
+unset machine_log_file
 
 # === git
 #

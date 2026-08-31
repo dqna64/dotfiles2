@@ -44,6 +44,7 @@
 ## Skills
 - When starting or resuming work on a branch, use the `branch-plans` skill to find or create the branch's plan.
 - When creating a PR, use the `pr-creation` skill for description conventions.
+- Before installing anything system-wide (brew/apt, `npm i -g`, pipx, cargo, a toolchain or version manager, a manual/GUI install, granting an OS permission), and again once it succeeds, use the `machine-logs` skill - it maintains this machine's log of everything installed outside the dotfiles repo. Applies in every repo, not just the dotfiles one. Project-local installs (a project's `npm install`, a venv, a lockfile bump) are not logged.
 
 ## Misc
 
