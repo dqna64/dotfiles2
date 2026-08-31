@@ -375,7 +375,6 @@ else
 	echo_note "MACHINE_LOG_FILE is not set; no machine log configured (optional)."
 	echo_note "To use one, set its path in $ZSH_CONFIG_FILE:"
 	echo_note "      export MACHINE_LOG_FILE=\"/path/to/log.md\""
-	echo_note "Template: $DOTFILES_DIR/machine-logs/machine.md.example"
 fi
 unset machine_log_file
 

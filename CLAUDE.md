@@ -119,7 +119,7 @@ has config**. Preserve these invariants in any change:
   one place, and `uninstall.sh` forwards `--dry-run`. Keep that delegation
   rather than duplicating the link-removal loop.
 
-## Machine logs (`machine-logs/`)
+## Machine logs
 
 A log of software installed or configured outside this repo. Maintaining it is
 global agent behaviour, driven by `claude/CLAUDE.base.md` (symlinked to
@@ -134,7 +134,8 @@ What this repo owns is small:
   business too.
 - `install.sh` reports that path. It creates nothing, clones nothing, and links
   nothing into `$HOME`.
-- `machine-logs/` holds `machine.md.example` (the template) and a README.
+- `README.md` -> "Machine logs" maps the moving parts and how to set one up.
+  Keep it in step with any change here.
 
 ## Conventions to follow
 

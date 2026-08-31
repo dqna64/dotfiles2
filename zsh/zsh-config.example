@@ -47,7 +47,6 @@ export AGENT_PLANS=
 # Optional log of software installed outside these dotfiles (brew formulae,
 # manual installs, toolchains, GUI app settings, OS permissions).
 # Path to this machine's log, read by install.sh and by agents.
-# A starting template is at machine-logs/machine.md.example.
 
 export MACHINE_LOG_FILE=
 

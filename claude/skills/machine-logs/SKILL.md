@@ -71,6 +71,19 @@ machine's real date (`date +%y/%m/%d`), never a guessed one.
 **Never** put secrets, tokens, API keys, or licence keys in this file. If a step involved one, write "(configured a token - not
 recorded here)".
 
+## Starting a new log
+
+If the user wants a log on a machine that has none, ask where it should live,
+create it with this header, and tell them to point `MACHINE_LOG_FILE` at it:
+
+````markdown
+# Machine log - <machine>
+
+Running log of things installed or configured **outside** the dotfiles repo on
+this machine: brew formulae/casks, manual installs, SDK/toolchain setup, GUI app
+settings, OS permissions granted. Newest entries at the bottom.
+````
+
 ## Committing
 
 The log may sit in a repo of its own, in which case an edit leaves **that** repo

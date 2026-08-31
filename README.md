@@ -112,11 +112,24 @@ Log of software installed **outside** this repo (brew formulae, manual installs,
 toolchains, OS permissions, PATH/env changes made elsewhere), so you can answer
 "how did I install this" months later.
 
-It lives wherever you put it - `MACHINE_LOG_FILE` in `zsh/zsh-config` names the
-path, and `install.sh` and agents both read that. Claude and Cursor append to it
-in **every** repo, not just this one: the trigger is in the global
-`claude/CLAUDE.base.md`, the detail in `claude/skills/machine-logs/`. Setup:
-[`machine-logs/README.md`](machine-logs/README.md).
+The log lives wherever you put it - any path, any repo. These dotfiles only need
+its path, and nothing here creates, clones, or validates it.
+
+| Where | Does what |
+|---|---|
+| `zsh/zsh-config` | `MACHINE_LOG_FILE` - the log's path. Exported, so agents read it from the environment |
+| `install.sh` | reports that path (or says it's unset). Creates nothing |
+| `claude/CLAUDE.base.md` | the trigger: before/after a system-wide install, claude will know to use the `machine-logs` skill. Symlinked to `~/.claude/CLAUDE.md` |
+| `claude/skills/machine-logs/SKILL.md` | the detail: what counts as loggable, the entry format, the header for a new log, where to commit. Synced to `~/.claude/skills` by `claude/sync-agent-links.sh` |
+
+To set one up: create the log wherever you want it (the skill has the header to
+start it with), then in `zsh/zsh-config`:
+
+```sh
+export MACHINE_LOG_FILE="$HOME/machine-logs/this-machine.md"
+```
+
+Agents pick it up from there - no other registration.
 
 ## Gitignored, per-machine files (do not commit)
 
