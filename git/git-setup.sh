@@ -126,6 +126,24 @@ if [[ -f "$example_file" && -f "$SHELL_VAR_NAMES" ]]; then
     fi
 fi
 
+# IdentityFile must be the private key. A trailing .pub is a recurring
+# mistake: the old variable was named *_SSH_PUBLIC_KEY, and the .pub is
+# what GitHub's UI / ssh-keygen print. ssh then loads the public key as
+# a private key (0644 -> UNPROTECTED PRIVATE KEY FILE -> Permission
+# denied (publickey)). Strip .pub at render time so the generated
+# snippet is always the private key. git-identity is left unchanged.
+strip_identityfile_pub() {
+    local varname="$1"
+    local path="${!varname}"
+    if [[ "$path" == *.pub ]]; then
+        printf -v "$varname" '%s' "${path%.pub}"
+        echo "Warning: $varname ends in .pub; IdentityFile needs the private key."
+        echo "         Rendering ${!varname} (git-identity left unchanged — edit it to drop .pub)."
+    fi
+}
+strip_identityfile_pub PRIMARY_ACC_SSH_PRIV_KEY
+strip_identityfile_pub SECONDARY_ACC_SSH_PRIV_KEY
+
 # Reassure the user: git-identity and the files rendered from it are
 # gitignored, so real names/emails/keys/usernames are never committed.
 echo "Note: git-identity and the rendered gitconfig/SSH snippet are gitignored — your real details won't be committed."
