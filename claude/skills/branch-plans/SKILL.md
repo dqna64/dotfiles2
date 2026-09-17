@@ -6,8 +6,16 @@ version: 1.0.0
 
 # Branch Plans
 
-- When working on a branch, look for a plan associated with the branch at the path "$AGENT_PLANS" (resolve the env var to its actual path before reading). If "$AGENT_PLANS" is unset or the path does not exist, fall back to "~/.agent/plans". If that path also does not exist, then just let the user know you can't find a plan, and proceed.
-- If no plan is found for the current branch, inform the user and ask if they would like one to be created.
+- Find the plans directory - the first of these that exists:
+  1. `<git root of the cwd>/plans/` (`git rev-parse --show-toplevel`). A project vault keeps the plans for branches of other repos (e.g. canva7 worktrees reached by absolute path), so this is the repo Claude was launched from, not the repo the branch lives in.
+  2. `$AGENT_PLANS` (resolve the env var to its actual path before reading).
+  3. `~/.agent/plans`.
+  If none exists, let the user know you can't find a plans directory, and proceed.
+- Find the branch's plan inside it - the first match wins:
+  1. A `README.md` index row for the branch (table with `| branch | plan file |` columns).
+  2. A file named after the branch (`<branch>.md`, with or without the `<user>/` prefix, `/` written as `-`).
+  3. Any `*.md` whose first 15 lines name the branch (vault plans are named by topic and date and carry a branch-facts header; prefer the file that lists it as its current branch over one that merely mentions it).
+- If no plan is found for the current branch, inform the user and ask if they would like one to be created - in the plans directory found above, named `<topic>-<YYYY-MM-DD>.md` when the directory uses that convention, else `<branch>.md`.
 - Plan contents vary by the type of work. Use discretion - include only what's useful, skip sections that don't apply.
 - Common elements across most plans:
   - **Goal**: what this branch is trying to achieve, and why.
