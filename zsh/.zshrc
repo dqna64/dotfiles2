@@ -193,3 +193,6 @@ fi
 export PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/.opencode/bin:$PATH"
 
+# BEGIN ANSIBLE MANAGED BLOCK FOR canva_git
+export PATH="$HOME/.local/share/canva-git/bin:$PATH"
+# END ANSIBLE MANAGED BLOCK FOR canva_git
