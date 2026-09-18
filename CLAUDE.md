@@ -137,6 +137,52 @@ What this repo owns is small:
 - `README.md` -> "Machine logs" maps the moving parts and how to set one up.
   Keep it in step with any change here.
 
+## Agent activity logs
+
+A per-project record of what agent sessions changed, appended by hooks into
+`$AGENT_LOGS/<basename>-<checksum>.jsonl`. Lives in `utils/agent-log/`; see
+`README.md` -> "Agent activity logs" for the moving parts.
+
+Invariants to preserve if you touch it:
+
+- **`agent-log.sh` is on the hot path.** Its `tool` event runs on every tool
+  call of every turn and blocks the agent. Keep it to one `jq` and one append -
+  no git, no model calls, no extra process spawns. Everything expensive belongs
+  in `summarise.sh`, which is detached.
+- **The hooks are only declared in `claude/settings.*.json`, but they fire in
+  Cursor too**: Cursor reads `~/.claude/settings.json` as a third-party config
+  source and maps the PascalCase event names onto its own. So the agent is
+  detected from the payload (`cursor_version`), never assumed from the argument
+  the hook command passes. Don't "fix" that by hardcoding the label, and don't
+  add a duplicate set of hooks to `~/.cursor/hooks.json` — it would double every
+  entry.
+- **It must never break a session.** It always exits 0 and always prints `{}`;
+  Cursor parses stdout as JSON and a crashed hook is fail-open. Don't add a
+  failure path that propagates.
+- **Entries are one line, written in one `write()`, under 4 KB.** That's the
+  whole concurrency story: many sessions append to one file with no lock,
+  because `O_APPEND` makes a single small write atomic and macOS has no
+  `flock(1)`. Never introduce a multi-line entry or a read-modify-write.
+- **Never widen what's captured.** Only the shape of a tool call is recorded -
+  tool name, file path, command truncated to 400 chars - and `summarise.sh`
+  redacts credential patterns on top. The file is durable and sits inside the
+  user's project; file contents and full arguments must not reach it.
+- **The gate is deliberate.** Turns that only read are not logged, at all. If
+  you change `mutation-gate.sh`, keep an unrecognised tool counting as
+  mutating: a missing entry makes the log untrustworthy, a spurious one is
+  merely noise. The same reasoning is why `task` is *not* on the read-only list
+  — a subagent's tool calls never reach the parent's hooks, so treating
+  delegation as read-only would silently drop the turn entirely.
+- **Brevity is the feature.** The value is being skimmable; an entry that
+  restates the diff is worse than no entry. Keep the prompt in `summarise.sh`
+  demanding one line, keep the `NOTHING` escape hatch, and don't add fields to
+  the rendered view that repeat on every line (see the machine-name test in
+  `render.sh`).
+- **Logs live outside every repo** (`$AGENT_LOGS`, mirroring `$AGENT_PLANS`), so
+  they can't dirty a project's `git status` or be committed by accident. Key on
+  the project path, not `cwd`, and keep the checksum in the filename — bare
+  basenames collide across checkouts.
+
 ## Conventions to follow
 
 - **Repo location is dynamic.** Scripts resolve `$DOTFILES_DIR` from their own
@@ -160,7 +206,11 @@ What this repo owns is small:
 - **`utils/` also holds standalone helpers.** `check-repo-freshness.sh` warns at
   shell startup when a local clone is behind upstream (local-only check on the
   hot path; throttled background `git fetch`), and exits silently for every
-  not-applicable case. Generic — point it at any clone.
+  not-applicable case. Generic — point it at any clone. `agent-log/` is the one
+  subdirectory: it's a single feature spanning four scripts, kept together
+  rather than spread across `utils/` as unrelated-looking files. It does *not*
+  source `common.sh` — it runs inside agent hooks, not from the installer, and
+  must not depend on the caller contract (`echo_*`, `nullglob`, `DRY_RUN`).
 - **Don't commit per-machine / secret files.** These are gitignored and
   bootstrapped from tracked `*.example` files: `zsh/zsh-config`,
   `git/git-identity`, the rendered `git/dqna64-dotfiles.gitconfig` and

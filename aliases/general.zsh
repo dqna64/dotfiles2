@@ -47,6 +47,11 @@ function sd() {
   ssh -t "$host" "tmux attach -t $2; $shell_cmd"
 }
 
+# Read this project's agent activity log - what Claude/Cursor sessions have
+# changed here, newest last. `agentlog -n 20` for just the recent entries.
+# Stored as JSONL (many sessions append to it at once); this renders it.
+alias agentlog='"${DOTFILES_DIR:-$HOME/dotfiles_dqna64}/utils/agent-log/render.sh"'
+
 # SP  ' '  0x20 = · U+00B7 Middle Dot
 # TAB '\t' 0x09 = ￫ U+FFEB Halfwidth Rightwards Arrow
 # CR  '\r' 0x0D = § U+00A7 Section Sign (⏎ U+23CE also works fine)

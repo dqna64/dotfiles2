@@ -46,6 +46,7 @@
 - When starting or resuming work on a branch, use the `branch-plans` skill to find or create the branch's plan.
 - When creating a PR in Canva/canva, use the `create-pr-canva` skill (title/description templates, draft + precheck, PR trains).
 - Before installing anything system-wide (brew/apt, `npm i -g`, pipx, cargo, a toolchain or version manager, a manual/GUI install, granting an OS permission), and again once it succeeds, use the `machine-logs` skill - it maintains this machine's log of everything installed outside the dotfiles repo. Applies in every repo, not just the dotfiles one. Project-local installs (a project's `npm install`, a venv, a lockfile bump) are not logged.
+- When starting or picking up work in a repo, use the `agent-logs` skill to check what previous sessions changed here and what they tried and rejected. Read-only: the log is written automatically by hooks, never by hand, and its summaries are model-written and unverified - verify anything load-bearing before acting on it.
 
 ## Misc
 

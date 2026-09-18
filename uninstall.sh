@@ -321,6 +321,26 @@ else
 	echo_note "  - TPM: none found at $TPM_DIR."
 fi
 
+# Agent activity logs. Unlinking ~/.claude/settings.json above already stops new
+# entries, since that's where the hooks live. The logs themselves are a record of
+# your own work, sitting outside this repo in $AGENT_LOGS alongside your plans —
+# so they're reported, never deleted. Only the ephemeral scratch dir under TMPDIR
+# belongs to us, and even that is left: a session running right now is using it.
+AGENT_LOGS_DIR="${AGENT_LOGS:-$HOME/.agent/logs}"
+AGENT_LOG_SCRATCH="${TMPDIR:-/tmp}/agent-log-dqna64"
+if [ -d "$AGENT_LOGS_DIR" ]; then
+	echo_note "  - Agent activity logs at $AGENT_LOGS_DIR"
+	echo_note "    ($(find "$AGENT_LOGS_DIR" -name '*.jsonl' 2>/dev/null | wc -l | tr -d ' ') project log(s))."
+	echo_note "    Unlinking ~/.claude/settings.json stops new entries; these are a"
+	echo_note "    record of your own work and are left alone."
+	echo_note "      Remove by hand if no longer wanted:  rm -rf \"$AGENT_LOGS_DIR\""
+else
+	echo_note "  - Agent activity logs: none found at $AGENT_LOGS_DIR."
+fi
+if [ -d "$AGENT_LOG_SCRATCH" ]; then
+	echo_note "    Scratch state at $AGENT_LOG_SCRATCH (safe to delete when no agent is running)."
+fi
+
 # === Manual follow-ups we won't do automatically
 
 # TODO: automate removal of the gitconfig and ssh config blocks

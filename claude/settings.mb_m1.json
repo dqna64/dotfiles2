@@ -46,5 +46,40 @@
       "Bash(printf *)",
       "Bash(date *)"
     ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${DOTFILES_DIR:-$HOME/dotfiles_dqna64}/utils/agent-log/agent-log.sh\" session-start claude"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${DOTFILES_DIR:-$HOME/dotfiles_dqna64}/utils/agent-log/agent-log.sh\" tool claude"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${DOTFILES_DIR:-$HOME/dotfiles_dqna64}/utils/agent-log/agent-log.sh\" turn-end claude"
+          }
+        ]
+      }
+    ]
   }
 }

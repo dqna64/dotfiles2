@@ -378,6 +378,22 @@ else
 fi
 unset machine_log_file
 
+# === agent-logs
+#
+# Per-project record of what agent sessions changed, one file per project under
+# $AGENT_LOGS. Nothing to install: the hooks live in the tracked
+# claude/settings.*.json that ~/.claude/settings.json already points at, so
+# linking that file is what turns this on, and the log directory is created on
+# first write. Reported here so the path is never a mystery.
+
+echo ""
+agent_logs_dir="${AGENT_LOGS:-$(zsh_config_value AGENT_LOGS)}"
+echo_info "Agent activity logs: ${agent_logs_dir:-$HOME/.agent/logs}"
+echo_note "Claude sessions append one entry per turn that changed something;"
+echo_note "turns that only read are not logged. Created on first write."
+echo_note "Read them with:  agentlog     (-n 20 for recent, -a for all projects)"
+unset agent_logs_dir
+
 # === git
 #
 # All git-related host setup (gitconfig, gitignore_global symlink, SSH host

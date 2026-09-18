@@ -83,6 +83,15 @@
             "command": "/usr/local/bin/otter agent-hook --agent claude-code --hook-event PostToolUse 2>/dev/null || true"
           }
         ]
+      },
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${DOTFILES_DIR:-$HOME/dotfiles_dqna64}/utils/agent-log/agent-log.sh\" tool claude"
+          }
+        ]
       }
     ],
     "PostToolUseFailure": [
@@ -127,6 +136,15 @@
             "command": "/usr/local/bin/otter agent-hook --agent claude-code --hook-event SessionStart 2>/dev/null || true"
           }
         ]
+      },
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${DOTFILES_DIR:-$HOME/dotfiles_dqna64}/utils/agent-log/agent-log.sh\" session-start claude"
+          }
+        ]
       }
     ],
     "Stop": [
@@ -136,6 +154,15 @@
           {
             "type": "command",
             "command": "/usr/local/bin/otter agent-hook --agent claude-code --hook-event Stop 2>/dev/null || true"
+          }
+        ]
+      },
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${DOTFILES_DIR:-$HOME/dotfiles_dqna64}/utils/agent-log/agent-log.sh\" turn-end claude"
           }
         ]
       }

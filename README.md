@@ -131,6 +131,75 @@ export MACHINE_LOG_FILE="$HOME/machine-logs/this-machine.md"
 
 Agents pick it up from there - no other registration.
 
+## Agent activity logs
+
+A running record of what agent sessions actually **changed** in a project, so
+you can review a week of agent work at a glance and a new session can find out
+what was already tried. Written automatically - there is nothing to set up and
+nothing to remember.
+
+Every session working in a directory appends to the same file, so the log
+accumulates across sessions, agents, branches and machines.
+
+```sh
+agentlog            # render this project's log
+agentlog -n 20      # just the recent entries
+agentlog -a         # every project, merged - what agents did lately
+```
+
+Logs live in **`$AGENT_LOGS`** (set in `zsh/zsh-config`, default
+`~/.agent/logs`), one file per project named `<basename>-<checksum>.jsonl`. Same
+convention as `$AGENT_PLANS`: plans are keyed by branch, logs by project. The
+checksum of the absolute path is what stops `canva5/web` and `canva7/web` from
+colliding.
+
+| Where | Does what |
+|---|---|
+| `utils/agent-log/agent-log.sh` | hook entry point. On the hot path: captures the shape of each tool call to a per-session scratch file, nothing more |
+| `utils/agent-log/mutation-gate.sh` | decides whether a turn changed anything. Turns that only read are never logged |
+| `utils/agent-log/summarise.sh` | detached worker. Writes one entry per consequential turn, via a small model call |
+| `utils/agent-log/log-path.sh` | where a project's log file lives; shared by the writer and the reader |
+| `utils/agent-log/render.sh` | the human view; aliased to `agentlog` |
+| `zsh/zsh-config` | `AGENT_LOGS` - the logs directory |
+| `claude/settings.*.json` | wires `SessionStart` / `PostToolUse` / `Stop` on each machine, alongside whatever else is there |
+| `claude/skills/agent-logs/SKILL.md` | tells agents to read the log when picking up work, and not to trust it blindly |
+
+Design points worth knowing:
+
+- **Only consequential turns are recorded.** A turn that reads, searches or runs
+  tests changes nothing, so it costs no model call and adds no entry. The
+  summariser can also return `NOTHING` to veto its own entry - a formatting pass
+  or a reverted experiment gets nothing.
+- **Delegation counts as a change.** A subagent's tool calls never reach the
+  parent session's hooks, so a turn that hands all its work to a subagent would
+  otherwise vanish. It's treated as mutating and summarised from the parent's
+  closing message, which does describe what the subagent did.
+- **JSONL, not markdown.** Many sessions append at once, and only a
+  one-line-per-write format is safe to share without a lock (macOS has no
+  `flock(1)`). Markdown is generated on read instead of stored.
+- **Out of tree.** Logs never sit inside a project, so they can't dirty a
+  `git status` or be committed by accident - they hold prompt-derived summaries.
+- **Summaries are unverified.** They're one agent's account of its own turn.
+  The mechanical fields (`files`, `commit`, `branch`, `ts`) are recorded from
+  the tool calls and are reliable; `summary` is inferred.
+- **Secrets are stripped twice**: only the shape of a tool call is captured (no
+  file contents, commands truncated), and credential patterns are redacted
+  before anything reaches the log or the model.
+
+**Cursor is covered too, without a second config.** Cursor reads
+`~/.claude/settings.json` as a third-party config source and maps Claude's
+PascalCase hook names onto its own, so the entries in `claude/settings.*.json`
+fire in Cursor sessions as well. Nothing is added to `~/.cursor/hooks.json`
+(which `otter` owns and this repo doesn't manage). Because the hook command is
+the same one either way, `agent-log.sh` detects which agent it's running under
+from the payload - `cursor_version` appears on every Cursor hook and no Claude
+one - rather than trusting the label passed on the command line.
+
+The one thing that mapping doesn't give us is Cursor's `afterAgentResponse`,
+which carries the assistant's closing text; Claude's `Stop` supplies a
+transcript path instead, which the summariser reads the same information out of.
+The `response` event exists for the day `~/.cursor/hooks.json` is managed here.
+
 ## Gitignored, per-machine files (do not commit)
 
 - `zsh/zsh-config` — machine identifier + flags.
