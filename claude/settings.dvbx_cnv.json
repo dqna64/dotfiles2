@@ -50,7 +50,7 @@
     ],
     "additionalDirectories": []
   },
-  "model": "opus",
+  "model": "claude-fable-5-1[1m]",
   "hooks": {
     "Notification": [
       {
@@ -177,6 +177,11 @@
   "enabledPlugins": {
     "otter-tools@otter-marketplace": true
   },
-  "theme": "dark",
-  "tui": "fullscreen"
+  "modelSettings": {
+    "claude-fable-5-1": {
+      "effortLevel": "high"
+    }
+  },
+  "tui": "fullscreen",
+  "theme": "dark"
 }
