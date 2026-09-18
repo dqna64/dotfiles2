@@ -50,6 +50,7 @@
     ],
     "additionalDirectories": []
   },
+  "model": "claude-fable-5-1",
   "hooks": {
     "Notification": [
       {
@@ -176,7 +177,12 @@
   "enabledPlugins": {
     "otter-tools@otter-marketplace": true
   },
+  "effortLevel": "medium",
+  "modelSettings": {
+    "claude-fable-5-1": {
+      "effortLevel": "xhigh"
+    }
+  },
   "tui": "fullscreen",
-  "defaultMode": "auto",
-  "effortLevel": "medium"
+  "defaultMode": "auto"
 }
