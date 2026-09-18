@@ -123,28 +123,12 @@ If a PR exists, reuse it (capture its number). If none exists, create one with a
 meaningful title/body (improvement over the script's generic "New PR"):
 
 ```bash
-gh pr create --repo "Canva/canva" --title "<title>" --body "$(cat <<'EOF'
-## Overview
-<tl;dr>
-
-## Problem
-<the issue and its cause>
-
-## Solution
-<what this PR does>
-
-## Verify
-<how to test>
-
-## Links
-<Jira ticket / related PRs>
-EOF
-)"
+# title and body per the create-pr-canva skill: fill its `default` template
+# (~/.claude/skills/create-pr-canva/templates/default.md, or the project's .claude/pr-templates/default.md)
+gh pr create --repo "Canva/canva" --title "<Project>: <what this PR does>" --body-file <filled template>
 ```
 
-Title: `[<JIRA-ID>] <description>` when a ticket is known, else
-`<package>: <description>`. Base defaults to `master` unless the branch is
-stacked on a parent.
+Base defaults to `master` unless the branch is stacked on a parent.
 
 ### 7. Trigger CI
 
