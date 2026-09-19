@@ -7,14 +7,21 @@ version: 1.0.0
 # Agent logs
 
 A per-project record of what agent sessions have actually changed here. Every
-session working in a directory appends to the same file, so it accumulates
-across sessions, across agents, and across machines.
+session working in a directory writes its own file into the project's logs
+directory; read together they accumulate across sessions, agents and machines.
 
-**Logs live in `$AGENT_LOGS`** (resolve the env var before reading; fall back to
-`~/.agent/logs` if it is unset), one file per project, named
-`<project-basename>-<checksum>.jsonl`. Same convention as `branch-plans`: plans
-are keyed by branch, logs by project. They are written automatically by hooks -
-you never write to one by hand.
+Find the logs directory using the same hierarchy as `branch-plans` - the first
+of these that exists:
+
+1. `<git root of the cwd>/.agent_dqna64/logs/` (`git rev-parse --show-toplevel`) - used whenever the
+   project has a `.agent_dqna64/` directory; committed with the project, like plans.
+2. `$AGENT_LOGS/<project slug>/` (resolve the env var first; slug = git-root path with `/` -> `-`).
+3. `~/.agent/logs/<project slug>/`.
+
+If the directory is missing or empty, no session has changed anything in this project yet. Say so and
+carry on; do not create one. Inside it, one file per agent session:
+`<start>_<machine>_<agent>_<session id>.jsonl` - the session id is the agent's own, so `claude --resume <id>`
+reopens the session a file came from. Files are written automatically by hooks - never write one by hand.
 
 Don't construct the filename yourself; ask for it:
 
@@ -38,13 +45,14 @@ and carry on; do not create one.
 
 ## How to read it
 
-One JSON object per line, oldest first by `ts`. Render it rather than reading
-raw when you want the whole thing:
+One JSON object per line per file; the renderer merges every session file and
+sorts by `ts`. Render it rather than reading raw when you want the whole thing:
 
 ```sh
-render.sh            # this project's log
+render.sh            # this project, all sessions merged
 render.sh -n 20      # recent entries only
-render.sh -a         # every project, merged - what agents did lately
+render.sh -s 097beb  # one session, by id prefix
+render.sh -a         # every project under the global logs root, merged
 ```
 
 The user has this aliased as `agentlog`.
@@ -53,9 +61,10 @@ For a targeted question, query the JSONL directly instead of reading all of it -
 it grows without bound:
 
 ```sh
-log="$(ls "${AGENT_LOGS:-$HOME/.agent/logs}"/"$(basename "$PWD")"-*.jsonl)"
-jq -r 'select(.files[]? | test("api/")) | "\(.ts) \(.summary)"' "$log"
-jq -r 'select(.branch == "my-branch") | .summary' "$log"
+. "${DOTFILES_DIR:-$HOME/dotfiles_dqna64}/utils/agent-log/log-path.sh"
+logs="$(agent_logs_dir "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")"
+cat "$logs"/*.jsonl | jq -r 'select(.files[]? | test("api/")) | "\(.ts) \(.summary)"'
+cat "$logs"/*.jsonl | jq -r 'select(.branch == "my-branch") | .summary'
 ```
 
 Fields: `ts`, `agent`, `session`, `turn`, `machine`, `project`, `branch`,
@@ -83,9 +92,10 @@ edit, or delete entries by hand, and never "tidy up" a log file: other sessions
 may be appending to it at the same moment, and it is append-only by design so
 that concurrent writers can't corrupt each other.
 
-Logs live outside every repo, so they never dirty a project's `git status` and
-can't be committed by accident - which matters, because entries are derived from
-prompts and may quote work in progress.
+Repo-local logs are committed with the project, exactly like `.agent_dqna64/plans/`:
+never add them to a project or global gitignore. A project that wants its log
+kept out of the repo uses the `$AGENT_LOGS` fallback. Commit the log file along
+with the work it describes; it is append-only, so commits never rewrite earlier lines.
 
 ## Related
 

@@ -11,6 +11,8 @@ version: 1.0.0
   2. `$AGENT_PLANS` (resolve the env var to its actual path before reading).
   3. `~/.agent/plans`.
   If none exists, let the user know you can't find a plans directory, and proceed.
+  `.agent_dqna64/plans/` is part of the project and is committed with it - never add it to a project or global
+  gitignore. A user who wants plans kept out of a repo uses the `$AGENT_PLANS` fallback instead.
 - Find the branch's plan inside it - the first match wins:
   1. A `README.md` index row for the branch (table with `| branch | plan file |` columns).
   2. A file named after the branch (`<branch>.md`, with or without the `<user>/` prefix, `/` written as `-`).

@@ -6,12 +6,14 @@
 #   summarise.sh <snapshot_dir> <project_dir> <agent> <session_id> <turn>
 #
 # Turns one turn's evidence into a single JSON line appended to the project's
-# log under $AGENT_LOGS. Nothing here is on the agent's hot path, so it can
-# afford the model call and the git commands that agent-log.sh avoids.
+# log under the directory selected by log-path.sh. Nothing here is on the
+# agent's hot path, so it can afford the model call and the git commands that
+# agent-log.sh avoids.
 #
 # Concurrency: many of these run at once - several turns of one session, several
-# sessions in one project, both agents at the same time - all appending to the
-# same file. Safety comes from writing each entry as a single line in a single
+# sessions in one project, both agents at the same time. Each session has its own
+# file, so only the turns of one session ever append to the same file. Safety for
+# those comes from writing each entry as a single line in a single
 # write() call under the filesystem block size, which O_APPEND makes atomic. No
 # lock is taken, and none should be: macOS has no flock(1), so any lock-based
 # design would need a second implementation per OS. See MAX_LINE below.
@@ -41,7 +43,8 @@ case "$project_dir" in
 esac
 
 . "$SCRIPT_DIR/log-path.sh"
-log_file="$(agent_log_path "$project_dir")"
+project_dir="$(agent_project_dir "$project_dir")" || exit 0
+log_file="$(agent_session_log_path "$project_dir" "$agent" "$session_id")"
 mkdir -p "$(dirname "$log_file")" 2>/dev/null || exit 0
 
 # A single entry must stay under the filesystem block size for the atomic append

@@ -139,9 +139,9 @@ What this repo owns is small:
 
 ## Agent activity logs
 
-A per-project record of what agent sessions changed, appended by hooks into
-`$AGENT_LOGS/<basename>-<checksum>.jsonl`. Lives in `utils/agent-log/`; see
-`README.md` -> "Agent activity logs" for the moving parts.
+A per-project record of what agent sessions changed, appended by hooks into the
+first existing logs directory resolved by `utils/agent-log/log-path.sh`. See
+`README.md` -> "Agent activity logs" for the hierarchy and moving parts.
 
 Invariants to preserve if you touch it:
 
@@ -178,10 +178,12 @@ Invariants to preserve if you touch it:
   demanding one line, keep the `NOTHING` escape hatch, and don't add fields to
   the rendered view that repeat on every line (see the machine-name test in
   `render.sh`).
-- **Logs live outside every repo** (`$AGENT_LOGS`, mirroring `$AGENT_PLANS`), so
-  they can't dirty a project's `git status` or be committed by accident. Key on
-  the project path, not `cwd`, and keep the checksum in the filename — bare
-  basenames collide across checkouts.
+- **Logs use the branch-plans hierarchy**: `<git root>/.agent_dqna64/logs/`
+  (used whenever the project has a `.agent_dqna64/`; committed with the project,
+  like plans, never gitignored), else `$AGENT_LOGS/<slug>`, else
+  `~/.agent/logs/<slug>`, slug = git-root path with `/` -> `-`. One file per
+  agent session, named by the agent's own session id (resumable), so no two
+  writers share a file. Keep it that way.
 
 ## Conventions to follow
 

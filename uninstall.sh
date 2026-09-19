@@ -322,17 +322,22 @@ else
 fi
 
 # Agent activity logs. Unlinking ~/.claude/settings.json above already stops new
-# entries, since that's where the hooks live. The logs themselves are a record of
-# your own work, sitting outside this repo in $AGENT_LOGS alongside your plans —
-# so they're reported, never deleted. Only the ephemeral scratch dir under TMPDIR
-# belongs to us, and even that is left: a session running right now is using it.
-AGENT_LOGS_DIR="${AGENT_LOGS:-$HOME/.agent/logs}"
+# entries, since that's where the hooks live. Resolve the same repo-local, env,
+# home hierarchy as the writer and report the selected logs without deleting
+# them. The scratch dir is also left because a running session may be using it.
+# shellcheck source=utils/agent-log/log-path.sh
+. "$DOTFILES_DIR/utils/agent-log/log-path.sh"
+AGENT_LOGS_DIR="$(agent_logs_dir "$DOTFILES_DIR")"
 AGENT_LOG_SCRATCH="${TMPDIR:-/tmp}/agent-log-dqna64"
 if [ -d "$AGENT_LOGS_DIR" ]; then
 	echo_note "  - Agent activity logs at $AGENT_LOGS_DIR"
-	echo_note "    ($(find "$AGENT_LOGS_DIR" -name '*.jsonl' 2>/dev/null | wc -l | tr -d ' ') project log(s))."
-	echo_note "    Unlinking ~/.claude/settings.json stops new entries; these are a"
-	echo_note "    record of your own work and are left alone."
+	echo_note "    ($(find "$AGENT_LOGS_DIR" -name '*.jsonl' 2>/dev/null | wc -l | tr -d ' ') session log(s))."
+	echo_note "    Unlinking ~/.claude/settings.json stops new entries."
+	if path_inside "$DOTFILES_DIR" "$AGENT_LOGS_DIR"; then
+		echo_note "    These are left alone unless you remove the repo below."
+	else
+		echo_note "    These are a record of your own work and are left alone."
+	fi
 	echo_note "      Remove by hand if no longer wanted:  rm -rf \"$AGENT_LOGS_DIR\""
 else
 	echo_note "  - Agent activity logs: none found at $AGENT_LOGS_DIR."
@@ -380,7 +385,7 @@ if [ ! -f "$DOTFILES_DIR/install.sh" ] || [ ! -f "$DOTFILES_DIR/uninstall.sh" ];
 	# Refuse to rm -rf a $DOTFILES_DIR that doesn't look like this repo (e.g.
 	# a hand-set env var pointing somewhere unexpected).
 	echo_warn "Not offering to remove $DOTFILES_DIR: it doesn't look like the dotfiles repo (missing install.sh/uninstall.sh)."
-elif decide "$REMOVE_REPO" "Remove the cloned dotfiles repo at $DOTFILES_DIR? This deletes the repo (incl. uninstall.sh and any gitignored per-machine files: zsh-config, git-identity, rendered git/ssh snippets)." false; then
+elif decide "$REMOVE_REPO" "Remove the cloned dotfiles repo at $DOTFILES_DIR? This deletes the repo (incl. uninstall.sh and any gitignored per-machine files: zsh-config, git-identity, rendered git/ssh snippets, and repo-local .agent_dqna64/logs)." false; then
 	echo_warn "Removing $DOTFILES_DIR..."
 	# cd out first so we're not deleting the directory we're sitting in, and do
 	# it as the very last action since the script file lives inside it. Route

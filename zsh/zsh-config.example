@@ -45,9 +45,11 @@ export CNV_WORK_BIN_PATH=
 export AGENT_PLANS="$HOME/.agent/plans"
 
 # === Path for agent activity logs
-# Where agent sessions record what they changed, one file per project. Written
-# automatically by utils/agent-log/ hooks; read with the `agentlog` alias.
-# Change it only if you want logs somewhere else.
+# Where agent sessions record what they changed: one folder per project, one
+# file per session. Written automatically by utils/agent-log/ hooks; read with
+# the `agentlog` alias. Used only for projects without a .agent_dqna64/ directory
+# (those keep their logs in-repo, like plans); this root gets a <project slug>/
+# folder per project. Change it only if you want that fallback somewhere else.
 # Default: AGENT_LOGS="$HOME/.agent/logs"
 
 export AGENT_LOGS="$HOME/.agent/logs"

@@ -2,9 +2,10 @@
 #
 # Agent activity log - hook entry point for Claude Code and Cursor.
 #
-# Records one line per *consequential* agent turn into the project's log under
-# $AGENT_LOGS (see log-path.sh), so every session working in a directory
-# contributes to one shared history that both the user and future agents read.
+# Records one line per *consequential* agent turn into this session's log file
+# (one file per session, in the project's logs directory selected by
+# log-path.sh); read together, the files are the history that both the user and
+# future agents consult.
 #
 # Invoked from the agents' hook configs as:
 #   agent-log.sh <event> <agent>

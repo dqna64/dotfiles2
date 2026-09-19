@@ -380,15 +380,22 @@ unset machine_log_file
 
 # === agent-logs
 #
-# Per-project record of what agent sessions changed, one file per project under
-# $AGENT_LOGS. Nothing to install: the hooks live in the tracked
-# claude/settings.*.json that ~/.claude/settings.json already points at, so
-# linking that file is what turns this on, and the log directory is created on
-# first write. Reported here so the path is never a mystery.
+# Per-project record of what agent sessions changed. Nothing to install: the
+# hooks live in the tracked claude/settings.*.json that ~/.claude/settings.json
+# already points at, so linking that file is what turns this on, and the log
+# directory is created on first write. The directory uses the same repo-local,
+# env, home hierarchy as branch plans. Reported here so the selected path is
+# never a mystery.
 
 echo ""
-agent_logs_dir="${AGENT_LOGS:-$(zsh_config_value AGENT_LOGS)}"
-echo_info "Agent activity logs: ${agent_logs_dir:-$HOME/.agent/logs}"
+# Same resolver the writer and reader use, so the reported path is the real one.
+# shellcheck source=utils/agent-log/log-path.sh
+. "$DOTFILES_DIR/utils/agent-log/log-path.sh"
+AGENT_LOGS="${AGENT_LOGS:-$(zsh_config_value AGENT_LOGS)}"
+agent_logs_dir="$(agent_logs_dir "$DOTFILES_DIR")"
+echo_info "Agent activity logs for this repo: $agent_logs_dir"
+echo_note "Directory priority: <git root>/.agent_dqna64/logs (committed with the project, like plans),"
+echo_note "then \$AGENT_LOGS/<project slug>, then ~/.agent/logs/<project slug>. One file per agent session."
 echo_note "Claude sessions append one entry per turn that changed something;"
 echo_note "turns that only read are not logged. Created on first write."
 echo_note "Read them with:  agentlog     (-n 20 for recent, -a for all projects)"
