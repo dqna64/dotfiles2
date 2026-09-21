@@ -1,0 +1,4 @@
+interface:
+  display_name: "Explain PR"
+  short_description: "Turn a GitHub PR into a guided HTML walkthrough"
+  default_prompt: "Use $explain-pr to turn this GitHub PR into a guided HTML walkthrough."
