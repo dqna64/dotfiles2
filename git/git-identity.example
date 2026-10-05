@@ -1,4 +1,4 @@
-# === Copy to ~/.config/git/git-identity and fill in your details
+# === Copy to git/git-identity (gitignored) and fill in your details
 
 # Primary git identity, used as default when running git operations that
 # depend on git identity

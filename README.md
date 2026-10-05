@@ -214,11 +214,17 @@ Completed items have been moved to the review plan in `$AGENT_PLANS`
   first, but it's fragile — worth a comment/guard (already partially there)
   and a test.
 
-## Migrating from the bare git repo dotfiles
+## Migrating a machine from the old bare-repo dotfiles
 
-- [ ] Clean up the leftover old setup once nothing still needs it: the bare repo
-  `~/.dotfiles-dqna64`, `~/.config/aliases/`, `~/.config/zsh/`, and the old
-  `~/.config/yabai/{start.sh,aliases.zsh,scripts}` (now served from the repo).
+For machines that still have the old `~/.dotfiles-dqna64` bare repo (done on
+MB_M1). After `install.sh` and `git/git-setup.sh`:
 
-- [ ] clean up redundant bits in `~/.gitconfig`
-- [ ] Clean up previous symlink ~/.gitignore_global → /Users/gordonh/.config/git/gitignore_global 
+1. Re-point editor links at this repo (`vscode/README.md`). The old ones point
+   into `~/.config/vscode/User/`; merge any newer settings from there first.
+2. Check nothing else links into the old paths, then archive and remove them:
+   `~/.dotfiles-dqna64`, `~/.config/{aliases,git,zsh,vscode,ripgrep}`,
+   `~/.config/yabai/{start.sh,aliases.zsh,scripts}`,
+   `~/.claude/{devbox-cnv,macbook-cnv,motorway1}`, `~/README.md`, `~/install.sh`.
+   All tracked content is on github.com/dqna64/dotfiles.
+3. Optionally drop the `[user]` / `[init]` blocks in `~/.gitconfig` that the
+   included snippet already sets.
