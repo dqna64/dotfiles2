@@ -31,8 +31,8 @@
 #     link should go is skipped with a warning and left intact - unlike
 #     install.sh, which moves its dotfiles' conflicts aside, because these dirs
 #     are shared with hand-written items and a same-named item may differ.
-#     --force opts into moving it to <dst>.backup_dqna64.<timestamp> (the marker
-#     .gitignore and uninstall.sh understand, so unsync restores it).
+#     No backups here: agents scan these dirs, so a *.backup_dqna64.* sibling
+#     would be loaded as a duplicate skill.
 #   - Prune is conservative: only symlinks that resolve back into the matching
 #     repo source dir AND no longer have a tracked item are removed (i.e. items
 #     you renamed or deleted in the repo). Foreign items are never touched.
@@ -90,7 +90,6 @@ fi
 # === Options
 
 DRY_RUN=false
-REPLACE_EXISTING=false
 
 usage() {
 	cat <<EOF
@@ -103,17 +102,16 @@ re-run; non-destructive to anything not tracked by these dotfiles.
 
 Options:
   -n, --dry-run   Show what would happen without changing anything.
-  -f, --force     Replace items already at a target name that aren't ours:
-                  move each to <name>.backup_dqna64.<timestamp>, then link.
-                  Default is to skip them with a warning.
   -h, --help      Show this help.
+
+Exit status: 0 when every item is linked; 2 when some were skipped because an
+item already existed (see the warnings); 1 on error.
 EOF
 }
 
 while [ $# -gt 0 ]; do
 	case "$1" in
 		-n|--dry-run) DRY_RUN=true ;;
-		-f|--force) REPLACE_EXISTING=true ;;
 		-h|--help) usage; exit 0 ;;
 		*) echo_error "Unknown option: $1"; echo ""; usage; exit 1 ;;
 	esac
@@ -125,7 +123,7 @@ done
 # The per-item link + prune primitives (symlink_item, prune_stale_links) live in
 # utils/common.sh (sourced above), alongside do_cmd, canonicalize_path,
 # path_inside, and dotfiles_backup_path; they bump the LINKED_*/RELINKED/
-# CONFLICTS/BACKED_UP/PRUNED counters we init and report below. sync_collection is the
+# CONFLICTS/PRUNED counters we init and report below. sync_collection is the
 # script-local orchestrator: it owns the globbing and the presentation (per-
 # collection header, spacing) so that stays out of the shared lib. Kept symmetric
 # with unsync-agent-links.sh's unsync_collection.
@@ -197,7 +195,6 @@ LINKED_NEW=0
 LINKED_OK=0
 RELINKED=0
 CONFLICTS=0
-BACKED_UP=0
 PRUNED=0
 
 # === Sync each collection
@@ -215,7 +212,9 @@ echo ""
 echo_success "Done."
 echo_note "  linked:        $LINKED_NEW new, $LINKED_OK already correct"
 [ "$RELINKED" -gt 0 ] && echo_note "  re-pointed:    $RELINKED"
-[ "$CONFLICTS" -gt 0 ] && echo_warn  "  skipped:       $CONFLICTS existing item(s) left in place (re-run with --force to replace)"
-[ "$BACKED_UP" -gt 0 ] && echo_warn  "  backed up:     $BACKED_UP existing item(s) moved aside (*.backup_dqna64.*)"
+[ "$CONFLICTS" -gt 0 ] && echo_warn  "  skipped:       $CONFLICTS existing item(s) left in place (see warnings above)"
 [ "$PRUNED" -gt 0 ] && echo_note "  pruned:        $PRUNED stale link(s)"
 echo_note "  Re-run this after adding items or 'git pull'. Edits/pulls need no re-run (symlinks point at the repo)."
+
+# Distinct from 1 (error) so a caller can tell "partially synced" from "failed".
+[ "$CONFLICTS" -eq 0 ] || exit 2

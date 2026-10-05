@@ -66,12 +66,13 @@ has config**. Preserve these invariants in any change:
    a `curl | bash` bootstrap it runs before the repo (and `common.sh`) is on
    disk; if you touch the format, keep both in sync.
    **Exception - agent links** (`claude/sync-agent-links.sh`: skills, output
-   styles): an item already at a target name is *skipped with a warning*, and
-   moved aside only with `--force`. Those dirs are shared with hand-written
-   items, and a same-named skill may have different content, so silently
-   swapping it would change agent behaviour. Core dotfiles keep move-aside
-   because running `install.sh` is itself the decision to hand those paths to
-   the repo.
+   styles, anything an agent registers from a directory): an item already at
+   a target name is *skipped with a warning* - never replaced, and never
+   backed up. Those dirs are shared with hand-written items, and a same-named
+   skill may have different content, so swapping it would change agent
+   behaviour; and agents scan the whole dir, so a `*.backup_dqna64.*` sibling
+   gets loaded as a duplicate skill. Core dotfiles keep move-aside because
+   running `install.sh` is itself the decision to hand those paths to the repo.
 3. **Respect what's already there.** Detect existing files/configs/clones and
    adapt. Distinguish "our symlink", "a real file the user owns", and "a symlink
    pointing elsewhere" — and only ever touch the first.

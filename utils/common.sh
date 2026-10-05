@@ -24,11 +24,8 @@
 #     empty list (not a literal '*') when nothing matches.
 #   - DRY_RUN gates do_cmd; it defaults to false below if the caller hasn't set
 #     it, so a script with no --dry-run still works.
-#   - REPLACE_EXISTING (default false) lets symlink_item move an existing
-#     non-ours item aside instead of skipping it; callers expose it as --force.
 
 : "${DRY_RUN:=false}"
-: "${REPLACE_EXISTING:=false}"
 
 # dotfiles_backup_path <file>
 # The single source of truth for the backup naming scheme. The backup_dqna64
@@ -164,7 +161,7 @@ remove_dir_if_empty() {
 # re-pointed; real files, dirs, and foreign symlinks are left be.
 #
 # Counters (optional): these bump plain globals so callers can print a summary —
-# LINKED_NEW / LINKED_OK / RELINKED / CONFLICTS / BACKED_UP / PRUNED (forward) and REMOVED /
+# LINKED_NEW / LINKED_OK / RELINKED / CONFLICTS / PRUNED (forward) and REMOVED /
 # SKIPPED / RESTORED (reverse). They default to 0 when unset (${VAR:-0}), so a
 # caller that doesn't care can ignore them; init them to 0 for a clean summary.
 # Requires `shopt -s nullglob` (see contract above) for the directory globs.
@@ -172,9 +169,9 @@ remove_dir_if_empty() {
 # symlink_item <src_root> <src> <dst>
 # Idempotently point <dst> at <src> (both absolute). <src_root> is the tracked
 # dir the collection lives under, used to recognise links we own. A real file/dir
-# or foreign symlink at <dst> is skipped with a warning by default; with
-# REPLACE_EXISTING=true it's moved to <dst>.backup_dqna64.<timestamp> (which
-# unlink_dir_from restores) and linked. A stale link we own is re-pointed.
+# or foreign symlink at <dst> is never touched: it's skipped with a warning. No
+# backup option on purpose - agents scan these dirs, so a <name>.backup_dqna64.*
+# sibling would be loaded as a duplicate skill. A stale link we own is re-pointed.
 symlink_item() {
 	local src_root="$1" src="$2" dst="$3"
 
@@ -208,19 +205,11 @@ symlink_item() {
 
 	if [ -e "$dst" ] || [ -L "$dst" ]; then
 		# A real file/dir, or a foreign symlink: the user's (or another tool's)
-		# item. A matching name doesn't mean matching content, so only replace
-		# it when explicitly asked.
-		if [ "$REPLACE_EXISTING" != "true" ]; then
-			echo_warn "  skipping $dst: already exists and isn't linked to the repo; left untouched."
-			echo_note "    re-run with --force to move it aside (*.backup_dqna64.*) and link the repo's version."
-			CONFLICTS=$(( ${CONFLICTS:-0} + 1 ))
-			return 0
-		fi
-		local backup
-		backup="$(dotfiles_backup_path "$dst")"
-		echo_warn "  --force: backing up existing $dst -> $backup"
-		do_cmd mv "$dst" "$backup"
-		BACKED_UP=$(( ${BACKED_UP:-0} + 1 ))
+		# item, and a matching name doesn't mean matching content. Leave it.
+		echo_warn "  skipping $dst: already exists and isn't linked to the repo; left untouched."
+		echo_note "    to use the repo's version: delete it (or move it outside $(dirname "$dst")), then re-run."
+		CONFLICTS=$(( ${CONFLICTS:-0} + 1 ))
+		return 0
 	fi
 
 	echo_info "  linking $dst -> $src"

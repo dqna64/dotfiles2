@@ -60,7 +60,8 @@ What it does and why it's safe:
 - **Idempotent**: links already correct are left alone; only new items get
   linked on a re-run.
 - **Non-destructive**: an existing item with the same name is skipped with a
-  warning. `--force` replaces it, moving the original to `*.backup_dqna64.*`.
+  warning and never replaced or backed up (a backup inside these dirs would be
+  loaded as a duplicate skill). Delete or move it out, then re-run.
 - **Prunes** stale links (items you renamed/removed in the repo).
 - **Edits/pulls need no re-run** — the symlinks point straight at the repo.
 
