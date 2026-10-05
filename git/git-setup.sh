@@ -126,12 +126,8 @@ if [[ -f "$example_file" && -f "$SHELL_VAR_NAMES" ]]; then
     fi
 fi
 
-# IdentityFile must be the private key. A trailing .pub is a recurring
-# mistake: the old variable was named *_SSH_PUBLIC_KEY, and the .pub is
-# what GitHub's UI / ssh-keygen print. ssh then loads the public key as
-# a private key (0644 -> UNPROTECTED PRIVATE KEY FILE -> Permission
-# denied (publickey)). Strip .pub at render time so the generated
-# snippet is always the private key. git-identity is left unchanged.
+# IdentityFile must be the private key: strip a trailing .pub at render time
+# (ssh rejects a public key loaded as a private one). git-identity is left as is.
 strip_identityfile_pub() {
     local varname="$1"
     local path="${!varname}"
@@ -212,12 +208,9 @@ render_template() {
         -e "s|{{SECONDARY_ACC_SSH_ALIAS}}|${SECONDARY_ACC_SSH_ALIAS}|g" \
         "$template_file" > "$output_file"
 
-    # Stamp the rendered file with the git object id of the template it was
-    # generated from. The shell-startup drift check in aliases.git_stuff/git.zsh
-    # recomputes the template's oid and compares against this, so an upstream
-    # template change (e.g. after `git pull`) that hasn't been re-rendered gets
-    # surfaced loudly instead of silently drifting. Both gitconfig and ssh
-    # config use `#` for comments, so a trailing comment is safe for either.
+    # Stamp the rendered file with its template's git object id; zsh/.zshrc
+    # compares it at shell startup to flag a template change that hasn't been
+    # re-rendered. `#` is a comment in both gitconfig and ssh config.
     printf '\n# dqna64-template-oid: %s\n' "$(git hash-object "$template_file")" >> "$output_file"
 
     echo "Rendered $template_file -> $output_file"

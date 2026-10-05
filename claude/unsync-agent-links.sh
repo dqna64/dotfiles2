@@ -1,23 +1,18 @@
 #!/usr/bin/env bash
 
 # Reverse claude/sync-agent-links.sh: remove the per-item symlinks it created
-# under ~/.claude/skills, ~/.cursor/skills, and ~/.claude/output-styles and
-# restore anything it moved aside. The target dirs themselves are tool-owned
-# (Claude / Cursor manage them), so we leave them in place even if empty.
+# under ~/.claude/skills, ~/.cursor/skills, and ~/.claude/output-styles. The
+# target dirs are tool-owned (Claude / Cursor), so they stay even if empty.
 #
 # Run it standalone to opt out of the dotfiles skills / output styles on a
 # machine, or let uninstall.sh call it as part of a full uninstall.
 #
-# Safety model (mirrors sync-agent-links.sh / uninstall.sh):
+# Safety model:
 #   - Only removes symlinks that resolve back into the matching repo source dir
-#     (claude/skills or claude/output-styles) — i.e. links we created. Foreign
-#     items (e.g. ~/.cursor/skills/ast-grep) and real files/dirs are reported
-#     and left untouched.
-#   - After removing our link, restores the most recent
-#     <dst>.backup_dqna64.<timestamp> if the path is now free, undoing the
-#     "moved aside" that sync-agent-links.sh did when something was in the way.
-#   - Leaves the target dirs in place regardless: they're owned by Claude /
-#     Cursor, not us, so we only remove the individual links we created.
+#     (claude/skills or claude/output-styles). Foreign items and real
+#     files/dirs are reported and left untouched.
+#   - After removing a link, restores the newest <dst>.backup_dqna64.<timestamp>
+#     if one exists and the path is free.
 #   - --dry-run previews everything without changing the filesystem.
 
 set -euo pipefail
@@ -101,13 +96,9 @@ done
 
 # === Helpers
 #
-# The per-target-dir link-removal primitive (unlink_dir_from) lives in
-# utils/common.sh (sourced above), alongside do_cmd, canonicalize_path,
-# path_inside, and restore_latest_backup; it drops only links resolving into a
-# given source dir, restores backups, and bumps the REMOVED/SKIPPED/RESTORED
-# counters we report below (leaving tool-owned target dirs in place even if
-# emptied). unsync_collection is the script-local orchestrator owning the
-# presentation — kept symmetric with sync-agent-links.sh's sync_collection.
+# unlink_dir_from comes from utils/common.sh and bumps the REMOVED/SKIPPED/
+# RESTORED counters reported below. unsync_collection owns the presentation,
+# mirroring sync_collection.
 
 # unsync_collection <label> <src_dir> <target_dir>
 # Drop our links (those resolving into <src_dir>) from <target_dir> and restore

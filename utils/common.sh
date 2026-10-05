@@ -169,9 +169,8 @@ remove_dir_if_empty() {
 # symlink_item <src_root> <src> <dst>
 # Idempotently point <dst> at <src> (both absolute). <src_root> is the tracked
 # dir the collection lives under, used to recognise links we own. A real file/dir
-# or foreign symlink at <dst> is never touched: it's skipped with a warning. No
-# backup option on purpose - agents scan these dirs, so a <name>.backup_dqna64.*
-# sibling would be loaded as a duplicate skill. A stale link we own is re-pointed.
+# or foreign symlink at <dst> is skipped with a warning and never touched. A
+# stale link we own is re-pointed.
 symlink_item() {
 	local src_root="$1" src="$2" dst="$3"
 
@@ -183,9 +182,6 @@ symlink_item() {
 
 	do_cmd mkdir -p "$(dirname "$dst")"
 
-	# Not just `-L "$dst"`: when a parent dir is itself a link into the repo
-	# (e.g. ~/.claude/output-styles -> claude/output-styles), <dst> is the
-	# source file reached through that link, and must never be moved/relinked.
 	if { [ -L "$dst" ] || [ -e "$dst" ]; } && [ "$(canonicalize_path "$dst")" = "$src_canon" ]; then
 		echo "  already linked: $dst"
 		LINKED_OK=$(( ${LINKED_OK:-0} + 1 ))
@@ -193,9 +189,7 @@ symlink_item() {
 	fi
 
 	if [ -L "$dst" ] && path_inside "$src_root" "$(canonicalize_path "$dst")"; then
-		# Our own link, but pointing at a different tracked item (shouldn't
-		# normally happen for matching names). Re-point it — no backup needed
-		# since it's a link we own.
+		# Our own link, pointing at a different tracked item: re-point it.
 		echo_info "  re-pointing our stale link: $dst"
 		do_cmd rm "$dst"
 		do_cmd ln -s "$src" "$dst"
@@ -239,10 +233,9 @@ prune_stale_links() {
 # unlink_dir_from <src_root> <target_dir>
 # Reverse of symlink_item across a target dir (the counterpart to
 # prune_stale_links): in <target_dir>, drop ONLY the symlinks resolving into
-# <src_root> (links we own) and restore any backup we moved aside. Foreign links
-# and real files are reported and left in place. The <target_dir> itself is left
-# even if it ends up empty — these are typically tool-owned dirs we shouldn't
-# reap; call remove_dir_if_empty explicitly if you do want that.
+# <src_root> (links we own) and restore the newest backup_dqna64 copy, if any.
+# Foreign links and real files are reported and left in place. <target_dir> is
+# left even if empty (usually tool-owned); call remove_dir_if_empty to reap it.
 unlink_dir_from() {
 	local src_root="$1" target_dir="$2" entry resolved
 	[ -d "$target_dir" ] || return 0

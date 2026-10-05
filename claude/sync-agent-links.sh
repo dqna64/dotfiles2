@@ -28,11 +28,7 @@
 # Safety model:
 #   - Idempotent: re-running converges; links already correct are left alone.
 #   - Non-destructive: a real file/dir or a foreign symlink sitting where a
-#     link should go is skipped with a warning and left intact - unlike
-#     install.sh, which moves its dotfiles' conflicts aside, because these dirs
-#     are shared with hand-written items and a same-named item may differ.
-#     No backups here: agents scan these dirs, so a *.backup_dqna64.* sibling
-#     would be loaded as a duplicate skill.
+#     link should go is skipped with a warning and left intact.
 #   - Prune is conservative: only symlinks that resolve back into the matching
 #     repo source dir AND no longer have a tracked item are removed (i.e. items
 #     you renamed or deleted in the repo). Foreign items are never touched.
@@ -77,8 +73,8 @@ echo_note() {
 	echo -e "${CYAN}$*${RESET}"
 }
 
-# Shared safety helpers (do_cmd, canonicalize_path, path_inside,
-# dotfiles_backup_path). This script lives in claude/, so the lib is one dir up.
+# Shared safety helpers (do_cmd, canonicalize_path, path_inside, symlink_item,
+# prune_stale_links). This script lives in claude/, so the lib is one dir up.
 COMMON_LIB="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/utils/common.sh"
 if [ ! -r "$COMMON_LIB" ]; then
 	echo_error "Error: required helper library not found at $COMMON_LIB"
@@ -120,13 +116,9 @@ done
 
 # === Helpers
 #
-# The per-item link + prune primitives (symlink_item, prune_stale_links) live in
-# utils/common.sh (sourced above), alongside do_cmd, canonicalize_path,
-# path_inside, and dotfiles_backup_path; they bump the LINKED_*/RELINKED/
-# CONFLICTS/PRUNED counters we init and report below. sync_collection is the
-# script-local orchestrator: it owns the globbing and the presentation (per-
-# collection header, spacing) so that stays out of the shared lib. Kept symmetric
-# with unsync-agent-links.sh's unsync_collection.
+# symlink_item and prune_stale_links come from utils/common.sh and bump the
+# LINKED_*/RELINKED/CONFLICTS/PRUNED counters reported below. sync_collection
+# owns the globbing and presentation, mirroring unsync_collection.
 
 # sync_collection <label> <src_dir> <glob> <target_dir>
 # Link every item matching <src_dir>/<glob> into <target_dir> (via symlink_item),

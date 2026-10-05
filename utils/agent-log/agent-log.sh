@@ -60,15 +60,12 @@ payload="$(cat)"
 # commands, and this log is durable and lives inside the user's project, so the
 # full arguments are never written. summarise.sh redacts on top of that.
 #
-# `null`, not `empty`: an `empty` anywhere in an object construction discards
-# the entire object, which silently records nothing. Absent keys are dropped
-# afterwards instead.
+# Absent fields are `null` and dropped afterwards (`empty` would discard the
+# whole object).
 #
-# The agent is detected from the payload rather than trusted from $2, because
-# the two are not the same thing: Cursor reads ~/.claude/settings.json as a
-# third-party config source, so Claude's hook entries fire inside Cursor
-# sessions and would otherwise label every one of them "claude".
-# `cursor_version` is on every Cursor hook payload and on no Claude one.
+# The agent is detected from the payload, not taken from $2: Cursor also runs
+# the hooks in ~/.claude/settings.json, and `cursor_version` is on every Cursor
+# payload and on no Claude one.
 extracted="$(printf '%s' "$payload" | jq -r --arg ev "$event" '
 	(.session_id // .conversation_id // ""),
 	(if (.cursor_version // "") != "" or (.conversation_id // "") != ""
@@ -159,13 +156,9 @@ case "$event" in
 		printf '%s' "$payload" | jq -r '.transcript_path // empty' \
 			> "$snap/transcript_path" 2>/dev/null || true
 
-		# Detach. Both agents block on this hook and neither documents a
-		# background mode, so the model call has to outlive the hook and escape
-		# its timeout. stdout must be closed, not merely ignored: Cursor reads
-		# until EOF, and an inherited pipe would hold the turn open until the
-		# summary finished - exactly the latency this avoids. The subshell is a
-		# double fork that reparents the worker to init; setsid would say it
-		# more clearly but doesn't exist on macOS.
+		# Detach so the model call outlives the hook and its timeout. stdout is
+		# closed because Cursor reads until EOF. The subshell double-forks to
+		# reparent the worker to init.
 		(
 			nohup "$SCRIPT_DIR/summarise.sh" \
 				"$snap" "$project_dir" "$agent" "$session_id" "$turn" \

@@ -76,9 +76,8 @@ while IFS= read -r entry; do
 	printf '%s' "$entry" | jq -r --arg here "$here" --argjson all "$all" '
 		"\n" + .ts[11:16]
 		+ " · " + .agent
-		# Two path segments, not one: the basename alone is ambiguous across
-		# checkouts (canva5/web vs canva7/web) - which is the same collision the
-		# log filename has to defend against.
+		# Two path segments: the basename alone is ambiguous across checkouts
+		# (canva5/web vs canva7/web).
 		+ (if $all then " · " + (.project | split("/") | .[-2:] | join("/")) else "" end)
 		+ (if (.branch // "") != "" then " · " + .branch else "" end)
 		+ (if (.machine // "") != "" and .machine != $here then " · " + .machine else "" end)

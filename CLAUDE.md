@@ -270,8 +270,14 @@ When you add or change a feature, put each kind of content in its place.
   auto-sourced. See `README.md` → "Adding a new machine". Keep this property.
 - **Shell style.** `install.sh` uses `set -e`; `uninstall.sh` / `git-setup.sh`
   use `set -euo pipefail`. Quote variable expansions, prefer the existing helper
-  functions, and keep comments explaining *why* (non-obvious intent), matching
-  the existing dense-but-purposeful comment style.
+  functions, and keep comments explaining *why* (non-obvious intent), short and
+  to the point.
+- **Comments describe the code as it is, not how it got there.** A newcomer
+  takes the final implementation as given, so no history: no bugs hit along
+  the way, alternatives tried or rejected ("not X because..."), "used to",
+  "previously", or "the old variable was...". Same for dead commented-out code.
+  If a design decision needs defending against a well-meant regression, that
+  rationale goes in this file (as a rule) or in `docs/`, not inline.
 
 ## After changing the install/uninstall scripts
 

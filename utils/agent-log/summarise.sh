@@ -13,10 +13,9 @@
 # Concurrency: many of these run at once - several turns of one session, several
 # sessions in one project, both agents at the same time. Each session has its own
 # file, so only the turns of one session ever append to the same file. Safety for
-# those comes from writing each entry as a single line in a single
-# write() call under the filesystem block size, which O_APPEND makes atomic. No
-# lock is taken, and none should be: macOS has no flock(1), so any lock-based
-# design would need a second implementation per OS. See MAX_LINE below.
+# those comes from writing each entry as a single line in a single write()
+# call under the filesystem block size, which O_APPEND makes atomic, so no
+# lock is taken (macOS has no flock(1)). See MAX_LINE below.
 #
 # Entries can therefore land out of order. That's fine and intended: each entry
 # carries its own timestamp and turn index, so the renderer sorts on read.

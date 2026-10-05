@@ -10,7 +10,6 @@
 if ! pgrep -x "yabai" > /dev/null; then
     echo "Starting yabai service..."
     yabai --start-service
-    #/usr/bin/env sh "$HOME/.config/yabai/yabairc"
     echo "Yabai started"
 else
     if (( VERBOSITY_DQNA64 >= 2 )); then

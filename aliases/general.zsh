@@ -55,5 +55,5 @@ alias agentlog='"${DOTFILES_DIR:-$HOME/dotfiles_dqna64}/utils/agent-log/render.s
 # SP  ' '  0x20 = · U+00B7 Middle Dot
 # TAB '\t' 0x09 = ￫ U+FFEB Halfwidth Rightwards Arrow
 # CR  '\r' 0x0D = § U+00A7 Section Sign (⏎ U+23CE also works fine)
-# LF  '\n' 0x0A = ¶ U+00B6 Pilcrow Sign (was "Paragraph Sign")
+# LF  '\n' 0x0A = ¶ U+00B6 Pilcrow Sign
 alias whitespace="sed 's/ /·/g;s/\t/￫/g;s/\r/§/g;s/$/¶/g'"

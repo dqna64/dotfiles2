@@ -78,10 +78,8 @@ symlink_dotfile() {
 
 	if [ -e "$dst" ] || [ -L "$dst" ]; then
 		local backup
-		# Canonical naming lives in utils/common.sh (dotfiles_backup_path), but
-		# install.sh stays self-contained: in a `curl | bash` bootstrap this
-		# runs before the repo is cloned, so the lib isn't on disk yet.
-		# MAKE SURE TO keep this format identical to the one in common.sh.
+		# Same format as dotfiles_backup_path in utils/common.sh; install.sh keeps
+		# its own copy because a `curl | bash` bootstrap runs before the clone.
 		backup="$dst.backup_dqna64.$(date +%Y%m%d%H%M%S)"
 		echo_warn "Backing up existing $dst to $backup..."
 		mv "$dst" "$backup"
@@ -100,9 +98,6 @@ symlink_dotfile() {
 # Takes the LAST assignment, drops a trailing comment, trims whitespace and one
 # layer of surrounding quotes. A leading ~ or $HOME is expanded (paths are the
 # common case); nothing else is, since we deliberately don't eval user config.
-#
-# Canonical version lives in utils/common.sh; install.sh keeps its own copy to
-# stay self-contained for the `curl | bash` bootstrap. Keep the two in sync.
 zsh_config_value() {
 	local name="$1" raw
 	[ -f "${ZSH_CONFIG_FILE:-}" ] || return 0
@@ -380,11 +375,9 @@ unset machine_log_file
 
 # === agent-logs
 #
-# Per-project record of what agent sessions changed. Enabled by the agent-log
-# hooks in whatever ~/.claude/settings.json the machine uses - not assumed, so
-# report whether they're there. The log directory is created on first write and
-# uses the same repo-local, env, home hierarchy as branch plans. Reported here
-# so the selected path is never a mystery.
+# Per-project record of what agent sessions changed, enabled by the agent-log
+# hooks in ~/.claude/settings.json. Reports the logs dir and whether the hooks
+# are present.
 
 echo ""
 # Same resolver the writer and reader use, so the reported path is the real one.

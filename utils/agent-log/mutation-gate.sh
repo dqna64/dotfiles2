@@ -24,18 +24,13 @@ set -u
 # Tools that read and never write. Matched case-insensitively against the whole
 # name, plus the substring test below for the MCP tools we can't enumerate.
 #
-# `task` is deliberately NOT here. Delegating to a subagent looks like a single
-# read-only call from the parent, but the subagent's own tool calls don't reach
-# this session's hook - so a turn that hands all its work to a subagent would be
-# dropped, and the work would vanish from the log entirely. Counting delegation
-# as mutating means the summariser gets the turn and can judge it from the
-# parent's closing message, which does describe what the subagent did.
+# `task` counts as mutating: a subagent's tool calls don't reach this session's
+# hooks, so the parent's closing message is the only record of its work.
 readonly_tools='^(read|read_file|grep|grep_search|glob|glob_file_search|ls|list_dir|codebase_search|semsearch|webfetch|web_search|websearch|fetch_rules|todowrite|todo_write|notebookread|readlints|read_lints|askquestion|getdynamictools)$'
 
 # Read-only shell commands. A turn that only inspects the machine hasn't changed
 # it, however many commands it took.
-# `tee` and `xargs` are deliberately absent: tee writes, and xargs runs whatever
-# it is handed. Both are handled below rather than trusted by name.
+# `tee` writes and `xargs` runs its input; both are judged below.
 readonly_cmds='^(ls|cat|bat|head|tail|less|more|grep|rg|ag|ack|find|fd|wc|pwd|echo|printf|which|type|whereis|file|stat|du|df|tree|jq|yq|sort|uniq|cut|tr|awk|diff|date|printenv|ps|top|whoami|hostname|uname|sleep|true|test|basename|dirname|realpath|readlink|column)$'
 
 # git is the command that most needs splitting by subcommand: `git status` is a

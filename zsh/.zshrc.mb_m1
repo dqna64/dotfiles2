@@ -8,9 +8,6 @@
 #PATH="/Applications/CMake.app/Contents/bin":"$PATH"
 
 ### ============= Path ==============
-# Created by `userpath` on 2023-04-14 07:02:51
-# export PATH="$PATH:/Users/me/.local/bin"
-# Manually replace with this line
 export PATH="$HOME/.local/bin":$PATH
 
 # ===
@@ -36,9 +33,6 @@ export PATH=$JAVA_HOME/bin:$PATH
 
 ### Add apache maven to PATH
 export PATH=/Library/apache-maven-3.9.9/bin:$PATH
-
-# === start yabai tiling window manager
-#/usr/bin/env sh ~/.config/yabai/yabairc
 
 # === Added by LM Studio CLI (lms)
 export PATH="$PATH:$HOME/.lmstudio/bin"
