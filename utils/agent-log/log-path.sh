@@ -18,10 +18,10 @@
 # The renderer merges files on read and sorts by timestamp.
 #
 # The project's logs directory follows the branch-plans hierarchy:
-#   1. <git root>/.agent_dqna64/logs/   when the project has a .agent_dqna64/
+#   1. <git root>/.agent_dqna64/logs/    when the project has a .agent_dqna64/
 #      directory (plans or logs) - committed with the project, like plans.
-#   2. $AGENT_LOGS/<slug>/              the user's own logs root, one folder per
-#   3. ~/.agent/logs/<slug>/            project; <slug> is the absolute git-root
+#   2. $AGENT_LOGS/<slug>/               the user's own logs root, one folder per
+#   3. ~/.agent_dqna64/logs/<slug>/      project; <slug> is the absolute git-root
 #      path with '/' replaced by '-' (the same scheme Claude Code uses under
 #      ~/.claude/projects/), so canva5/web and canva7/web never collide.
 
@@ -42,12 +42,12 @@ agent_project_slug() {
 }
 
 # agent_logs_global_root
-# The user's logs root outside any project: $AGENT_LOGS, else ~/.agent/logs.
+# The user's logs root outside any project: $AGENT_LOGS, else ~/.agent_dqna64/logs.
 agent_logs_global_root() {
 	if [ -n "${AGENT_LOGS:-}" ]; then
 		printf '%s\n' "${AGENT_LOGS%/}"
 	else
-		printf '%s\n' "$HOME/.agent/logs"
+		printf '%s\n' "$HOME/.agent_dqna64/logs"
 	fi
 }
 

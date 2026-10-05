@@ -16,7 +16,7 @@ of these that exists:
 1. `<git root of the cwd>/.agent_dqna64/logs/` (`git rev-parse --show-toplevel`) - used whenever the
    project has a `.agent_dqna64/` directory; committed with the project, like plans.
 2. `$AGENT_LOGS/<project slug>/` (resolve the env var first; slug = git-root path with `/` -> `-`).
-3. `~/.agent/logs/<project slug>/`.
+3. `~/.agent_dqna64/logs/<project slug>/`.
 
 If the directory is missing or empty, no session has changed anything in this project yet. Say so and
 carry on; do not create one. Inside it, one file per agent session:

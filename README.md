@@ -40,13 +40,10 @@ re-source `.zshrc` after making changes to those files.
    ```bash
    # curl form — put the var before the receiving `bash`:
    curl -fsSL https://raw.githubusercontent.com/dqna64/dotfiles2/main/install.sh | DOTFILES_DIR=~/code/dotfiles bash
+   ```
 
-
-   `install.sh` clones into that path and symlinks `~/.zshenv` to it;
-   `zsh/.zshenv` auto-derives `DOTFILES_DIR` from that symlink on every
-   shell startup, so no shell-rc edit is needed to remember the
-   non-default location. `.zshrc` warns at startup if `DOTFILES_DIR`
-   doesn't resolve to a real clone.
+   No shell config edit is needed to remember the location. How it's
+   detected: `docs/repo-location.md`.
 
 2. **Edit `zsh/zsh-config`** (bootstrapped from `zsh-config.example` by
    `install.sh`). Set `DQNA64_MACHINE` to one of `MB_M1`, `MB_CNV`,
@@ -112,31 +109,19 @@ Log of software installed **outside** this repo (brew formulae, manual installs,
 toolchains, OS permissions, PATH/env changes made elsewhere), so you can answer
 "how did I install this" months later.
 
-The log lives wherever you put it - any path, any repo. These dotfiles only need
-its path, and nothing here creates, clones, or validates it.
-
-| Where | Does what |
-|---|---|
-| `zsh/zsh-config` | `MACHINE_LOG_FILE` - the log's path. Exported, so agents read it from the environment |
-| `install.sh` | reports that path (or says it's unset). Creates nothing |
-| `claude/CLAUDE.base.md` | the trigger: before/after a system-wide install, claude will know to use the `machine-logs` skill. Symlinked to `~/.claude/CLAUDE.md` |
-| `claude/skills/machine-logs/SKILL.md` | the detail: what counts as loggable, the entry format, the header for a new log, where to commit. Synced to `~/.claude/skills` by `claude/sync-agent-links.sh` |
-
-To set one up: create the log wherever you want it (the skill has the header to
-start it with), then in `zsh/zsh-config`:
+To set one up: create the log wherever you want it (the `machine-logs` skill has
+the header to start it with), then in `zsh/zsh-config`:
 
 ```sh
 export MACHINE_LOG_FILE="$HOME/machine-logs/this-machine.md"
 ```
 
-Agents pick it up from there - no other registration.
+Agents pick it up from there. How it works: `docs/machine-logs.md`.
 
 ## Agent activity logs
 
-A per-project record of what agent sessions actually **changed**, written
-automatically by Claude Code / Cursor hooks (nothing to set up). Only turns that
-change something are logged, summarised by a small model call; reads, searches
-and test runs add nothing.
+A per-project record of what agent sessions **changed**, written automatically
+by Claude Code / Cursor hooks. Turns that only read are not logged.
 
 ```sh
 agentlog            # this project, all sessions merged
@@ -145,24 +130,9 @@ agentlog -s <id>    # one session, by id prefix
 agentlog -a         # every project under the global logs root
 ```
 
-Where they live, same hierarchy as branch plans: `<git root>/.agent_dqna64/logs/`
-when the project has a `.agent_dqna64/` (committed with the project, like plans -
-never gitignored; use the fallback if a repo must not carry them), else
-`$AGENT_LOGS/<project slug>/`, else `~/.agent/logs/<project slug>/`. One JSONL
-file per agent session, `<start>_<machine>_<agent>_<session id>.jsonl`, the id
-being the agent's own (`claude --resume <id>`), so no two writers ever share a
-file and git never merges two sessions.
-
-Know before trusting one: `summary` is the agent's own unverified account of its
-turn; `files`, `commit`, `branch`, `ts` are recorded mechanically. Only the shape
-of tool calls is captured and credentials are redacted before anything is
-written. Cursor is covered by the same hook entries (it reads
-`~/.claude/settings.json` as a third-party source; `agent-log.sh` detects the
-agent from the payload).
-
-Code: `utils/agent-log/` (`agent-log.sh` hook entry, `mutation-gate.sh`,
-`summarise.sh`, `log-path.sh`, `render.sh`); hooks in `claude/settings.*.json`;
-reader guidance in `claude/skills/agent-logs/SKILL.md`; design notes in `CLAUDE.md`.
+To enable: `~/.claude/settings.json` needs the `hooks` block from any
+`claude/settings.*.json` - symlink one (see `claude/README.md`) or copy the block
+in. How it works (where logs live, what's captured): `docs/agent-logs.md`.
 
 ## Gitignored, per-machine files (do not commit)
 
@@ -171,14 +141,6 @@ reader guidance in `claude/skills/agent-logs/SKILL.md`; design notes in `CLAUDE.
 - `*.backup_dqna64.*` — created by `install.sh` and `git-setup.sh` when
   an existing file is moved aside before being replaced. The marker
   keeps these distinct from any other `.backup` files you might have.
-
-## Brittleness
-
-- **`zsh/.zshenv` depth is baked into `DOTFILES_DIR` derivation.**
-  `.zshenv` uses `${_zshenv_self:A:h:h}` to walk two levels up to the
-  repo root. If `.zshenv` moves to a different depth, update the `:h`
-  count (`<repo>/.zshenv` → `:A:h`; `<repo>/zsh/sub/.zshenv` →
-  `:A:h:h:h`). Dir name doesn't matter, only depth.
 
 ## Uninstall
 
@@ -224,6 +186,9 @@ your login shell. Run `uninstall.sh --help` for all options.
 
 - [ ] Test out installing in a different directory than default, via
    `./install.sh` and via curl -fsSL
+- [ ] Rename GitHub repo `dotfiles2` -> `dotfiles_dqna64` to match the default
+   `$DOTFILES_DIR`. Update repo URLs in `install.sh` and `README.md`; run
+   `git remote set-url origin` in existing clones.
 - [x] tmux session saving (via TPM + tmux-resurrect; see `tmux/.tmux.conf`)
 - [ ] Duplicated contants prone to drift due to not using a single source between install.sh
     and everything else. Includes:
@@ -250,6 +215,10 @@ Completed items have been moved to the review plan in `$AGENT_PLANS`
   and a test.
 
 ## Migrating from the bare git repo dotfiles
+
+- [ ] Clean up the leftover old setup once nothing still needs it: the bare repo
+  `~/.dotfiles-dqna64`, `~/.config/aliases/`, `~/.config/zsh/`, and the old
+  `~/.config/yabai/{start.sh,aliases.zsh,scripts}` (now served from the repo).
 
 - [ ] clean up redundant bits in `~/.gitconfig`
 - [ ] Clean up previous symlink ~/.gitignore_global → /Users/gordonh/.config/git/gitignore_global 

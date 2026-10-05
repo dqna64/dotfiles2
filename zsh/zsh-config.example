@@ -40,9 +40,9 @@ export CNV_WORK_BIN_PATH=
 # CLAUDE.*.md files in these dotfiles may tell agents to reference this path
 # as the place to read and write plans, one file per branch.
 # Change it only if you keep plans somewhere else.
-# Default: AGENT_PLANS="$HOME/.agent/plans"
+# Default: AGENT_PLANS="$HOME/.agent_dqna64/plans"
 
-export AGENT_PLANS="$HOME/.agent/plans"
+export AGENT_PLANS="$HOME/.agent_dqna64/plans"
 
 # === Path for agent activity logs
 # Where agent sessions record what they changed: one folder per project, one
@@ -50,9 +50,9 @@ export AGENT_PLANS="$HOME/.agent/plans"
 # the `agentlog` alias. Used only for projects without a .agent_dqna64/ directory
 # (those keep their logs in-repo, like plans); this root gets a <project slug>/
 # folder per project. Change it only if you want that fallback somewhere else.
-# Default: AGENT_LOGS="$HOME/.agent/logs"
+# Default: AGENT_LOGS="$HOME/.agent_dqna64/logs"
 
-export AGENT_LOGS="$HOME/.agent/logs"
+export AGENT_LOGS="$HOME/.agent_dqna64/logs"
 
 # === Machine log
 # Optional log of software installed outside these dotfiles (brew formulae,

@@ -380,12 +380,11 @@ unset machine_log_file
 
 # === agent-logs
 #
-# Per-project record of what agent sessions changed. Nothing to install: the
-# hooks live in the tracked claude/settings.*.json that ~/.claude/settings.json
-# already points at, so linking that file is what turns this on, and the log
-# directory is created on first write. The directory uses the same repo-local,
-# env, home hierarchy as branch plans. Reported here so the selected path is
-# never a mystery.
+# Per-project record of what agent sessions changed. Enabled by the agent-log
+# hooks in whatever ~/.claude/settings.json the machine uses - not assumed, so
+# report whether they're there. The log directory is created on first write and
+# uses the same repo-local, env, home hierarchy as branch plans. Reported here
+# so the selected path is never a mystery.
 
 echo ""
 # Same resolver the writer and reader use, so the reported path is the real one.
@@ -395,10 +394,16 @@ AGENT_LOGS="${AGENT_LOGS:-$(zsh_config_value AGENT_LOGS)}"
 agent_logs_dir="$(agent_logs_dir "$DOTFILES_DIR")"
 echo_info "Agent activity logs for this repo: $agent_logs_dir"
 echo_note "Directory priority: <git root>/.agent_dqna64/logs (committed with the project, like plans),"
-echo_note "then \$AGENT_LOGS/<project slug>, then ~/.agent/logs/<project slug>. One file per agent session."
+echo_note "then \$AGENT_LOGS/<project slug>, then ~/.agent_dqna64/logs/<project slug>. One file per agent session."
 echo_note "Claude sessions append one entry per turn that changed something;"
 echo_note "turns that only read are not logged. Created on first write."
 echo_note "Read them with:  agentlog     (-n 20 for recent, -a for all projects)"
+if grep -qs 'agent-log/agent-log.sh' "$HOME/.claude/settings.json"; then
+	echo_info "Agent logging: enabled (hooks found in ~/.claude/settings.json)."
+else
+	echo_note "Agent logging: not enabled (no agent-log hooks in ~/.claude/settings.json)."
+	echo_note "To enable, see README.md -> \"Agent activity logs\"."
+fi
 unset agent_logs_dir
 
 # === git

@@ -46,3 +46,6 @@ export PATH="$PATH:$HOME/.lmstudio/bin"
 
 
 
+
+# === iTerm2 shell integration (command marks, Cmd-Shift-Up jumps, cwd for new tabs)
+test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"

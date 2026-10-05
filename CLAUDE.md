@@ -133,7 +133,7 @@ global agent behaviour, driven by `claude/CLAUDE.base.md` (symlinked to
 `~/.claude/CLAUDE.md`) and `claude/skills/machine-logs/SKILL.md`, so it applies
 in every repo, not just this one.
 
-What this repo owns is small:
+How it works: `docs/machine-logs.md`. What this repo owns is small:
 
 - `$MACHINE_LOG_FILE` is the log's path, set by hand in `zsh/zsh-config`. Never
   derive or guess it, and don't assume where the log lives - that's the user's
@@ -141,14 +141,23 @@ What this repo owns is small:
   business too.
 - `install.sh` reports that path. It creates nothing, clones nothing, and links
   nothing into `$HOME`.
-- `README.md` -> "Machine logs" maps the moving parts and how to set one up.
-  Keep it in step with any change here.
+- `docs/machine-logs.md` maps the moving parts; `README.md` -> "Machine logs"
+  says how to set one up. Keep both in step with any change here.
 
 ## Agent activity logs
 
 A per-project record of what agent sessions changed, appended by hooks into the
 first existing logs directory resolved by `utils/agent-log/log-path.sh`. See
-`README.md` -> "Agent activity logs" for the hierarchy and moving parts.
+`docs/agent-logs.md` for the hierarchy and moving parts.
+
+Principles - the feature's contract; the invariants below exist to serve them:
+
+- **Works for any new agent session.** Once a machine's settings carry the
+  hooks, every session is logged - no per-session or per-project setup.
+- **No required directory structure.** Any working directory, in a git repo or
+  not, resolves to a logs dir via the fallback hierarchy, created on first write.
+- **Fully automatic, in the background.** Runs off hooks during ordinary
+  sessions; nothing to invoke, and it never slows or breaks the session.
 
 Invariants to preserve if you touch it:
 
@@ -188,16 +197,36 @@ Invariants to preserve if you touch it:
 - **Logs use the branch-plans hierarchy**: `<git root>/.agent_dqna64/logs/`
   (used whenever the project has a `.agent_dqna64/`; committed with the project,
   like plans, never gitignored), else `$AGENT_LOGS/<slug>`, else
-  `~/.agent/logs/<slug>`, slug = git-root path with `/` -> `-`. One file per
+  `~/.agent_dqna64/logs/<slug>`, slug = git-root path with `/` -> `-`. One file per
   agent session, named by the agent's own session id (resumable), so no two
   writers share a file. Keep it that way.
+
+## Documentation placement
+
+- `README.md` - how to **use** things: setup, commands, flags, what to do next.
+- `docs/<feature>.md` - how a feature **works**: design, moving parts, data
+  layout. The base reference for both humans and agents.
+- `CLAUDE.md` - **rules and guidelines** for developing the repo. Build on
+  `docs/` (link to it) rather than restating how things work.
+
+When you add or change a feature, put each kind of content in its place.
+
+## Pending migrations
+
+- **`claude/settings.*.json` per-machine Claude settings** may be superseded by
+  the dotfile overlays system (in progress separately). When that lands,
+  update every reference to the `claude/settings.*.json` mechanism - find them
+  with `grep -rn 'claude/settings\.\|settings\.\*\.json\|settings\.<' .`
+  (`install.sh`, `uninstall.sh`, `README.md`, `claude/README.md`,
+  `docs/agent-logs.md`, `utils/agent-log/agent-log.sh`, this file).
 
 ## Conventions to follow
 
 - **Repo location is dynamic.** Scripts resolve `$DOTFILES_DIR` from their own
   location (the checkout they run from), allow a `DOTFILES_DIR=…` env override,
   and fall back to `$HOME/dotfiles_dqna64`. `zsh/.zshenv` re-derives it from the
-  `~/.zshenv` symlink at shell startup. Don't hardcode `$HOME/dotfiles_dqna64`.
+  `~/.zshenv` symlink at shell startup (see `docs/repo-location.md`, including
+  the `.zshenv` depth it bakes in). Don't hardcode `$HOME/dotfiles_dqna64`.
 - **Shared helpers live in `utils/common.sh`.** The safety-critical primitives
   (`dotfiles_backup_path`, `do_cmd`, `canonicalize_path`, `path_inside`,
   `restore_latest_backup`, `remove_dir_if_empty`) plus the generic per-item
