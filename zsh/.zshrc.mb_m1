@@ -44,8 +44,5 @@ export PATH=/Library/apache-maven-3.9.9/bin:$PATH
 export PATH="$PATH:$HOME/.lmstudio/bin"
 # End of LM Studio CLI section
 
-
-
-
 # === iTerm2 shell integration (command marks, Cmd-Shift-Up jumps, cwd for new tabs)
 test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"

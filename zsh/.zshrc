@@ -133,7 +133,7 @@ load_dqna64_aliases() {
     local dir file
 
     case "$DQNA64_MACHINE" in
-        MB_M1)               dirs+=("$DOTFILES_DIR"/aliases.{git_stuff,mb_m1}) ;;
+        MB_M1)               dirs+=("$DOTFILES_DIR"/aliases.git_stuff) ;;
         MB_CNV)              dirs+=("$DOTFILES_DIR"/aliases.{git_stuff,mb_cnv}) ;;
         DVBX1|DVBX2|DVBX3|DVBX4|DVBX5)   dirs+=("$DOTFILES_DIR"/aliases.{git_stuff,dvbx_cnv}) ;;
     esac
