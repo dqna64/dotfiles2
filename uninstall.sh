@@ -36,14 +36,14 @@ if [ -t 1 ]; then
 	RED='\033[31m'
 	GREEN='\033[32m'
 	YELLOW='\033[33m'
-	BLUE='\033[34m'
+	CYAN='\033[36m'
 	BOLD='\033[1m'
 	RESET='\033[0m'
 else
 	RED=''
 	GREEN=''
 	YELLOW=''
-	BLUE=''
+	CYAN=''
 	BOLD=''
 	RESET=''
 fi
@@ -65,7 +65,7 @@ echo_error() {
 }
 
 echo_note() {
-	echo -e "${BLUE}$*${RESET}"
+	echo -e "${CYAN}$*${RESET}"
 }
 
 # Shared safety helpers (do_cmd, canonicalize_path, path_inside,
@@ -152,7 +152,7 @@ confirm() {
 	if [ "$ASSUME_NO" = "true" ]; then return 1; fi
 	if [ ! -t 0 ]; then return 1; fi
 	local reply
-	read -r -p "$(echo -e "${BLUE}${prompt} [y/N] ${RESET}")" reply
+	read -r -p "$(echo -e "${CYAN}${prompt} [y/N] ${RESET}")" reply
 	case "$reply" in
 		[Yy]|[Yy][Ee][Ss]) return 0 ;;
 		*) return 1 ;;
@@ -351,7 +351,7 @@ fi
 # TODO: automate removal of the gitconfig and ssh config blocks
 # using the markers
 
-printf '%b' "$BLUE"
+printf '%b' "$CYAN"
 cat <<EOF
 
 Manual follow-ups (uninstall.sh won't touch user-owned files):

@@ -59,8 +59,8 @@ What it does and why it's safe:
   installed locally in those dirs stay untouched.
 - **Idempotent**: links already correct are left alone; only new items get
   linked on a re-run.
-- **Non-destructive**: a real file/dir or foreign symlink in the way is moved to
-  `*.backup_dqna64.<timestamp>`, never overwritten.
+- **Non-destructive**: an existing item with the same name is skipped with a
+  warning. `--force` replaces it, moving the original to `*.backup_dqna64.*`.
 - **Prunes** stale links (items you renamed/removed in the repo).
 - **Edits/pulls need no re-run** — the symlinks point straight at the repo.
 
@@ -85,7 +85,7 @@ To remove these links from a machine, run the reverse script (also invoked by
 ```
 
 It drops only the links resolving back into the repo and restores anything
-`sync-agent-links.sh` moved aside, leaving foreign items and the tool-owned
+moved aside to `*.backup_dqna64.*`, leaving foreign items and the tool-owned
 target dirs untouched. `-n`/`--dry-run` to preview.
 
 ## 5. (Optional) Cursor global rules

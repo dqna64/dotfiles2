@@ -6,14 +6,14 @@ if [ -t 1 ]; then
 	RED='\033[31m'
 	GREEN='\033[32m'
 	YELLOW='\033[33m'
-	BLUE='\033[34m'
+	CYAN='\033[36m'
 	BOLD='\033[1m'
 	RESET='\033[0m'
 else
 	RED=''
 	GREEN=''
 	YELLOW=''
-	BLUE=''
+	CYAN=''
 	BOLD=''
 	RESET=''
 fi
@@ -35,7 +35,7 @@ echo_error() {
 }
 
 echo_note() {
-	echo -e "${BLUE}$*${RESET}"
+	echo -e "${CYAN}$*${RESET}"
 }
 
 # === Helpers
@@ -407,7 +407,7 @@ unset agent_logs_dir
 # aliases) is handled by git/git-setup.sh, not here, because most of it
 # depends on values from git/git-identity.
 
-printf '%b' "$BLUE"
+printf '%b' "$CYAN"
 cat <<EOF
 
 Configure git identities + per-account SSH host aliases [optional]
@@ -457,7 +457,7 @@ else
 	git clone https://github.com/tmux-plugins/tpm "$TPM_DIR"
 fi
 
-printf '%b' "$BLUE"
+printf '%b' "$CYAN"
 cat <<EOF
 
   Finish tmux plugin setup [optional]
@@ -491,7 +491,7 @@ symlink_dotfile "$DOTFILES_DIR/yabai/yabairc" "$HOME/.config/yabai/yabairc"
 # Claude config isn't symlinked automatically — the README lists the
 # available configs and the matching `ln -sf` commands.
 
-printf '%b' "$BLUE"
+printf '%b' "$CYAN"
 cat <<EOF
 
   Optional: install Claude Code config.
@@ -526,7 +526,7 @@ printf '%b' "$RESET"
 
 # === DOTFILES_DIR reminder
 
-printf '%b' "$BLUE"
+printf '%b' "$CYAN"
 cat <<EOF
 
   Note: zsh/.zshenv auto-derives \$DOTFILES_DIR from its own location

@@ -65,6 +65,13 @@ has config**. Preserve these invariants in any change:
    of truth). `install.sh` keeps a deliberate hand-copy of the format because in
    a `curl | bash` bootstrap it runs before the repo (and `common.sh`) is on
    disk; if you touch the format, keep both in sync.
+   **Exception - agent links** (`claude/sync-agent-links.sh`: skills, output
+   styles): an item already at a target name is *skipped with a warning*, and
+   moved aside only with `--force`. Those dirs are shared with hand-written
+   items, and a same-named skill may have different content, so silently
+   swapping it would change agent behaviour. Core dotfiles keep move-aside
+   because running `install.sh` is itself the decision to hand those paths to
+   the repo.
 3. **Respect what's already there.** Detect existing files/configs/clones and
    adapt. Distinguish "our symlink", "a real file the user owns", and "a symlink
    pointing elsewhere" — and only ever touch the first.

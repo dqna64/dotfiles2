@@ -24,8 +24,11 @@
 #     empty list (not a literal '*') when nothing matches.
 #   - DRY_RUN gates do_cmd; it defaults to false below if the caller hasn't set
 #     it, so a script with no --dry-run still works.
+#   - REPLACE_EXISTING (default false) lets symlink_item move an existing
+#     non-ours item aside instead of skipping it; callers expose it as --force.
 
 : "${DRY_RUN:=false}"
+: "${REPLACE_EXISTING:=false}"
 
 # dotfiles_backup_path <file>
 # The single source of truth for the backup naming scheme. The backup_dqna64
@@ -158,20 +161,20 @@ remove_dir_if_empty() {
 #
 # "Ours" vs foreign: a link is ours iff it resolves back into <src_root> (the
 # tracked dir a collection lives under). Only our links are ever removed or
-# re-pointed; real files, dirs, and foreign symlinks are backed up or left be.
+# re-pointed; real files, dirs, and foreign symlinks are left be.
 #
 # Counters (optional): these bump plain globals so callers can print a summary —
-# LINKED_NEW / LINKED_OK / RELINKED / BACKED_UP / PRUNED (forward) and REMOVED /
+# LINKED_NEW / LINKED_OK / RELINKED / CONFLICTS / BACKED_UP / PRUNED (forward) and REMOVED /
 # SKIPPED / RESTORED (reverse). They default to 0 when unset (${VAR:-0}), so a
 # caller that doesn't care can ignore them; init them to 0 for a clean summary.
 # Requires `shopt -s nullglob` (see contract above) for the directory globs.
 
 # symlink_item <src_root> <src> <dst>
 # Idempotently point <dst> at <src> (both absolute). <src_root> is the tracked
-# dir the collection lives under, used to recognise links we own. Non-destructive:
-# a real file/dir or foreign symlink at <dst> is moved to
-# <dst>.backup_dqna64.<timestamp>, never overwritten. A stale link we own is
-# re-pointed with no backup.
+# dir the collection lives under, used to recognise links we own. A real file/dir
+# or foreign symlink at <dst> is skipped with a warning by default; with
+# REPLACE_EXISTING=true it's moved to <dst>.backup_dqna64.<timestamp> (which
+# unlink_dir_from restores) and linked. A stale link we own is re-pointed.
 symlink_item() {
 	local src_root="$1" src="$2" dst="$3"
 
@@ -183,7 +186,10 @@ symlink_item() {
 
 	do_cmd mkdir -p "$(dirname "$dst")"
 
-	if [ -L "$dst" ] && [ "$(canonicalize_path "$dst")" = "$src_canon" ]; then
+	# Not just `-L "$dst"`: when a parent dir is itself a link into the repo
+	# (e.g. ~/.claude/output-styles -> claude/output-styles), <dst> is the
+	# source file reached through that link, and must never be moved/relinked.
+	if { [ -L "$dst" ] || [ -e "$dst" ]; } && [ "$(canonicalize_path "$dst")" = "$src_canon" ]; then
 		echo "  already linked: $dst"
 		LINKED_OK=$(( ${LINKED_OK:-0} + 1 ))
 		return 0
@@ -201,10 +207,18 @@ symlink_item() {
 	fi
 
 	if [ -e "$dst" ] || [ -L "$dst" ]; then
-		# A real file/dir, or a foreign symlink: move aside, never clobber.
+		# A real file/dir, or a foreign symlink: the user's (or another tool's)
+		# item. A matching name doesn't mean matching content, so only replace
+		# it when explicitly asked.
+		if [ "$REPLACE_EXISTING" != "true" ]; then
+			echo_warn "  skipping $dst: already exists and isn't linked to the repo; left untouched."
+			echo_note "    re-run with --force to move it aside (*.backup_dqna64.*) and link the repo's version."
+			CONFLICTS=$(( ${CONFLICTS:-0} + 1 ))
+			return 0
+		fi
 		local backup
 		backup="$(dotfiles_backup_path "$dst")"
-		echo_warn "  backing up existing $dst -> $backup"
+		echo_warn "  --force: backing up existing $dst -> $backup"
 		do_cmd mv "$dst" "$backup"
 		BACKED_UP=$(( ${BACKED_UP:-0} + 1 ))
 	fi

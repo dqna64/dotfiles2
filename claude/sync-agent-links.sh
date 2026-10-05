@@ -25,12 +25,14 @@
 # Why symlinks (not copies): editing an item in the repo — or `git pull`ing an
 # update — is instantly reflected on the machine, with nothing to re-copy.
 #
-# Safety model (mirrors install.sh / uninstall.sh):
+# Safety model:
 #   - Idempotent: re-running converges; links already correct are left alone.
 #   - Non-destructive: a real file/dir or a foreign symlink sitting where a
-#     link should go is moved aside to <dst>.backup_dqna64.<timestamp>, never
-#     overwritten. The backup_dqna64 marker is the same one .gitignore and
-#     uninstall.sh understand.
+#     link should go is skipped with a warning and left intact - unlike
+#     install.sh, which moves its dotfiles' conflicts aside, because these dirs
+#     are shared with hand-written items and a same-named item may differ.
+#     --force opts into moving it to <dst>.backup_dqna64.<timestamp> (the marker
+#     .gitignore and uninstall.sh understand, so unsync restores it).
 #   - Prune is conservative: only symlinks that resolve back into the matching
 #     repo source dir AND no longer have a tracked item are removed (i.e. items
 #     you renamed or deleted in the repo). Foreign items are never touched.
@@ -43,14 +45,14 @@ if [ -t 1 ]; then
 	RED='\033[31m'
 	GREEN='\033[32m'
 	YELLOW='\033[33m'
-	BLUE='\033[34m'
+	CYAN='\033[36m'
 	BOLD='\033[1m'
 	RESET='\033[0m'
 else
 	RED=''
 	GREEN=''
 	YELLOW=''
-	BLUE=''
+	CYAN=''
 	BOLD=''
 	RESET=''
 fi
@@ -72,7 +74,7 @@ echo_error() {
 }
 
 echo_note() {
-	echo -e "${BLUE}$*${RESET}"
+	echo -e "${CYAN}$*${RESET}"
 }
 
 # Shared safety helpers (do_cmd, canonicalize_path, path_inside,
@@ -88,6 +90,7 @@ fi
 # === Options
 
 DRY_RUN=false
+REPLACE_EXISTING=false
 
 usage() {
 	cat <<EOF
@@ -100,6 +103,9 @@ re-run; non-destructive to anything not tracked by these dotfiles.
 
 Options:
   -n, --dry-run   Show what would happen without changing anything.
+  -f, --force     Replace items already at a target name that aren't ours:
+                  move each to <name>.backup_dqna64.<timestamp>, then link.
+                  Default is to skip them with a warning.
   -h, --help      Show this help.
 EOF
 }
@@ -107,6 +113,7 @@ EOF
 while [ $# -gt 0 ]; do
 	case "$1" in
 		-n|--dry-run) DRY_RUN=true ;;
+		-f|--force) REPLACE_EXISTING=true ;;
 		-h|--help) usage; exit 0 ;;
 		*) echo_error "Unknown option: $1"; echo ""; usage; exit 1 ;;
 	esac
@@ -118,7 +125,7 @@ done
 # The per-item link + prune primitives (symlink_item, prune_stale_links) live in
 # utils/common.sh (sourced above), alongside do_cmd, canonicalize_path,
 # path_inside, and dotfiles_backup_path; they bump the LINKED_*/RELINKED/
-# BACKED_UP/PRUNED counters we init and report below. sync_collection is the
+# CONFLICTS/BACKED_UP/PRUNED counters we init and report below. sync_collection is the
 # script-local orchestrator: it owns the globbing and the presentation (per-
 # collection header, spacing) so that stays out of the shared lib. Kept symmetric
 # with unsync-agent-links.sh's unsync_collection.
@@ -189,6 +196,7 @@ echo_info "Output styles source: $OUTPUT_STYLES_SRC_DIR -> ~/.claude/output-styl
 LINKED_NEW=0
 LINKED_OK=0
 RELINKED=0
+CONFLICTS=0
 BACKED_UP=0
 PRUNED=0
 
@@ -207,6 +215,7 @@ echo ""
 echo_success "Done."
 echo_note "  linked:        $LINKED_NEW new, $LINKED_OK already correct"
 [ "$RELINKED" -gt 0 ] && echo_note "  re-pointed:    $RELINKED"
+[ "$CONFLICTS" -gt 0 ] && echo_warn  "  skipped:       $CONFLICTS existing item(s) left in place (re-run with --force to replace)"
 [ "$BACKED_UP" -gt 0 ] && echo_warn  "  backed up:     $BACKED_UP existing item(s) moved aside (*.backup_dqna64.*)"
 [ "$PRUNED" -gt 0 ] && echo_note "  pruned:        $PRUNED stale link(s)"
 echo_note "  Re-run this after adding items or 'git pull'. Edits/pulls need no re-run (symlinks point at the repo)."

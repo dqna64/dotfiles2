@@ -27,14 +27,14 @@ if [ -t 1 ]; then
 	RED='\033[31m'
 	GREEN='\033[32m'
 	YELLOW='\033[33m'
-	BLUE='\033[34m'
+	CYAN='\033[36m'
 	BOLD='\033[1m'
 	RESET='\033[0m'
 else
 	RED=''
 	GREEN=''
 	YELLOW=''
-	BLUE=''
+	CYAN=''
 	BOLD=''
 	RESET=''
 fi
@@ -56,7 +56,7 @@ echo_error() {
 }
 
 echo_note() {
-	echo -e "${BLUE}$*${RESET}"
+	echo -e "${CYAN}$*${RESET}"
 }
 
 # Shared safety helpers (do_cmd, canonicalize_path, path_inside,
