@@ -28,9 +28,9 @@
     "python": false,
     "cpp": false,
     "c": false,
-    "typescript": true,
     "typescriptreact": true,
-    "java": true
+    "java": true,
+    "typescript": true
   },
   "editor.minimap.enabled": false,
   "editor.wordWrap": "on",
@@ -158,7 +158,8 @@
   "terminal.integrated.gpuAcceleration": "off",
   "window.systemColorTheme": "dark",
   "window.titleBarStyle": "custom",
-  "claudeCode.preferredLocation": "sidebar",
+  "claudeCode.preferredLocation": "panel",
+  "github.copilot.nextEditSuggestions.eagerness": "low",
   // "files.trimTrailingWhitespace": true,
   // "files.insertFinalNewline": true,
 }
