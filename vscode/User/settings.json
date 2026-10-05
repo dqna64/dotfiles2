@@ -70,9 +70,6 @@
     "editor.formatOnType": false,
     // "editor.defaultFormatter": "ms-python.autopep8"
   },
-  "C_Cpp.default.cppStandard": "c++20",
-  "C_Cpp.intelliSenseEngine": "default", // Intellisense conflicts with clangd, disable it
-  "C_Cpp.clang_format_fallbackStyle": "{BasedOnStyle: Google, IndentWidth: 4, ColumnLimit: 0}",
   "cmake.configureOnOpen": true,
   "code-runner.executorMap": {
     // "cpp": "cd $dir && g++ $fileName -o $fileNameWithoutExt && $dir$fileNameWithoutExt",
@@ -83,11 +80,56 @@
     "workbench.action.tasks.configureTaskRunner",
     "workbench.action.tasks.runTask"
   ],
+  // === C/C++
+  // Point directly to your Homebrew LLVM clangd engine path
+  // For M1/M2/M3/M4 Apple Silicon Macs use this line:
+  "clangd.path": "/opt/homebrew/opt/llvm/bin/clangd",
+  // =
+  // The clangd vscode extension installed a copy of clangd here, you can
+  // use this if you want:
+  // "clangd.path": "/Users/me/Library/Application Support/Code/User/globalStorage/llvm-vs-code-extensions.vscode-clangd/install/15.0.6/clangd_15.0.6/bin/clangd",
+  // =
+  // Note: If you are using an Intel-based Mac, uncomment the line below instead:
+  // "clangd.path": "/usr/local/opt/llvm/bin/clangd",
+  // =
+  // If you have an Apple-provided clangd (check with `xcrun -find clangd`)
+  // you can use this path instead of a homebrew installation of clangd
+  // "clangd.path": "/usr/bin/clangd",
+  "clangd.restartAfterCrash": true,
+  // Prevent Microsoft VSCode built-in intellisense from conflicting with our
+  // Homebrew LLVM clangd installation.
+  "C_Cpp.intelliSenseEngine": "disabled",
+  "C_Cpp.default.cppStandard": "c++20",
+  // Assign clangd as the exclusive handler for C/C++ files
   "[cpp]": {
-    "editor.defaultFormatter": "xaver.clang-format"
+    // "editor.defaultFormatter": "xaver.clang-format",
+    // "editor.defaultFormatter": "ms-vscode.cpptools",
+    "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
+    "editor.formatOnSave": true,
   },
+  "[c]": {
+    // "editor.defaultFormatter": "xaver.clang-format"
+    // "editor.defaultFormatter": "ms-vscode.cpptools",
+    "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
+    "editor.formatOnSave": true
+  },
+  // Disable ms-vscode.cpptools for formatting to prevent conflicts,
+  // we use llvm-vs-code-extensions.vscode-clangd instead
+  "C_Cpp.formatting": "disabled",
+  // Look for .clang-format custom style config in workspace if available
+  "C_Cpp.clang_format_style": "file",
+  // Fallback style config when no .clang-format file is found in the workspace
+  "C_Cpp.clang_format_fallbackStyle": "Google",
+  // 4. (Optional) Provide query execution paths for system headers
+  "clangd.arguments": [
+    "--background-index", // indexes your codebase in background
+    "--clang-tidy", // enables advanced linting with .clang-tidy
+    "--completion-style=detailed", // richer autocomplete
+    "--header-insertion=iwyu", // include-what-you-use style headers
+    "--fallback-style=Google" // style if no .clang-format found
+  ],
   "C_Cpp.default.cStandard": "c11",
-  "clangd.path": "/Users/me/Library/Application Support/Code/User/globalStorage/llvm-vs-code-extensions.vscode-clangd/install/15.0.6/clangd_15.0.6/bin/clangd",
+  // ===
   "haskell.manageHLS": "GHCup",
   "[typescriptreact]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
@@ -151,15 +193,17 @@
     }
   ],
   "codium.enable": false,
-  "[c]": {
-    // "editor.defaultFormatter": "xaver.clang-format"
-  },
   "editor.formatOnSave": true,
   "terminal.integrated.gpuAcceleration": "off",
   "window.systemColorTheme": "dark",
   "window.titleBarStyle": "custom",
-  "claudeCode.preferredLocation": "panel",
+  "claudeCode.preferredLocation": "sidebar",
   "github.copilot.nextEditSuggestions.eagerness": "low",
+  "chat.viewSessions.orientation": "stacked",
   // "files.trimTrailingWhitespace": true,
   // "files.insertFinalNewline": true,
+"chat.automations.enabled": true,
+"chat.editing.explainChanges.enabled": true,
+"github.copilot.chat.languageContext.fix.typescript.enabled": true,
+"github.copilot.chat.languageContext.inline.typescript.enabled": true,
 }
