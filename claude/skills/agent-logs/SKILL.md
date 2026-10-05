@@ -10,13 +10,10 @@ A per-project record of what agent sessions have actually changed here. Every
 session working in a directory writes its own file into the project's logs
 directory; read together they accumulate across sessions, agents and machines.
 
-Find the logs directory using the same hierarchy as `branch-plans` - the first
-of these that exists:
+The logs directory is always outside the project, never inside the repo:
 
-1. `<git root of the cwd>/.agent_dqna64/logs/` (`git rev-parse --show-toplevel`) - used whenever the
-   project has a `.agent_dqna64/` directory; committed with the project, like plans.
-2. `$AGENT_LOGS/<project slug>/` (resolve the env var first; slug = git-root path with `/` -> `-`).
-3. `~/.agent_dqna64/logs/<project slug>/`.
+1. `$AGENT_LOGS/<project slug>/` (resolve the env var first; slug = git-root path with `/` -> `-`).
+2. else `~/.agent_dqna64/logs/<project slug>/`.
 
 If the directory is missing or empty, no session has changed anything in this project yet. Say so and
 carry on; do not create one. Inside it, one file per agent session:
@@ -92,10 +89,9 @@ edit, or delete entries by hand, and never "tidy up" a log file: other sessions
 may be appending to it at the same moment, and it is append-only by design so
 that concurrent writers can't corrupt each other.
 
-Repo-local logs are committed with the project, exactly like `.agent_dqna64/plans/`:
-never add them to a project or global gitignore. A project that wants its log
-kept out of the repo uses the `$AGENT_LOGS` fallback. Commit the log file along
-with the work it describes; it is append-only, so commits never rewrite earlier lines.
+Never copy, move or commit a log file into a repo. Entries hold the hostname,
+absolute paths and unreviewed summaries - private, machine-specific detail that
+must not be published. Logs stay in the user's home logs root.
 
 ## Related
 

@@ -322,8 +322,8 @@ else
 fi
 
 # Agent activity logs. Unlinking ~/.claude/settings.json above already stops new
-# entries, since that's where the hooks live. Resolve the same repo-local, env,
-# home hierarchy as the writer and report the selected logs without deleting
+# entries, since that's where the hooks live. Resolve the same env, home
+# hierarchy as the writer and report the selected logs without deleting
 # them. The scratch dir is also left because a running session may be using it.
 # shellcheck source=utils/agent-log/log-path.sh
 . "$DOTFILES_DIR/utils/agent-log/log-path.sh"

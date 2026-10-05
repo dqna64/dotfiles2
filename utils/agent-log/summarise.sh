@@ -72,7 +72,7 @@ run_with_timeout() {
 # Strip the credential shapes that routinely appear in shell commands. This is
 # the last line of defence, not the first: agent-log.sh already records only the
 # shape of a tool call. But commands are recorded verbatim up to 400 chars, and
-# this file is durable and sits inside the user's project, so anything that
+# this file is durable, so anything that
 # looks like a secret is masked before it reaches the log or the model.
 redact() {
 	sed -E \

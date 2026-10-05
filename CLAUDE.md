@@ -182,8 +182,8 @@ Invariants to preserve if you touch it:
   `flock(1)`. Never introduce a multi-line entry or a read-modify-write.
 - **Never widen what's captured.** Only the shape of a tool call is recorded -
   tool name, file path, command truncated to 400 chars - and `summarise.sh`
-  redacts credential patterns on top. The file is durable and sits inside the
-  user's project; file contents and full arguments must not reach it.
+  redacts credential patterns on top. The file is durable; file contents and
+  full arguments must not reach it.
 - **The gate is deliberate.** Turns that only read are not logged, at all. If
   you change `mutation-gate.sh`, keep an unrecognised tool counting as
   mutating: a missing entry makes the log untrustworthy, a spurious one is
@@ -195,12 +195,13 @@ Invariants to preserve if you touch it:
   demanding one line, keep the `NOTHING` escape hatch, and don't add fields to
   the rendered view that repeat on every line (see the machine-name test in
   `render.sh`).
-- **Logs use the branch-plans hierarchy**: `<git root>/.agent_dqna64/logs/`
-  (used whenever the project has a `.agent_dqna64/`; committed with the project,
-  like plans, never gitignored), else `$AGENT_LOGS/<slug>`, else
-  `~/.agent_dqna64/logs/<slug>`, slug = git-root path with `/` -> `-`. One file per
-  agent session, named by the agent's own session id (resumable), so no two
-  writers share a file. Keep it that way.
+- **Logs never live inside a project**: `$AGENT_LOGS/<slug>`, else
+  `~/.agent_dqna64/logs/<slug>`, slug = git-root path with `/` -> `-`. Unlike
+  plans, there is no `<repo>/.agent_dqna64/` tier: entries carry the hostname,
+  absolute paths and unreviewed model summaries, which must never be committed
+  (or pushed to a public repo). One file per agent session, named by the
+  agent's own session id (resumable), so no two writers share a file. Keep it
+  that way.
 
 ## Documentation placement
 

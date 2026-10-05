@@ -5,14 +5,14 @@ changing this feature are in `CLAUDE.md` -> "Agent activity logs".
 
 ## Where logs live
 
-Same hierarchy as branch plans, resolved by `utils/agent-log/log-path.sh` - the
+Always outside the project, resolved by `utils/agent-log/log-path.sh` - the
 writer, `agentlog` and `install.sh` all use it, so they agree:
 
-1. `<git root>/.agent_dqna64/logs/` when the project has a `.agent_dqna64/`
-   directory. Committed with the project, like plans - never gitignored; use
-   the fallbacks if a repo must not carry them.
-2. `$AGENT_LOGS/<project slug>/`.
-3. `~/.agent_dqna64/logs/<project slug>/`.
+1. `$AGENT_LOGS/<project slug>/`.
+2. else `~/.agent_dqna64/logs/<project slug>/`.
+
+Unlike branch plans there is no in-repo tier: entries carry the hostname,
+absolute paths and unreviewed summaries, which must not be committed.
 
 `<project slug>` is the absolute git-root path with `/` -> `-` (the scheme Claude
 Code uses under `~/.claude/projects/`), so `canva5/web` and `canva7/web` never
@@ -20,7 +20,7 @@ collide. The directory is created on first write.
 
 One JSONL file per agent session, `<start>_<machine>_<agent>_<session id>.jsonl`.
 The id is the agent's own (`claude --resume <id>`), so no two writers ever share
-a file and git never merges two sessions. `render.sh` merges files on read and
+a file. `render.sh` merges files on read and
 sorts by timestamp.
 
 ## Moving parts

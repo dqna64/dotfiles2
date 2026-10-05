@@ -57,7 +57,7 @@ payload="$(cat)"
 #
 # The record deliberately captures only the *shape* of a call - tool name, file
 # path, truncated command. Hook payloads carry whole file contents and raw shell
-# commands, and this log is durable and lives inside the user's project, so the
+# commands, and this log is durable, so the
 # full arguments are never written. summarise.sh redacts on top of that.
 #
 # Absent fields are `null` and dropped afterwards (`empty` would discard the
