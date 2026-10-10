@@ -279,6 +279,13 @@ else
 	elif [ -e "$settings_dst" ] && [ ! -L "$settings_dst" ]; then
 		echo_note "  $settings_dst is a real file (yours); not replacing it. Resolver's pick: $winner"
 	else
+		# A link into any dotfiles repo (possibly dangling, e.g. a settings file
+		# that moved to an overlay) is ours: re-point it. symlink_item only
+		# recognises links into the winner's own repo.
+		if [ -L "$settings_dst" ] && dotfiles_root_of "$(readlink "$settings_dst")" "${ROOTS[@]}" >/dev/null; then
+			echo_info "  re-pointing $settings_dst (was -> $(readlink "$settings_dst"))"
+			do_cmd rm "$settings_dst"
+		fi
 		symlink_item "$winner_root" "$winner" "$settings_dst"
 	fi
 fi
