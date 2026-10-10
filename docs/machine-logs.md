@@ -10,5 +10,5 @@ only need its path; nothing here creates, clones or validates it.
 |---|---|
 | `zsh/zsh-config` | `MACHINE_LOG_FILE` - the log's path. Exported, so agents read it from the environment |
 | `install.sh` | reports that path (or says it's unset). Creates nothing |
-| `claude/CLAUDE.base.md` | the trigger: before/after a system-wide install, agents know to use the `machine-logs` skill. Symlinked to `~/.claude/CLAUDE.md` |
+| `claude/rules/skills.md` | the trigger: before/after a system-wide install, agents know to use the `machine-logs` skill. Linked into `~/.claude/rules/` by `claude/sync-agent-links.sh` |
 | `claude/skills/machine-logs/SKILL.md` | the detail: what counts as loggable, the entry format, the header for a new log, where to commit. Synced to `~/.claude/skills` by `claude/sync-agent-links.sh` |

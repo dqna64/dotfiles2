@@ -5,6 +5,16 @@
 #   - git/.gitignore_global       -> ~/.gitignore_global             (symlinked)
 #   - ssh/config.template         -> ssh/dqna64-dotfiles.conf        (rendered, gitignored, Included from ~/.ssh/config)
 #
+# Extension repos (overlays listed in zsh/zsh-config) may carry the same two
+# templates: <overlay>/git/gitconfig.template and <overlay>/ssh/config.template.
+# They are rendered with the SAME identity values (git/git-identity in this
+# repo is the only source of names, emails, keys and aliases) into gitignored
+# files next to them, and the base's rendered files pull them in: the base
+# gitconfig ends with [include] path = <overlay rendered> (so overlay settings
+# win over the base's), and the base ssh snippet starts with Include <overlay
+# rendered> (before any Host block, so the overlay's Hosts are global). Your
+# ~/.gitconfig and ~/.ssh/config keep their single include line.
+#
 # Run AFTER install.sh — install.sh handles the zsh/karabiner/tmux/yabai
 # pieces but leaves git-related host setup to this script because most of
 # it depends on values from git/git-identity.
@@ -36,6 +46,13 @@ if [[ ! -r "$COMMON_LIB" ]]; then
 fi
 # shellcheck source=../utils/common.sh
 . "$COMMON_LIB"
+# shellcheck source=../utils/overlays.sh
+. "$DOTFILES_DIR/utils/overlays.sh"
+export DOTFILES_DIR
+ZSH_CONFIG_FILE="${ZSH_CONFIG_FILE:-$DOTFILES_DIR/zsh/zsh-config}"
+OVERLAY_ROOTS=()
+while IFS= read -r _r; do [[ "$_r" != "$DOTFILES_DIR" ]] && OVERLAY_ROOTS+=("$_r"); done < <(dotfiles_roots 2>/dev/null)
+unset _r
 
 GIT_DIR="$DOTFILES_DIR/git"
 SSH_TEMPLATE_DIR="$DOTFILES_DIR/ssh"
@@ -213,10 +230,57 @@ render_template() {
     # re-rendered. `#` is a comment in both gitconfig and ssh config.
     printf '\n# dqna64-template-oid: %s\n' "$(git hash-object "$template_file")" >> "$output_file"
 
+    # A placeholder this script does not know stays literal and would ship a
+    # broken config; overlay templates may only use the variables git-identity
+    # defines. Fail loudly instead.
+    local leftover
+    leftover="$( { grep -o '{{[A-Z_]*}}' "$output_file" || true; } | sort -u | tr '\n' ' ')"
+    if [[ -n "$leftover" ]]; then
+        echo "Error: $template_file uses placeholders git-identity does not define: $leftover" >&2
+        echo "       Only the variables in git/git-identity.example are available to overlay templates." >&2
+        exit 1
+    fi
+
     echo "Rendered $template_file -> $output_file"
 }
 
+# Overlay templates. Rendered into the overlay, next to the template, under the
+# same names the base uses. Each overlay's own .gitignore must cover them
+# (new-overlay.sh writes it); a hand-made overlay that does not is warned.
+warn_if_tracked() {
+    git -C "$(dirname "$1")" check-ignore -q "$1" 2>/dev/null && return 0
+    echo "   WARNING: $1 is not gitignored in its repo - add '${1#"$2"/}' to $2/.gitignore (it holds git-identity values)."
+}
+OVERLAY_GITCONFIGS=()
+OVERLAY_SSH_SNIPPETS=()
+for _root in ${OVERLAY_ROOTS[@]+"${OVERLAY_ROOTS[@]}"}; do
+    if [[ -f "$_root/git/gitconfig.template" ]]; then
+        render_template "$_root/git/gitconfig.template" "$_root/git/dqna64-dotfiles.gitconfig"
+        warn_if_tracked "$_root/git/dqna64-dotfiles.gitconfig" "$_root"
+        OVERLAY_GITCONFIGS+=("$_root/git/dqna64-dotfiles.gitconfig")
+    fi
+    if [[ -f "$_root/ssh/config.template" ]]; then
+        render_template "$_root/ssh/config.template" "$_root/ssh/dqna64-dotfiles.conf"
+        chmod 600 "$_root/ssh/dqna64-dotfiles.conf"
+        warn_if_tracked "$_root/ssh/dqna64-dotfiles.conf" "$_root"
+        OVERLAY_SSH_SNIPPETS+=("$_root/ssh/dqna64-dotfiles.conf")
+    fi
+done
+unset _root
+
 render_template "$GIT_DIR/gitconfig.template" "$GITCONFIG_RENDERED"
+
+# Pull the overlays' rendered gitconfigs in from the base's rendered file, at
+# the END so an overlay's values override the base's (git: last wins). Nested
+# includes are fine for git (depth limit 10).
+if [[ ${#OVERLAY_GITCONFIGS[@]} -gt 0 ]]; then
+    {
+        printf '\n# Extension repos (overlays) - rendered by git-setup.sh, included last so they win.\n[include]\n'
+        for _f in "${OVERLAY_GITCONFIGS[@]}"; do printf '    path = %s\n' "$_f"; done
+    } >> "$GITCONFIG_RENDERED"
+    unset _f
+    echo "  + includes ${#OVERLAY_GITCONFIGS[@]} overlay gitconfig(s)"
+fi
 
 # Symlink the global gitignore so edits to git/.gitignore_global in the repo
 # take effect immediately.
@@ -257,6 +321,21 @@ fi
 # Included files.
 render_template "$SSH_TEMPLATE_DIR/config.template" "$SSH_SNIPPET_DEST"
 chmod 600 "$SSH_SNIPPET_DEST"
+
+# Pull the overlays' rendered ssh snippets in from the TOP of the base snippet:
+# an Include below a Host block only applies while that Host matches, so the
+# overlay Includes must come before the base's first Host line.
+if [[ ${#OVERLAY_SSH_SNIPPETS[@]} -gt 0 ]]; then
+    {
+        printf '# Extension repos (overlays) - rendered by git-setup.sh; Included first so their Hosts are global.\n'
+        for _f in "${OVERLAY_SSH_SNIPPETS[@]}"; do printf 'Include %s\n' "$_f"; done
+        printf '\n'
+        cat "$SSH_SNIPPET_DEST"
+    } > "$SSH_SNIPPET_DEST.tmp" && mv "$SSH_SNIPPET_DEST.tmp" "$SSH_SNIPPET_DEST"
+    chmod 600 "$SSH_SNIPPET_DEST"
+    unset _f
+    echo "  + Includes ${#OVERLAY_SSH_SNIPPETS[@]} overlay ssh snippet(s)"
+fi
 
 # Same two-signal check as gitconfig above: the canonical `Include <abs-path>`
 # line must exist AND be wrapped in our markers to count as fully managed.

@@ -27,7 +27,7 @@ sorts by timestamp.
 
 | File | Role |
 |---|---|
-| `claude/settings.*.json` | declares the hooks (`SessionStart`, `PostToolUse`, `Stop`) that call `agent-log.sh` |
+| `claude/settings.json` (base, and any overlay's `settings[.<machine>].json`) | declares the hooks (`SessionStart`, `PostToolUse`, `Stop`) that call `agent-log.sh` |
 | `utils/agent-log/agent-log.sh` | hook entry point: records the shape of each tool call, one line per event |
 | `utils/agent-log/mutation-gate.sh` | decides whether a turn changed anything; read-only turns are dropped |
 | `utils/agent-log/summarise.sh` | detached, at turn end: one-line model summary, credential redaction |

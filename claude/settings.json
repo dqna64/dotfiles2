@@ -1,0 +1,80 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git *)",
+      "Bash(npm *)",
+      "Bash(npm test)",
+      "Bash(npm run *)",
+      "Bash(npm install)",
+      "Bash(pnpm *)",
+      "Bash(python *)",
+      "Bash(python3 *)",
+      "Bash(ls *)",
+      "Bash(find *)",
+      "Bash(grep *)",
+      "Bash(cat *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(mkdir *)",
+      "Bash(touch *)",
+      "Bash(cp *)",
+      "Bash(make *)",
+      "Bash(docker *)",
+      "Bash(curl *)",
+      "Bash(wget *)",
+      "Bash(jq *)",
+      "Bash(sort *)",
+      "Bash(uniq *)",
+      "Bash(wc *)",
+      "Bash(cut *)",
+      "Bash(awk *)",
+      "Bash(sed *)",
+      "Bash(tr *)",
+      "Bash(which *)",
+      "Bash(whereis *)",
+      "Bash(file *)",
+      "Bash(stat *)",
+      "Bash(du *)",
+      "Bash(df *)",
+      "Bash(pwd)",
+      "Bash(echo *)",
+      "Bash(printf *)",
+      "Bash(date *)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${DOTFILES_DIR:-$HOME/dotfiles_dqna64}/utils/agent-log/agent-log.sh\" session-start claude"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${DOTFILES_DIR:-$HOME/dotfiles_dqna64}/utils/agent-log/agent-log.sh\" tool claude"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${DOTFILES_DIR:-$HOME/dotfiles_dqna64}/utils/agent-log/agent-log.sh\" turn-end claude"
+          }
+        ]
+      }
+    ]
+  }
+}

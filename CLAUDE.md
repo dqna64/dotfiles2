@@ -10,8 +10,10 @@ Gordon's cross-machine dotfiles. The model is: tracked config lives in this
 repo, and `install.sh` creates **symlinks** from the expected locations
 (`~/.zshrc`, `~/.gitignore_global`, `~/.tmux.conf`, …) back into the repo, so
 edits to the repo take effect without re-running the installer. `~/.zshrc`
-sources lots of other files directly out of the repo (aliases, `omz-setup.zsh`,
-yabai). See `README.md` for the full layout and user-facing setup steps.
+sources lots of other files directly out of the repo (`zsh/zshrc.d`,
+`omz-setup.zsh`, yabai). This repo is also the **base** for optional extension
+repos ("overlays") with the same layout; see "Extension repos" below and
+`README.md` for the full layout and user-facing setup steps.
 
 ## Target machines (must work on all of them)
 
@@ -19,9 +21,9 @@ These dotfiles must work across **every** machine Gordon uses. Any change to
 `install.sh`, `uninstall.sh`, `git/git-setup.sh`, or the shell config must keep
 working everywhere — not just on the machine you happen to be testing on:
 
-- **macOS laptops** — Canva work MacBook and a personal MacBook (M1, Apple
+- **macOS laptops** — a work MacBook and a personal MacBook (M1, Apple
   Silicon). Both Apple Silicon and Intel brew paths should be handled.
-- **Canva work devboxes** — `DVBX1`, `DVBX2`, `DVBX3`, `DVBX4`, `DVBX5`, and potentially more
+- **Work devboxes (Linux)** — `DVBX1`, `DVBX2`, `DVBX3`, `DVBX4`, `DVBX5`, and potentially more
   (Linux).
 - **Linux VPS** — DigitalOcean, OVH, and similar.
 
@@ -39,11 +41,10 @@ Design implications to uphold:
 - **Tailored per environment via config vars, not forks.** When a decision is
   device-specific, drive it from a **config variable / flag** (e.g.
   `DQNA64_MACHINE`, `ENABLE_YABAI_DQNA64`, `ZSH_THEME_MY`, the per-machine
-  `aliases.<suffix>/` dirs and `zsh/.zshrc.<machine>` files) rather than
-  hardcoding or branching on hostname. Add a new machine by setting vars /
-  dropping files (see "Adding machines / aliases" below), not by editing
-  script internals. Keep the `*.example` files and the `case`/flag plumbing in
-  sync when you introduce a new knob.
+  `zsh/zshrc.d.<machine>/` dirs and `<stem>.<machine><ext>` single files) rather
+  than hardcoding or branching on hostname. Add a new machine by setting vars /
+  dropping files (see "Adding machines" below), not by editing script
+  internals. Keep the `*.example` files in sync when you introduce a new knob.
 - **One script, every machine.** There should be a single `install.sh` /
   `uninstall.sh` / `git-setup.sh` that adapts to its environment — avoid
   per-machine script variants.
@@ -130,8 +131,8 @@ has config**. Preserve these invariants in any change:
 ## Machine logs
 
 A log of software installed or configured outside this repo. Maintaining it is
-global agent behaviour, driven by `claude/CLAUDE.base.md` (symlinked to
-`~/.claude/CLAUDE.md`) and `claude/skills/machine-logs/SKILL.md`, so it applies
+global agent behaviour, driven by `claude/rules/skills.md` (linked into
+`~/.claude/rules/`) and `claude/skills/machine-logs/SKILL.md`, so it applies
 in every repo, not just this one.
 
 How it works: `docs/machine-logs.md`. What this repo owns is small:
@@ -166,7 +167,7 @@ Invariants to preserve if you touch it:
   call of every turn and blocks the agent. Keep it to one `jq` and one append -
   no git, no model calls, no extra process spawns. Everything expensive belongs
   in `summarise.sh`, which is detached.
-- **The hooks are only declared in `claude/settings.*.json`, but they fire in
+- **The hooks are only declared in `claude/settings*.json` (base and overlays), but they fire in
   Cursor too**: Cursor reads `~/.claude/settings.json` as a third-party config
   source and maps the PascalCase event names onto its own. So the agent is
   detected from the payload (`cursor_version`), never assumed from the argument
@@ -213,14 +214,47 @@ Invariants to preserve if you touch it:
 
 When you add or change a feature, put each kind of content in its place.
 
-## Pending migrations
+## Extension repos (overlays)
 
-- **`claude/settings.*.json` per-machine Claude settings** may be superseded by
-  the dotfile overlays system (in progress separately). When that lands,
-  update every reference to the `claude/settings.*.json` mechanism - find them
-  with `grep -rn 'claude/settings\.\|settings\.\*\.json\|settings\.<' .`
-  (`install.sh`, `uninstall.sh`, `README.md`, `claude/README.md`,
-  `docs/agent-logs.md`, `utils/agent-log/agent-log.sh`, this file).
+The base must stay usable alone and must not need editing when an overlay is
+added. Mechanics live in `utils/overlays.sh` (entry parsing, `dotfiles_roots`,
+`dotfiles_machine_id`) and `utils/common.sh` (`resolve_single`,
+`collect_collisions`); everything that links or sources config walks the roots
+list, base first, then overlays in `zsh-config` order. How it works:
+`docs/overlays.md`. Moving an existing
+machine onto this layout: `docs/overlay-migration.md` (includes retiring the old work
+scripts clone at `$HOME/.local/bin/cnv`). Rules to preserve:
+
+- **`bin/` in any repo is prepended to `PATH`** by `.zshenv` (base first; a
+  later overlay's same-named script wins, which `dotdoctor` reports). This
+  replaced `WORK_BIN_PATH`; work scripts belong in the work overlay's `bin/`.
+- **Collections add, never override**: `zsh/zshrc.d*`, `claude/skills`,
+  `claude/output-styles`, `claude/rules`. A duplicate item name across repos is
+  an error: `sync-agent-links.sh` links nothing until it is resolved
+  (all-or-nothing on purpose, so a half-synced machine cannot hide the clash).
+- **Single files resolve most-specific-first, ties are errors**:
+  the machine variant (`settings.<machine>.json`, `.tmux.<machine>.conf`: id
+  before the last extension, appended if none) in any repo, then an overlay's
+  `<file>`, then the base's.
+  Add a new single-target file by calling `link_single` in `install.sh`, not
+  `symlink_dotfile` directly.
+- **Reserved paths** (`zsh/.zshrc`, `zsh/.zshenv`, `install.sh`,
+  `uninstall.sh`, `utils/`) are only read from the base; an overlay copy is
+  ignored with a warning. Overlays extend via `zshrc.d/` and `install.d/`.
+  Any other overlay path is ignored silently; `dotdoctor` lists such paths
+  (`dotfiles_unread_paths_in`) - extend that case list when the base starts
+  reading a new path.
+- **`~/.claude/rules/` replaced the global CLAUDE.md** so that no repo's rules
+  import another's; keep rule files self-contained and per-topic.
+- **git/ssh templates in overlays** are rendered by the base `git-setup.sh`
+  (same placeholders, from the base's `git-identity`; leftover placeholders
+  abort) and included from the base's rendered files: gitconfig at the end,
+  ssh at the top. `~/.gitconfig` / `~/.ssh/config` keep one include line. The
+  rendered files are ignored by each overlay's own `.gitignore`, not by
+  `.gitignore_global`; `git-setup.sh` checks with `git check-ignore` and warns.
+- Overlays are private, not secret: `zsh-config` and `git-identity` stay the
+  home of keys and identities. Scaffold a new overlay with `new-overlay.sh`;
+  `utils/dotfiles-doctor.sh` (`dotdoctor`) shows how a machine resolves.
 
 ## Conventions to follow
 
@@ -266,9 +300,11 @@ When you add or change a feature, put each kind of content in its place.
   a template changes without re-rendering. Preserve this if you touch templating.
 - **The machine log's location is `$MACHINE_LOG_FILE`**, set by hand; nothing
   derives it. See "Machine logs" above.
-- **Adding machines / aliases** is registration-free by design: drop a `.zsh`
-  file in an `aliases*/` dir, or a `zsh/.zshrc.<machine>` file, and it's
-  auto-sourced. See `README.md` → "Adding a new machine". Keep this property.
+- **Adding machines** is registration-free by design: drop a `.zsh` file in
+  `zsh/zshrc.d/` or `zsh/zshrc.d.<machine>/` (in the base or an overlay) and
+  it's auto-sourced; single files get a machine variant (`settings.<machine>.json`). See `README.md`
+  → "Adding a new machine". Keep this property; never reintroduce a `case` on
+  machine ids in `.zshrc` / `.zshenv`.
 - **Shell style.** `install.sh` uses `set -e`; `uninstall.sh` / `git-setup.sh`
   use `set -euo pipefail`. Quote variable expansions, prefer the existing helper
   functions, and keep comments explaining *why* (non-obvious intent), short and

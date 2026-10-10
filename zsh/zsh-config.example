@@ -1,11 +1,11 @@
 # === Machine identifier
-# Used elsewhere (e.g. zsh/.zshenv) to enable machine-specific behaviour
-# such as Canva devbox PATH additions.
-# Options (extend as needed):
-#   DVBX1 .. DVBX5  - Canva devboxes
-#   MB_M1         - personal MacBook
-#   MB_CNV        - work Macbook
-# Leave unset or use a non-matching value to disable all machine-specific blocks.
+# Selects the per-machine directories in every dotfiles repo: zsh/zshrc.d.<id>/
+# and the <file>.<id> variants of single files (claude/settings.<id>.json, ...),
+# with <id> lowercased. Any identifier works; current ones:
+#   DVBX1 .. DVBX5  - work devboxes
+#   MB_M1           - personal MacBook
+#   MB_CNV          - work MacBook
+# Leave unset to load only the machine-independent files.
 DQNA64_MACHINE=
 
 # === Set zsh theme
@@ -31,10 +31,19 @@ ENABLE_YABAI_DQNA64=false # true or false
 # - 2: informative messages
 export VERBOSITY_DQNA64=1
 
-# === Path to CNV work binaries
-# E.g. "$HOME/.local/bin/cnv"
-
-export CNV_WORK_BIN_PATH=
+# === Extension dotfiles repos (overlays)
+# Extra repos with the same layout as this one, loaded after it: bin/,
+# zsh/zshrc.d, zsh/zshrc.d.<machine>, claude/{skills,output-styles,rules},
+# claude/settings*.json, tmux/.tmux.conf, karabiner/karabiner.json,
+# yabai/yabairc, install.d, git/ssh templates. One entry per line, in load order:
+#   "<clone url>"           cloned by install.sh to $HOME/<repo name>
+#   "<clone url>=<path>"    cloned to <path>
+#   "<path>"                an existing local directory, nothing cloned
+# Paths are absolute: write "$HOME/x", not "~/x" (a quoted ~ does not expand).
+# Leave the list empty on machines that use only this repo. The URL form is
+# per machine: use whatever authenticates here (HTTPS app, or an SSH alias).
+DOTFILES_OVERLAYS=(
+)
 
 # === Path for agents to store and read plans
 # CLAUDE.*.md files in these dotfiles may tell agents to reference this path

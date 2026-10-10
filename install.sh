@@ -353,6 +353,64 @@ else
 	echo_note "After updating, restart zsh (or run 'exec zsh') as it's sourced by ~/.zshenv at shell startup."
 fi
 
+# === Extension dotfiles repos (overlays)
+#
+# Extra repos with the same layout as this one, listed per machine in
+# zsh/zsh-config (DOTFILES_OVERLAYS). Everything below
+# that links a collection or a single file walks the base repo first, then each
+# overlay, via utils/overlays.sh. The repo is on disk from here on, so the
+# shared helper libraries can be sourced.
+
+echo ""
+# shellcheck source=utils/common.sh
+. "$DOTFILES_DIR/utils/common.sh"
+# shellcheck source=utils/overlays.sh
+. "$DOTFILES_DIR/utils/overlays.sh"
+export DOTFILES_DIR
+
+# Clone any listed overlay that is not on disk yet.
+while IFS= read -r entry; do
+	[ -n "$entry" ] || continue
+	overlay_path="$(dotfiles_overlay_path "$entry")"
+	overlay_url="$(dotfiles_overlay_url "$entry")"
+	if [ -d "$overlay_path" ]; then
+		echo_info "Overlay present: $(dotfiles_overlay_name "$entry") at $overlay_path"
+	elif [ -n "$overlay_url" ]; then
+		echo_info "Cloning overlay $(dotfiles_overlay_name "$entry") into $overlay_path..."
+		git clone "$overlay_url" "$overlay_path"
+	else
+		echo_warn "Overlay path $overlay_path does not exist and has no clone URL; skipping it."
+	fi
+	for reserved in $(dotfiles_reserved_paths_in "$overlay_path" 2>/dev/null); do
+		echo_warn "Reserved path in overlay, ignored: $reserved (use zsh/zshrc.d/ or install.d/ instead)"
+	done
+done < <(dotfiles_overlay_entries)
+
+ROOTS=()
+while IFS= read -r r; do ROOTS+=("$r"); done < <(dotfiles_roots)
+MACHINE_ID="$(dotfiles_machine_id)"
+echo_info "Machine: ${MACHINE_ID:-<unset - set DQNA64_MACHINE in $ZSH_CONFIG_FILE>}"
+for r in "${ROOTS[@]}"; do
+	if [ "$r" = "$DOTFILES_DIR" ]; then echo_info "Root (base):    $r"; else echo_info "Root (overlay): $r"; fi
+done
+
+# link_single <relative path> <destination>
+# Symlink a single-target file from whichever repo wins it (utils/common.sh
+# resolve_single: the machine variant anywhere, else an overlay's <file>, else the
+# base's). A tie is an error; a file no repo provides is skipped.
+link_single() {
+	local rel="$1" dst="$2" winner rc
+	set +e
+	winner="$(resolve_single "$rel" "$MACHINE_ID" "${ROOTS[@]}")"
+	rc=$?
+	set -e
+	case "$rc" in
+		0) symlink_dotfile "$winner" "$dst" ;;
+		2) echo_error "Error: two repos provide $rel at the same level (see above). Remove one and re-run."; exit 1 ;;
+		*) echo_note "No repo provides $rel; leaving $dst alone." ;;
+	esac
+}
+
 # === machine-logs
 #
 # Optional log of software installed outside this repo (brew formulae, manual
@@ -438,12 +496,12 @@ printf '%b' "$RESET"
 # === karabiner
 
 echo ""
-symlink_dotfile "$DOTFILES_DIR/karabiner/karabiner.json" "$HOME/.config/karabiner/karabiner.json"
+link_single "karabiner/karabiner.json" "$HOME/.config/karabiner/karabiner.json"
 
 # === tmux
 
 echo ""
-symlink_dotfile "$DOTFILES_DIR/tmux/.tmux.conf" "$HOME/.tmux.conf"
+link_single "tmux/.tmux.conf" "$HOME/.tmux.conf"
 
 # Install TPM (tmux plugin manager), which manages the plugins declared in
 # .tmux.conf (eg tmux-resurrect, etc).
@@ -482,7 +540,27 @@ printf '%b' "$RESET"
 # === yabai
 
 echo ""
-symlink_dotfile "$DOTFILES_DIR/yabai/yabairc" "$HOME/.config/yabai/yabairc"
+link_single "yabai/yabairc" "$HOME/.config/yabai/yabairc"
+
+# === Overlay install hooks
+#
+# Each overlay may carry install.d/*.sh, run here on every install in filename
+# order, after the base's own steps. They must be idempotent (check before
+# acting); a failing hook is reported and does not stop the install.
+
+for r in "${ROOTS[@]}"; do
+	[ "$r" != "$DOTFILES_DIR" ] || continue
+	[ -d "$r/install.d" ] || continue
+	echo ""
+	echo_info "Running install hooks from $r/install.d/..."
+	for hook in "$r"/install.d/*.sh; do
+		[ -f "$hook" ] || continue
+		echo_info "  $hook"
+		if ! DOTFILES_DIR="$DOTFILES_DIR" DOTFILES_OVERLAY_DIR="$r" DQNA64_MACHINE="$MACHINE_ID" bash "$hook"; then
+			echo_warn "  hook failed: $hook (continuing)"
+		fi
+	done
+done
 
 # === claude
 #
@@ -492,32 +570,20 @@ symlink_dotfile "$DOTFILES_DIR/yabai/yabairc" "$HOME/.config/yabai/yabairc"
 printf '%b' "$CYAN"
 cat <<EOF
 
-  Optional: install Claude Code config.
+  Optional: install Claude Code / Cursor agent config.
 
-    Configs live in $DOTFILES_DIR/claude/. Refer to
-    $DOTFILES_DIR/claude/README.md — it walks you through picking a
-    settings file and symlinking it (plus optional global instructions).
-
-    Quick version: pick one and symlink it. E.g.:
-
-      ln -sf "$DOTFILES_DIR/claude/settings.mb_m1.json" "\$HOME/.claude/settings.json"
-
-    Global instructions for Claude:
-
-      ln -sf "$DOTFILES_DIR/claude/CLAUDE.cnv.md" "\$HOME/.claude/CLAUDE.md"
-
-    To share the global instructions with Cursor (one source of truth
-    for both), symlink your chosen CLAUDE.*.md as a global Cursor rule:
-
-      mkdir -p "\$HOME/.cursor/rules"
-      ln -sf "$DOTFILES_DIR/claude/CLAUDE.cnv.md" "\$HOME/.cursor/rules/claude.mdc"
-
-    Agent Skills (shared by Claude Code + Cursor) and Claude output styles
-    are opt-in. To link the repo's skills into ~/.claude/skills and
-    ~/.cursor/skills and its output styles into ~/.claude/output-styles, and
-    to pick up new ones later, run (re-runnable; --dry-run to preview):
+    One command links everything from the base repo and every overlay
+    (re-runnable; --dry-run to preview):
 
       $DOTFILES_DIR/claude/sync-agent-links.sh
+
+    It links skills (Claude + Cursor), output styles and rules
+    (claude/rules/*.md -> ~/.claude/rules, which replace a global
+    CLAUDE.md), and ~/.claude/settings.json to the winning
+    claude/settings[.<machine>].json.
+    Cursor has no global rules directory: paste the output of
+    $DOTFILES_DIR/claude/render-cursor-rules.sh into
+    Cursor > Settings > Rules once. Details: $DOTFILES_DIR/claude/README.md
 
 EOF
 printf '%b' "$RESET"

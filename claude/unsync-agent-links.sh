@@ -1,16 +1,18 @@
 #!/usr/bin/env bash
 
 # Reverse claude/sync-agent-links.sh: remove the per-item symlinks it created
-# under ~/.claude/skills, ~/.cursor/skills, and ~/.claude/output-styles. The
-# target dirs are tool-owned (Claude / Cursor), so they stay even if empty.
+# under ~/.claude/skills, ~/.cursor/skills, ~/.claude/output-styles and
+# ~/.claude/rules (from the base repo and every overlay), the
+# ~/.claude/settings.json link. The target dirs are tool-owned (Claude / Cursor),
+# so they stay even if empty.
 #
 # Run it standalone to opt out of the dotfiles skills / output styles on a
 # machine, or let uninstall.sh call it as part of a full uninstall.
 #
 # Safety model:
-#   - Only removes symlinks that resolve back into the matching repo source dir
-#     (claude/skills or claude/output-styles). Foreign items and real
-#     files/dirs are reported and left untouched.
+#   - Only removes symlinks that resolve back into a dotfiles repo's source dir
+#     (claude/skills, claude/output-styles, claude/rules). Foreign items and
+#     real files/dirs are reported and left untouched.
 #   - After removing a link, restores the newest <dst>.backup_dqna64.<timestamp>
 #     if one exists and the path is free.
 #   - --dry-run previews everything without changing the filesystem.
@@ -136,22 +138,46 @@ if [ ! -d "$DOTFILES_DIR" ]; then
 fi
 DOTFILES_DIR="$(cd "$DOTFILES_DIR" >/dev/null 2>&1 && pwd -P)"
 
-SKILLS_SRC_DIR="$DOTFILES_DIR/claude/skills"
-OUTPUT_STYLES_SRC_DIR="$DOTFILES_DIR/claude/output-styles"
+# === Roots: the base repo plus every overlay on disk (utils/overlays.sh)
+# shellcheck source=../utils/overlays.sh
+. "$DOTFILES_DIR/utils/overlays.sh"
+ZSH_CONFIG_FILE="$DOTFILES_DIR/zsh/zsh-config"
+ROOTS=()
+while IFS= read -r r; do ROOTS+=("$r"); done < <(dotfiles_roots 2>/dev/null)
 
 echo ""
 echo_success "Removing dqna64 dotfiles agent links"
-echo_info "Skills source:        $SKILLS_SRC_DIR (~/.claude/skills, ~/.cursor/skills)"
-echo_info "Output styles source: $OUTPUT_STYLES_SRC_DIR (~/.claude/output-styles)"
+for r in "${ROOTS[@]}"; do echo_info "Root: $r"; done
 [ "$DRY_RUN" = "true" ] && echo_warn "DRY RUN: no changes will be made."
 
 REMOVED=0
 RESTORED=0
 SKIPPED=0
 
-unsync_collection "Agent Skills" "$SKILLS_SRC_DIR" "$HOME/.claude/skills"
-unsync_collection "Agent Skills" "$SKILLS_SRC_DIR" "$HOME/.cursor/skills"
-unsync_collection "Output styles" "$OUTPUT_STYLES_SRC_DIR" "$HOME/.claude/output-styles"
+for r in "${ROOTS[@]}"; do
+	label="$(basename "$r")"
+	unsync_collection "Agent Skills [$label]" "$r/claude/skills" "$HOME/.claude/skills"
+	unsync_collection "Agent Skills [$label]" "$r/claude/skills" "$HOME/.cursor/skills"
+	unsync_collection "Output styles [$label]" "$r/claude/output-styles" "$HOME/.claude/output-styles"
+	unsync_collection "Claude rules [$label]" "$r/claude/rules" "$HOME/.claude/rules"
+done
+
+# Single-file links created by sync-agent-links.sh (or by hand per claude/README.md).
+echo ""
+echo_success "Single files"
+for f in "$HOME/.claude/settings.json" "$HOME/.claude/CLAUDE.md" "$HOME/.cursor/rules/claude.mdc"; do
+	[ -L "$f" ] || continue
+	raw="$(readlink "$f")"
+	if dotfiles_root_of "$raw" "${ROOTS[@]}" >/dev/null; then
+		echo_info "  removing $f -> $raw"
+		do_cmd rm "$f"
+		restore_latest_backup "$f" true
+		REMOVED=$((REMOVED + 1))
+	else
+		echo_note "  skipping $f: points outside the dotfiles repos ($raw); not ours."
+		SKIPPED=$((SKIPPED + 1))
+	fi
+done
 
 echo ""
 echo_success "Done."
