@@ -57,3 +57,15 @@ alias agentlog='"${DOTFILES_DIR:-$HOME/dotfiles_dqna64}/utils/agent-log/render.s
 # CR  '\r' 0x0D = § U+00A7 Section Sign (⏎ U+23CE also works fine)
 # LF  '\n' 0x0A = ¶ U+00B6 Pilcrow Sign (was "Paragraph Sign")
 alias whitespace="sed 's/ /·/g;s/\t/￫/g;s/\r/§/g;s/$/¶/g'"
+
+# Dotfiles across the base repo and every extension repo (overlay).
+# dotpull:   pull each repo (fast-forward only), base first.
+# dotdoctor: show machine id, repos, which repo wins each single file, links.
+dotpull() {
+  local root
+  for root in ${(f)"$(dotfiles_roots)"}; do
+    echo "== $root"
+    git -C "$root" pull --ff-only || echo "   (pull failed; resolve by hand)"
+  done
+}
+alias dotdoctor='"${DOTFILES_DIR:-$HOME/dotfiles_dqna64}/utils/dotfiles-doctor.sh"'

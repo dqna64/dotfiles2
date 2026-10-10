@@ -77,7 +77,7 @@ while IFS= read -r entry; do
 		"\n" + .ts[11:16]
 		+ " · " + .agent
 		# Two path segments, not one: the basename alone is ambiguous across
-		# checkouts (canva5/web vs canva7/web) - which is the same collision the
+		# checkouts (two repos both containing a `web/`) - which is the same collision the
 		# log filename has to defend against.
 		+ (if $all then " · " + (.project | split("/") | .[-2:] | join("/")) else "" end)
 		+ (if (.branch // "") != "" then " · " + .branch else "" end)

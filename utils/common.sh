@@ -214,17 +214,21 @@ symlink_item() {
 	LINKED_NEW=$(( ${LINKED_NEW:-0} + 1 ))
 }
 
-# prune_stale_links <src_root> <target_dir>
+# prune_stale_links <src_root> <target_dir> [<ours_pattern>]
 # Remove symlinks in <target_dir> that resolve into <src_root> but whose target
-# no longer exists (renamed/deleted at the source). Foreign links and real files
-# are left alone. `-e` covers both directory and file items.
+# no longer exists (renamed/deleted at the source). With <ours_pattern> (e.g.
+# "/claude/skills/"), a dangling link whose raw target contains it is pruned
+# too: that is a leftover from a dotfiles repo that was deleted or unlisted.
+# Foreign links and real files are left alone. `-e` covers dirs and files.
 prune_stale_links() {
-	local src_root="$1" target_dir="$2" entry resolved
+	local src_root="$1" target_dir="$2" ours="${3:-}" entry resolved
 	[ -d "$target_dir" ] || return 0
 	for entry in "$target_dir"/*; do
 		[ -L "$entry" ] || continue
 		resolved="$(canonicalize_path "$entry")"
-		path_inside "$src_root" "$resolved" || continue
+		if ! path_inside "$src_root" "$resolved"; then
+			[ -n "$ours" ] && [ ! -e "$entry" ] && case "$(readlink "$entry")" in *"$ours"*) ;; *) continue ;; esac || continue
+		fi
 		if [ ! -e "$resolved" ]; then
 			echo_warn "  pruning stale link: $entry -> $resolved (no longer tracked)"
 			do_cmd rm "$entry"
@@ -258,4 +262,83 @@ unlink_dir_from() {
 			SKIPPED=$(( ${SKIPPED:-0} + 1 ))
 		fi
 	done
+}
+
+# === Single-file resolution across dotfiles repos
+#
+# resolve_single <relative path> <machine id (may be empty)> <root>...
+# Which repo provides a single-target file (~/.tmux.conf, ~/.claude/settings.json,
+# ...). Candidates, most specific first:
+#   1. the machine variant in ANY root: the machine id (lowercased) inserted
+#      before the last extension, or appended when there is none:
+#      settings.dvbx5.json, .tmux.dvbx5.conf, yabairc.dvbx5
+#   2. <relative path> in an OVERLAY root (any root but the first)
+#   3. <relative path> in the BASE root (the first root given)
+# The first level with a match wins and its path is printed. Two matches at the
+# same level are a collision: both paths go to stderr and the return code is 2.
+# No match at all returns 1. Callers pass roots base-first (see dotfiles_roots).
+resolve_single() {
+	local rel="$1" machine="$2"; shift 2
+	local -a roots=("$@")
+	local base="${roots[0]}"
+	local dir="${rel%/*}" file="${rel##*/}" stem ext mrel
+	[ "$dir" = "$rel" ] && dir=""
+	if [ "${file##*.}" != "$file" ]; then
+		stem="${file%.*}"; ext=".${file##*.}"
+	else
+		stem="$file"; ext=""
+	fi
+	local -a level1=() level2=() level3=()
+	local r
+	if [ -n "$machine" ]; then
+		local m; m="$(printf '%s' "$machine" | tr '[:upper:]' '[:lower:]')"
+		mrel="${dir:+$dir/}$stem.$m$ext"
+		for r in "${roots[@]}"; do
+			[ -f "$r/$mrel" ] && level1+=("$r/$mrel")
+		done
+	fi
+	for r in "${roots[@]}"; do
+		[ -f "$r/$rel" ] || continue
+		if [ "$r" = "$base" ]; then level3+=("$r/$rel"); else level2+=("$r/$rel"); fi
+	done
+	local -a hits=()
+	if [ ${#level1[@]} -gt 0 ]; then hits=("${level1[@]}")
+	elif [ ${#level2[@]} -gt 0 ]; then hits=("${level2[@]}")
+	elif [ ${#level3[@]} -gt 0 ]; then hits=("${level3[@]}")
+	else return 1; fi
+	if [ ${#hits[@]} -gt 1 ]; then
+		printf 'collision for %s - more than one repo provides it at the same level:\n' "$rel" >&2
+		printf '  %s\n' "${hits[@]}" >&2
+		return 2
+	fi
+	printf '%s\n' "${hits[0]}"
+}
+
+# collect_collisions <subdir> <glob> <root>...
+# For a collection (claude/skills "*/", claude/rules "*.md", ...), print any
+# item name that more than one root provides, as "name: path path" lines.
+# Returns 1 when there is at least one collision, 0 otherwise. Portable to
+# bash 3.2 (macOS): no associative arrays.
+collect_collisions() {
+	local sub="$1" glob="$2"; shift 2
+	local r entry name pairs="" dups found=0
+	local nullglob_was; nullglob_was="$(shopt -p nullglob || true)"; shopt -s nullglob
+	for r in "$@"; do
+		[ -d "$r/$sub" ] || continue
+		for entry in "$r/$sub"/$glob; do
+			entry="${entry%/}"; name="$(basename "$entry")"
+			pairs="$pairs$name $entry"$'\n'
+		done
+	done
+	eval "$nullglob_was"
+	dups="$(printf '%s' "$pairs" | awk '{print $1}' | sort | uniq -d)"
+	[ -n "$dups" ] || return 0
+	while IFS= read -r name; do
+		[ -n "$name" ] || continue
+		printf '%s:' "$name"
+		printf '%s' "$pairs" | awk -v n="$name" '$1==n {printf " %s", $2}'
+		printf '\n'
+		found=1
+	done <<< "$dups"
+	[ "$found" -eq 0 ]
 }

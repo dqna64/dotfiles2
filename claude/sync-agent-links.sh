@@ -1,14 +1,23 @@
 #!/usr/bin/env bash
 
-# Sync the per-user agent config tracked in this repo into the dirs Claude Code
-# and Cursor read from, one item at a time. Two collections are handled:
+# Sync the per-user agent config tracked in this repo AND in every extension repo
+# (overlay) listed in zsh-config into the dirs Claude Code and Cursor read from,
+# one item at a time. Three collections are handled, from each repo root:
 #
 #   Agent Skills (directories):
-#     ~/.claude/skills/<name>          ->  $DOTFILES_DIR/claude/skills/<name>
-#     ~/.cursor/skills/<name>          ->  $DOTFILES_DIR/claude/skills/<name>
+#     ~/.claude/skills/<name>          ->  <root>/claude/skills/<name>
+#     ~/.cursor/skills/<name>          ->  <root>/claude/skills/<name>
 #
 #   Output styles (files):
-#     ~/.claude/output-styles/<file>   ->  $DOTFILES_DIR/claude/output-styles/<file>
+#     ~/.claude/output-styles/<file>   ->  <root>/claude/output-styles/<file>
+#
+#   Claude rules (files; replace the old single ~/.claude/CLAUDE.md):
+#     ~/.claude/rules/<file>           ->  <root>/claude/rules/<file>
+#
+# Plus one single-target file: ~/.claude/settings.json -> the winning
+# claude/settings[.<machine>].json across repos (utils/common.sh resolve_single).
+# Cursor has no global rules directory; claude/render-cursor-rules.sh prints the
+# rules for pasting into Cursor's User Rules instead.
 #
 # Run this AFTER install.sh (these aren't installed at install time — you opt in
 # by running this), and re-run it any time you add/remove an item in the repo or
@@ -93,14 +102,21 @@ usage() {
 	cat <<EOF
 Usage: $0 [options]
 
-Symlinks every skill in \$DOTFILES_DIR/claude/skills/ into ~/.claude/skills/ and
-~/.cursor/skills/, and every output style in \$DOTFILES_DIR/claude/output-styles/
-into ~/.claude/output-styles/, then prunes our own now-stale links. Safe to
-re-run; non-destructive to anything not tracked by these dotfiles.
+From the base repo and every extension repo listed in zsh-config
+(DOTFILES_OVERLAYS), symlinks each item of these collections, then prunes our own
+now-stale links:
+  claude/skills/<name>       -> ~/.claude/skills, ~/.cursor/skills
+  claude/output-styles/*.md  -> ~/.claude/output-styles
+  claude/rules/*.md          -> ~/.claude/rules
+and links ~/.claude/settings.json to the winning claude/settings[.<machine>].json
+when nothing is linked there yet. The same item name in two repos is an error;
+nothing is linked until it is resolved. Safe to re-run; non-destructive to
+anything not tracked by these dotfiles.
 
 Options:
-  -n, --dry-run   Show what would happen without changing anything.
-  -h, --help      Show this help.
+  -n, --dry-run          Show what would happen without changing anything.
+                         even if it already links to another tracked file.
+  -h, --help             Show this help.
 EOF
 }
 
@@ -151,7 +167,7 @@ sync_collection() {
 	fi
 
 	echo_info "  Pruning stale links that resolve into $src_dir..."
-	prune_stale_links "$src_dir" "$target_dir"
+	prune_stale_links "$src_dir" "$target_dir" "/claude/${src_dir##*/claude/}/"
 }
 
 # === Resolve DOTFILES_DIR
@@ -176,15 +192,37 @@ if [ ! -d "$DOTFILES_DIR" ]; then
 	exit 1
 fi
 DOTFILES_DIR="$(cd "$DOTFILES_DIR" >/dev/null 2>&1 && pwd -P)"
+export DOTFILES_DIR
 
-SKILLS_SRC_DIR="$DOTFILES_DIR/claude/skills"
-OUTPUT_STYLES_SRC_DIR="$DOTFILES_DIR/claude/output-styles"
+# === Roots: the base repo plus every overlay on disk (utils/overlays.sh)
+# shellcheck source=../utils/overlays.sh
+. "$DOTFILES_DIR/utils/overlays.sh"
+ZSH_CONFIG_FILE="$DOTFILES_DIR/zsh/zsh-config"
+ROOTS=()
+while IFS= read -r r; do ROOTS+=("$r"); done < <(dotfiles_roots)
+MACHINE="$(dotfiles_machine_id)"
 
 echo ""
 echo_success "Syncing dqna64 dotfiles agent links"
-echo_info "Skills source:        $SKILLS_SRC_DIR -> ~/.claude/skills, ~/.cursor/skills"
-echo_info "Output styles source: $OUTPUT_STYLES_SRC_DIR -> ~/.claude/output-styles"
+echo_info "Machine: ${MACHINE:-<unset>}"
+for r in "${ROOTS[@]}"; do
+	if [ "$r" = "$DOTFILES_DIR" ]; then echo_info "Root (base):    $r"; else echo_info "Root (overlay): $r"; fi
+done
 [ "$DRY_RUN" = "true" ] && echo_warn "DRY RUN: no changes will be made."
+
+# === Collision check: the same item name in two repos is an error, not a
+# silent last-wins. Nothing is linked until it is resolved.
+collisions=""
+for spec in "claude/skills:*/" "claude/output-styles:*.md" "claude/rules:*.md"; do
+	out="$(collect_collisions "${spec%%:*}" "${spec#*:}" "${ROOTS[@]}" || true)"
+	[ -n "$out" ] && collisions="$collisions${spec%%:*}: $out"$'\n'
+done
+if [ -n "$collisions" ]; then
+	echo_error "Refusing to sync: the same item is provided by more than one repo."
+	printf '%s' "$collisions" | sed 's/^/  /' >&2
+	echo_note "Rename or remove one copy (an overlay adds items; it never overrides the base)."
+	exit 1
+fi
 
 LINKED_NEW=0
 LINKED_OK=0
@@ -192,14 +230,62 @@ RELINKED=0
 BACKED_UP=0
 PRUNED=0
 
-# === Sync each collection
+# === Legacy single-file links from before claude/rules existed
+# ~/.claude/CLAUDE.md and ~/.cursor/rules/claude.mdc used to point at
+# claude/CLAUDE.*.md in this repo. Those files are gone (rules replace them).
+# Nothing here is removed, even a dangling link: the user decides (Gordon,
+# 2026-10-10). unsync-agent-links.sh removes links into the repos on uninstall.
+for legacy in "$HOME/.claude/CLAUDE.md" "$HOME/.cursor/rules/claude.mdc"; do
+	[ -e "$legacy" ] || [ -L "$legacy" ] || continue
+	if [ -L "$legacy" ] && [ ! -e "$legacy" ]; then
+		echo_warn "  $legacy is a dangling link -> $(readlink "$legacy"); claude/rules/ replaced it. Remove it by hand if unwanted."
+	elif [ -L "$legacy" ]; then
+		echo_note "  $legacy -> $(readlink "$legacy") exists; the dotfiles use ~/.claude/rules/ instead and leave it alone."
+	else
+		echo_note "  $legacy exists (your own file); the dotfiles use ~/.claude/rules/ and leave it alone."
+	fi
+done
+
+# === Sync each collection from every root
 #
-# Skills are directories linked into both agents; output styles are files linked
-# into Claude Code only (Cursor has no equivalent output-styles dir). One call
-# per target dir.
-sync_collection "Agent Skills" "$SKILLS_SRC_DIR" "*/" "$HOME/.claude/skills"
-sync_collection "Agent Skills" "$SKILLS_SRC_DIR" "*/" "$HOME/.cursor/skills"
-sync_collection "Output styles" "$OUTPUT_STYLES_SRC_DIR" "*.md" "$HOME/.claude/output-styles"
+# Skills are directories linked into both agents; output styles and rules are
+# files linked into Claude Code only. One call per (root, target dir).
+for r in "${ROOTS[@]}"; do
+	label="$(basename "$r")"
+	sync_collection "Agent Skills [$label]" "$r/claude/skills" "*/" "$HOME/.claude/skills"
+	sync_collection "Agent Skills [$label]" "$r/claude/skills" "*/" "$HOME/.cursor/skills"
+	sync_collection "Output styles [$label]" "$r/claude/output-styles" "*.md" "$HOME/.claude/output-styles"
+	sync_collection "Claude rules [$label]" "$r/claude/rules" "*.md" "$HOME/.claude/rules"
+done
+
+# === ~/.claude/settings.json: one file, one winner
+#
+# Most specific wins: claude/settings.<machine>.json in any repo, else
+# claude/settings.json in an overlay, else claude/settings.json in the base.
+# A real (non-link) file is yours and is left alone.
+echo ""
+echo_success "Claude settings -> $HOME/.claude/settings.json"
+settings_dst="$HOME/.claude/settings.json"
+set +e
+winner="$(resolve_single "claude/settings.json" "$MACHINE" "${ROOTS[@]}")"
+rc=$?
+set -e
+if [ "$rc" -eq 2 ]; then
+	echo_error "  collision between repos for claude/settings.json (see above); not touching $settings_dst."
+	exit 1
+elif [ "$rc" -ne 0 ]; then
+	echo_note "  no claude/settings[.<machine>].json in any repo; leaving $settings_dst alone."
+else
+	winner_root="$(dotfiles_root_of "$winner" "${ROOTS[@]}")"
+	if [ -L "$settings_dst" ] && [ "$(canonicalize_path "$settings_dst")" = "$(canonicalize_path "$winner")" ]; then
+		echo "  already linked: $settings_dst -> $winner"
+		LINKED_OK=$((LINKED_OK + 1))
+	elif [ -e "$settings_dst" ] && [ ! -L "$settings_dst" ]; then
+		echo_note "  $settings_dst is a real file (yours); not replacing it. Resolver's pick: $winner"
+	else
+		symlink_item "$winner_root" "$winner" "$settings_dst"
+	fi
+fi
 
 # === Summary
 
@@ -209,4 +295,5 @@ echo_note "  linked:        $LINKED_NEW new, $LINKED_OK already correct"
 [ "$RELINKED" -gt 0 ] && echo_note "  re-pointed:    $RELINKED"
 [ "$BACKED_UP" -gt 0 ] && echo_warn  "  backed up:     $BACKED_UP existing item(s) moved aside (*.backup_dqna64.*)"
 [ "$PRUNED" -gt 0 ] && echo_note "  pruned:        $PRUNED stale link(s)"
-echo_note "  Re-run this after adding items or 'git pull'. Edits/pulls need no re-run (symlinks point at the repo)."
+echo_note "  Cursor has no global rules dir: paste  claude/render-cursor-rules.sh  output into Cursor > Settings > Rules once."
+echo_note "  Re-run this after adding items or 'git pull'. Edits/pulls need no re-run (symlinks point at the repos)."

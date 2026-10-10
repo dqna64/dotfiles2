@@ -38,10 +38,15 @@ fi
 # re-run git-setup.sh, so pulling an updated template leaves them stale and
 # silently wrong. Detect that here and nag to regenerate the custom config files.
 () {
-    local -a pairs=(
-        "$DOTFILES_DIR/git/gitconfig.template:$DOTFILES_DIR/git/dqna64-dotfiles.gitconfig"
-        "$DOTFILES_DIR/ssh/config.template:$DOTFILES_DIR/ssh/dqna64-dotfiles.conf"
-    )
+    # Base first, then every overlay (utils/overlays.sh, sourced below for the
+    # zshrc.d loader; sourced here too since this runs earlier).
+    [ -f "$DOTFILES_DIR/utils/overlays.sh" ] && source "$DOTFILES_DIR/utils/overlays.sh"
+    local -a pairs=()
+    local root
+    for root in ${(f)"$(dotfiles_roots 2>/dev/null)"}; do
+        pairs+=("$root/git/gitconfig.template:$root/git/dqna64-dotfiles.gitconfig")
+        pairs+=("$root/ssh/config.template:$root/ssh/dqna64-dotfiles.conf")
+    done
     local pair template_file rendered_file stamped current
     for pair in "${pairs[@]}"; do
         template_file="${pair%%:*}"
@@ -118,58 +123,36 @@ fi
 
 # ===
 
-# === Source aliases
-# $DOTFILES_DIR/aliases/ loads on every machine. The case adds per-machine
-# dirs named aliases.<suffix>/, where <suffix> is arbitrary and several
-# machines can share a dir: every machine loads git_stuff, and the Cnv
-# devboxes DVBX1/2/3/4/5 share dvbx_cnv. Each dir's *.zsh files are sourced; a
-# listed dir that doesn't exist warns to stderr.
+# === Source zshrc.d from the base repo and every extension repo
+# Every dotfiles repo (this one and each overlay listed in DOTFILES_OVERLAYS in
+# zsh-config) may carry zsh/zshrc.d/*.zsh, sourced on every machine that uses
+# the repo, and zsh/zshrc.d.<machine>/*.zsh, sourced only when DQNA64_MACHINE
+# (lowercased) matches. Files load in filename order within a directory; use a
+# numeric prefix (10-, 20-) when order matters. Base first, then overlays in
+# the order listed. Resolver: utils/overlays.sh.
 #
-# Wrapped in a function so the loop/temp variables are local and need no
-# manual cleanup; aliases and functions defined by the sourced files stay
-# global. The function is left defined so aliases can be reloaded on demand.
-load_dqna64_aliases() {
-    local -a dirs=("$DOTFILES_DIR/aliases")
-    local dir file
-
-    case "$DQNA64_MACHINE" in
-        MB_M1)               dirs+=("$DOTFILES_DIR"/aliases.{git_stuff,mb_m1}) ;;
-        MB_CNV)              dirs+=("$DOTFILES_DIR"/aliases.{git_stuff,mb_cnv}) ;;
-        DVBX1|DVBX2|DVBX3|DVBX4|DVBX5)   dirs+=("$DOTFILES_DIR"/aliases.{git_stuff,dvbx_cnv}) ;;
-    esac
-
-    for dir in "${dirs[@]}"; do
-        if [ -d "$dir" ]; then
-            [ "${VERBOSITY_DQNA64:-0}" -ge 1 ] && echo "Loading aliases from $dir"
-            for file in "$dir"/*.zsh(N); do
+# Wrapped in a function so the loop variables are local; aliases and functions
+# defined by the sourced files stay global. Left defined so it can be re-run.
+[ -f "$DOTFILES_DIR/utils/overlays.sh" ] && source "$DOTFILES_DIR/utils/overlays.sh"
+load_dqna64_zshrc_d() {
+    local root dir file machine="${DQNA64_MACHINE:l}"
+    for root in ${(f)"$(dotfiles_roots)"}; do
+        for dir in "$root/zsh/zshrc.d" "$root/zsh/zshrc.d.$machine"; do
+            [ -n "$machine" ] || [ "$dir" = "$root/zsh/zshrc.d" ] || continue
+            [ -d "$dir" ] || continue
+            [ "${VERBOSITY_DQNA64:-0}" -ge 1 ] && echo "Loading $dir"
+            for file in "$dir"/*.zsh(Nn); do
                 source "$file"
             done
-        else
-            echo "Warning: alias dir not found at $dir" >&2
-        fi
+        done
     done
 }
-load_dqna64_aliases
+load_dqna64_zshrc_d
 
 # ===
 
 bindkey "[D" backward-word
 bindkey "[C" forward-word
-
-# === Machine-specific zsh config
-# Source per-machine config from the dotfiles repo if a matching file
-# exists. Filename convention is zsh/.zshrc.<machine>, where <machine>
-# is $DQNA64_MACHINE lowercased (e.g. MB_M1 -> mb_m1, MB_CNV -> mb_cnv,
-# DVBX1 -> dvbx1). To wire up a new machine, just drop the file in zsh/ — no edit here needed.
-# Missing files are not an error (most machines won't have one).
-if [ -n "$DQNA64_MACHINE" ]; then
-    MACHINE_ZSHRC="$DOTFILES_DIR/zsh/.zshrc.${DQNA64_MACHINE:l}"
-    if [ -f "$MACHINE_ZSHRC" ]; then
-        [ "${VERBOSITY_DQNA64:-0}" -ge 1 ] && echo "Loading machine zshrc from $MACHINE_ZSHRC"
-        source "$MACHINE_ZSHRC"
-    fi
-    unset MACHINE_ZSHRC
-fi
 
 # === Yabai window management
 # yabairc itself is read by yabai from $HOME/.config/yabai/yabairc (symlinked
@@ -187,9 +170,8 @@ if [[ "$ENABLE_YABAI_DQNA64" == "true" ]]; then
     unset YABAI_DIR
 fi
 
-# === Cnv ansible exports
-# Keep these here otherwise cnv ansible will automatically append these
-# to .zshrc again.
+# === PATH lines that work tooling appends to ~/.zshrc when missing
+# Kept here verbatim so that tooling finds them and leaves the file alone.
 export PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/.opencode/bin:$PATH"
 

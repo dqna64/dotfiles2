@@ -21,7 +21,7 @@
     email = "{{PRIMARY_EMAIL}}"
 
 # Git identities as numbered slots, consumed by the `gm` shell function
-# (dotfiles_dqna64/aliases.git_stuff/git.zsh): `gm -N "msg"` authors a single
+# (dotfiles_dqna64/zsh/zshrc.d/20-git.zsh): `gm -N "msg"` authors a single
 # commit as slot N.
 # 
 # Slot 1 is the primary/default identity.

@@ -1,114 +1,56 @@
-# Claude Code config
+# Claude Code / Cursor config
 
-Claude config files live here. Nothing is symlinked automatically — pick
-the one you want and symlink it into `~/.claude/`.
-
-## 1. Pick a settings file
-
-See the `settings.*.json` files in this directory and pick the one for your
-environment (e.g. `settings.mb_m1.json`).
-
-## 2. Symlink it
+Everything here is linked into `~/.claude` (and skills into `~/.cursor`) by one
+re-runnable command, from this repo and from every extension repo (overlay)
+listed in `zsh/zsh-config`:
 
 ```bash
-ln -sf "$DOTFILES_DIR/claude/settings.mb_m1.json" "$HOME/.claude/settings.json"
+"$DOTFILES_DIR/claude/sync-agent-links.sh"          # -n / --dry-run to preview
 ```
 
-Swap in whichever file from the table you picked.
+| In each repo | Linked to | Kind |
+|---|---|---|
+| `claude/skills/<name>/` | `~/.claude/skills/<name>`, `~/.cursor/skills/<name>` | collection |
+| `claude/output-styles/*.md` | `~/.claude/output-styles/` | collection |
+| `claude/rules/*.md` | `~/.claude/rules/` | collection |
+| `claude/settings.json`, `claude/settings.<machine>.json` | `~/.claude/settings.json` | single file |
 
-## 3. (Optional) Global instructions
+**Collections** are additive: every repo's items are linked. The same item name
+in two repos is an error and nothing is linked until it is renamed.
 
-`CLAUDE.base.md` holds the global instructions (response style, git/PR
-conventions) and is the single source of truth. `CLAUDE.cnv.md` (Canva
-machines) and `CLAUDE.personal.md` (personal machines) are repo-tracked
-symlinks to it — machines link to the name matching their type, so if one
-machine type ever needs different instructions, replace just that repo
-symlink with a real file (start from a copy of `CLAUDE.base.md`) and no
-machine has to re-link.
+**Rules replace a global `CLAUDE.md`.** Claude Code loads every
+`~/.claude/rules/*.md` in every session, before project rules, with no approval
+prompt. Each file covers one topic (`response-style.md`, `code-and-git.md`,
+`skills.md`); an overlay adds files for its own domain and never restates a
+base topic, because rule files concatenate and cannot override each other.
+`~/.claude/CLAUDE.md` is not used; if one exists (your own file, or an old link
+to the deleted `CLAUDE.*.md` files) `sync-agent-links.sh` only says so and
+leaves it alone. `unsync-agent-links.sh` removes it on uninstall if it points
+into a dotfiles repo.
+
+**Settings** is one file, so one repo wins: `claude/settings.<machine>.json` in
+any repo (`<machine>` = `DQNA64_MACHINE` lowercased), else `claude/settings.json`
+in an overlay, else `claude/settings.json` here. The base `claude/settings.json`
+holds the generic permissions and the agent-log hooks, so a machine with no
+`settings.<machine>.json` anywhere works with zero configuration.
+
+**Cursor.** Skills are shared through `~/.cursor/skills`. Cursor has no global
+rules directory (User Rules live only in Cursor > Settings > Rules), so paste
+the output of this once per machine, and again after rules change:
 
 ```bash
-ln -sf "$DOTFILES_DIR/claude/CLAUDE.cnv.md" "$HOME/.claude/CLAUDE.md"      # Canva machines
-ln -sf "$DOTFILES_DIR/claude/CLAUDE.personal.md" "$HOME/.claude/CLAUDE.md" # personal machines
+"$DOTFILES_DIR/claude/render-cursor-rules.sh"        # | pbcopy on macOS
 ```
 
-## 4. (Optional) Agent skills + output styles
+The sync is idempotent, per-item (foreign items in those directories are left
+alone), non-destructive (anything in the way is moved to
+`*.backup_dqna64.<timestamp>`), and prunes links whose repo item was removed or
+whose repo is no longer listed. Edits and `git pull` need no re-run: the links
+point at the repos. To remove the links: `claude/unsync-agent-links.sh`
+(also run by `uninstall.sh`).
 
-Two opt-in collections are kept in sync by one script:
-
-- `skills/` — Agent Skills (each a `<skill-name>/SKILL.md`) shared between
-  Claude Code and Cursor, linked into `~/.claude/skills` and `~/.cursor/skills`.
-- `output-styles/` — named output style definitions for Claude Code, linked
-  into `~/.claude/output-styles`. Switch styles in a session with `/config` →
-  "Output style".
-
-This directory is the single source of truth — `sync-agent-links.sh` symlinks
-each item individually (never the whole dir), so editing one repo copy updates
-every machine:
-
-```bash
-"$DOTFILES_DIR/claude/sync-agent-links.sh"
-```
-
-Run this once after install, then again whenever you want to sync new/deleted
-skills or output styles from remote to your machine.
-Pass `-n`/`--dry-run` to preview.
-
-What it does and why it's safe:
-
-- **Per-item symlinks** (not the whole dir), so skills / output styles you
-  installed locally in those dirs stay untouched.
-- **Idempotent**: links already correct are left alone; only new items get
-  linked on a re-run.
-- **Non-destructive**: a real file/dir or foreign symlink in the way is moved to
-  `*.backup_dqna64.<timestamp>`, never overwritten.
-- **Prunes** stale links (items you renamed/removed in the repo).
-- **Edits/pulls need no re-run** — the symlinks point straight at the repo.
-
-To add a new output style, drop a markdown file in `output-styles/` with the
-frontmatter (re-run the sync to link it):
-
-```markdown
----
-name: Brief
-description: Terse responses, no fluff
-keep-coding-instructions: true
----
-
-Respond as concisely as possible. No preamble, no summaries, no filler phrases.
-```
-
-To remove these links from a machine, run the reverse script (also invoked by
-`uninstall.sh`):
-
-```bash
-"$DOTFILES_DIR/claude/unsync-agent-links.sh"
-```
-
-It drops only the links resolving back into the repo and restores anything
-`sync-agent-links.sh` moved aside, leaving foreign items and the tool-owned
-target dirs untouched. `-n`/`--dry-run` to preview.
-
-## 5. (Optional) Cursor global rules
-
-Cursor reads global `.mdc` rule files from `~/.cursor/rules/`. Symlink your
-chosen `CLAUDE.*.md`:
-
-```bash
-mkdir -p "$HOME/.cursor/rules"
-ln -sf "$DOTFILES_DIR/claude/CLAUDE.cnv.md" "$HOME/.cursor/rules/claude.mdc"
-```
-
-Notes:
-
-- No YAML frontmatter is needed (or wanted) for global `~/.cursor/rules/*.mdc`
-  files
-- If a future Cursor version stops honoring global `.mdc` loading from `~/.cursor/rules/`,
-  fall back to pasting the file's contents into Settings → Rules → User Rules,
-  or to a project-level `.cursor/rules/` rule.
-
----
-
-- `$DOTFILES_DIR` is set by `zsh/.zshenv` (defaults to `$HOME/dotfiles_dqna64`).
-- `ln -sf` overwrites the target — back up first if you have local changes.
-- Editing the symlinked file edits the repo copy, so changes are tracked.
-- New config? Drop a `settings.<suffix>.json` here.
+To add an output style, drop a markdown file in `output-styles/` with frontmatter
+(`name`, `description`, `keep-coding-instructions`) and re-run the sync. To add a
+rule, drop a topic file in `rules/`. To add a skill, a `<name>/SKILL.md` directory.
+Machine-independent, work-specific or private items belong in an overlay repo,
+not here (see the root README, "Extension repos").

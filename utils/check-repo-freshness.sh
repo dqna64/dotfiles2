@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
 # Warn at interactive shell startup when a local git clone has fallen behind its
-# upstream, so you remember to `git pull`. Used by zsh/.zshrc for $CANVA_DOCU
-# (the local clone of the Canva documentation repo), but deliberately generic:
+# upstream, so you remember to `git pull`. Written for a docs clone you read
+# often but rarely commit to, and deliberately generic:
 # point it at any clone.
 #
 # Usage: check-repo-freshness.sh <repo_path> <label>
-#   <repo_path>  path to the local clone (e.g. "$CANVA_DOCU")
-#   <label>      friendly name shown in the warning (e.g. "Canva docs")
+#   <repo_path>  path to the local clone (e.g. "$HOME/work/docs")
+#   <label>      friendly name shown in the warning (e.g. "work docs")
 #
 # Design (why it's safe on the shell-startup hot path):
 #   - The "behind upstream" check is purely LOCAL: it compares HEAD to the

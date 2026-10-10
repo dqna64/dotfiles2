@@ -37,7 +37,7 @@ export DOTFILES_DIR
 
 # === Machine-specific variables
 # zsh-config is created from zsh-config.example by install.sh and holds
-# per-machine values like DQNA64_MACHINE and CNV_WORK_BIN_PATH that the
+# per-machine values like DQNA64_MACHINE and DOTFILES_OVERLAYS that the
 # blocks below depend on.
 ZSH_CONFIG_FILE="$DOTFILES_DIR/zsh/zsh-config"
 if [ -f "$ZSH_CONFIG_FILE" ]; then
@@ -58,16 +58,21 @@ export RIPGREP_CONFIG_PATH="$DOTFILES_DIR/ripgrep/ripgreprc"
 # Prepended last so they win over earlier entries.
 [ -d "$HOME/.local/bin" ]    && export PATH="$HOME/.local/bin:$PATH"
 
-# === Cnv-specific exports
+# === Work-tooling exports
 
-# This is automatically added by cnv ansible, keep this here unconditionally.
-. "$HOME/.cargo/env"
+# Appended by work machine provisioning; kept here unconditionally so it is
+# not appended again.
+[ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
 
-case "$DQNA64_MACHINE" in
-	MB_CNV|DVBX1|DVBX2|DVBX3|DVBX4|DVBX5)
-		# Prepend $CNV_WORK_BIN_PATH to PATH, if set in zsh-config.
-		if [ -n "$CNV_WORK_BIN_PATH" ] && [ -d "$CNV_WORK_BIN_PATH" ]; then
-			export PATH="$CNV_WORK_BIN_PATH:$PATH"
-		fi
-		;;
-esac
+# === bin/ from this repo and every extension repo
+# Any dotfiles repo may carry bin/ with scripts. Each existing one is prepended
+# to PATH, base first, so a later overlay's script shadows an earlier one's
+# (dotdoctor reports same-named scripts). Work scripts live in the work
+# overlay's bin/; nothing is configured per machine.
+if [ -f "$DOTFILES_DIR/utils/overlays.sh" ]; then
+	source "$DOTFILES_DIR/utils/overlays.sh"
+	for _root in ${(f)"$(dotfiles_roots 2>/dev/null)"}; do
+		[ -d "$_root/bin" ] && export PATH="$_root/bin:$PATH"
+	done
+	unset _root
+fi

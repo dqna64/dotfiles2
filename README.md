@@ -49,9 +49,12 @@ re-source `.zshrc` after making changes to those files.
    doesn't resolve to a real clone.
 
 2. **Edit `zsh/zsh-config`** (bootstrapped from `zsh-config.example` by
-   `install.sh`). Set `DQNA64_MACHINE` to one of `MB_M1`, `MB_CNV`,
-   `DVBX1`, ... and toggle the per-machine flags (`ENABLE_YABAI_DQNA64`,
-   `ZSH_THEME_MY`, etc.). This file is gitignored.
+   `install.sh`). Set `DQNA64_MACHINE` (any identifier; it selects the
+   `*.<machine>` files and `zshrc.d.<machine>/` dirs), list any extension
+   repos in `DOTFILES_OVERLAYS` (see "Extension repos" below), and toggle
+   the per-machine flags (`ENABLE_YABAI_DQNA64`, `ZSH_THEME_MY`, etc.).
+   This file is gitignored. Re-run `install.sh` after editing it: it clones
+   listed overlays and re-resolves the single files.
 
 3. **(Optional) Configure git identities + SSH host aliases.** Edit
    `git/git-identity` with your real values (it's bootstrapped from
@@ -63,6 +66,11 @@ re-source `.zshrc` after making changes to those files.
    - `~/.gitignore_global` — symlink to `git/.gitignore_global`
    - `ssh/dqna64-dotfiles.conf` — SSH host-alias snippet (gitignored,
      next to its template)
+
+   Overlays (see "Extension repos") may carry their own
+   `git/gitconfig.template` and `ssh/config.template`; the same run
+   renders them with the same identity values and includes them from
+   the two files above, so nothing else changes on the machine.
 
    `~/.gitconfig` and `~/.ssh/config` are user-owned and never modified
    by the script. To pull in the rendered files, `git-setup.sh` prints
@@ -83,28 +91,86 @@ re-source `.zshrc` after making changes to those files.
    # --- END DQNA64 DOTFILES --- #
    ```
 
-4. **(Optional) Symlink Claude / VS Code / Cursor config** following the
-   per-tool instructions in `claude/README.md` and `vscode/README.md`.
+4. **(Optional) Agent config.** `claude/sync-agent-links.sh` links skills,
+   output styles, rules and settings from this repo and every overlay
+   (`claude/README.md`). VS Code: `vscode/README.md`.
 
-## Aliases
+## Shell config: `zsh/zshrc.d`
 
-`zsh/.zshrc` sources every `*.zsh` in `aliases/` on all machines, plus any
-per-machine `aliases.<suffix>/` dirs. A `case` block maps `$DQNA64_MACHINE`
-to a list of suffixes, so a machine can load several dirs and machines can
-share one (e.g. `DVBX1`/`DVBX2`/`DVBX3`/ `DVBX4` / `DVBX5` → `(dvbx_cnv)`).
-Suffixes are arbitrary; missing dirs are skipped. Just drop a `.zsh` file
-in a dir — no registration needed.
+`zsh/.zshrc` sources, from this repo and then from each overlay in order:
+every `zsh/zshrc.d/*.zsh` (all machines using that repo), then every
+`zsh/zshrc.d.<machine>/*.zsh` where `<machine>` is `$DQNA64_MACHINE`
+lowercased. Files load in filename order inside a directory, so prefix with
+a number when order matters (`10-general.zsh`, `20-git.zsh`). Aliases,
+functions, exports and tool init all go in these files; missing dirs are
+skipped. Drop a file in - no registration anywhere.
 
 ## Adding a new machine
 
-1. Pick an identifier (e.g. `MB_2026`).
-2. For per-machine aliases, add a branch to the `case` block in `zsh/.zshrc`
-   (e.g. `MB_2026) MACHINE_ALIAS_SUFFIXES=(mb_2026) ;;`) and create the matching
-   `aliases.<suffix>/` dir(s). Suffixes use `_` not `-`. For PATH/env
-   additions, add a branch in `zsh/.zshenv` (e.g. the `DVBX*` block).
-3. Optionally drop `zsh/.zshrc.<machine>` (`mb_m1`, `mb_cnv`, `dvbx1`, …,
-   i.e. `$DQNA64_MACHINE` lowercased) for a machine-specific zshrc. **No
-   registration needed** — `zsh/.zshrc` auto-sources by the derived filename.
+1. Pick an identifier (e.g. `MB_2026`) and set `DQNA64_MACHINE` to it in
+   `zsh/zsh-config`.
+2. Machine-specific shell config: create `zsh/zshrc.d.mb_2026/` (the id
+   lowercased, `_` not `-`) in whichever repo should own it and drop `.zsh`
+   files in. Machine-specific single files: `claude/settings.mb_2026.json`,
+   `tmux/.tmux.mb_2026.conf`, `karabiner/karabiner.mb_2026.json`, `yabai/yabairc.mb_2026`
+   in any repo (the id goes before the last extension, or at the end if none).
+3. Nothing to edit in `.zshrc`, `.zshenv` or `install.sh`.
+
+## Extension repos (overlays)
+
+This repo is the base: it works on its own and defines the places an
+extension repo can add to. An overlay is a second git repo with the same
+layout, holding what does not belong in a public base: work tooling, private
+machine configs, a team's skills. A machine can use several; an overlay can
+serve many machines. The base stores nothing about which overlays exist;
+each machine lists its own in `zsh/zsh-config`:
+
+```sh
+DOTFILES_OVERLAYS=(
+  "https://github.com/<you>/dotfiles-work.git"                 # cloned to ~/dotfiles-work
+  "git@github.com-personal:<you>/dotfiles-home.git=$HOME/home"  # cloned to an explicit path
+  "$HOME/some-local-dir"                                       # existing dir, nothing cloned
+)
+```
+
+`install.sh` clones missing overlays, runs each overlay's `install.d/*.sh` (every run, so keep them
+idempotent), and resolves the single files. Use whatever URL form
+authenticates on that machine (HTTPS app, SSH host alias).
+
+What an overlay may contain, and how it combines with the base:
+
+| Path | Kind | Rule |
+|---|---|---|
+| `bin/` | collection | every repo's `bin/` is prepended to `PATH` by `.zshenv`, base first (a later repo's same-named script wins; `dotdoctor` reports these) |
+| `zsh/zshrc.d/`, `zsh/zshrc.d.<machine>/` | collection | all repos' files are sourced, base first |
+| `claude/skills/`, `claude/output-styles/`, `claude/rules/` | collection | all repos' items are linked; a duplicate name is an error |
+| `claude/settings.json`, `tmux/.tmux.conf`, `karabiner/karabiner.json`, `yabai/yabairc` (+ machine variants: `settings.<machine>.json`, `.tmux.<machine>.conf`, `yabairc.<machine>`) | single file | most specific wins: the machine variant in any repo, else an overlay's file, else the base's; a tie is an error |
+| `install.d/*.sh` | hooks | run by `install.sh` after its own steps |
+| `git/gitconfig.template`, `ssh/config.template` | templates | rendered by `git/git-setup.sh` with the base's `git-identity` values (the only identity source), written next to the template (each overlay's own `.gitignore` must cover them; `new-overlay.sh` writes that and `git-setup.sh` warns if missing), and included from the base's rendered gitconfig (last, so overlay values win) and ssh snippet (first, so overlay Hosts are global); unknown placeholders are an error |
+| `zsh/.zshrc`, `zsh/.zshenv`, `install.sh`, `uninstall.sh`, `utils/` | reserved | read only from the base; ignored in an overlay, with a warning |
+
+Collections never override, single files never tie silently, and an overlay's
+files are self-contained (a rule file does not import a base file).
+Overlays are for private or work-specific config, not secrets: keys and
+identities stay in the gitignored `zsh/zsh-config` and `git/git-identity`.
+
+`dotpull` pulls every repo; `dotdoctor` prints the machine id, each repo's
+state, which repo won each single file, every agent link, collisions, and any
+overlay file the base does not read (a typo or an unsupported directory).
+
+### Create an extension repo
+
+```bash
+~/dotfiles_dqna64/new-overlay.sh ~/dotfiles-work --remote git@github.com-work:<you>/dotfiles-work.git
+git -C ~/dotfiles-work push -u origin main
+```
+
+It scaffolds the layout above with a README that states the rules, commits
+it, and prints the `zsh-config` line to add on each machine. Then on each of
+those machines: add the line, run
+`install.sh` and `claude/sync-agent-links.sh`.
+
+Moving an existing machine onto this layout: follow `OVERLAY-MIGRATION.md`.
 
 ## Machine logs
 
@@ -119,7 +185,7 @@ its path, and nothing here creates, clones, or validates it.
 |---|---|
 | `zsh/zsh-config` | `MACHINE_LOG_FILE` - the log's path. Exported, so agents read it from the environment |
 | `install.sh` | reports that path (or says it's unset). Creates nothing |
-| `claude/CLAUDE.base.md` | the trigger: before/after a system-wide install, claude will know to use the `machine-logs` skill. Symlinked to `~/.claude/CLAUDE.md` |
+| `claude/rules/skills.md` | the trigger: before/after a system-wide install, claude will know to use the `machine-logs` skill. Linked into `~/.claude/rules/` |
 | `claude/skills/machine-logs/SKILL.md` | the detail: what counts as loggable, the entry format, the header for a new log, where to commit. Synced to `~/.claude/skills` by `claude/sync-agent-links.sh` |
 
 To set one up: create the log wherever you want it (the skill has the header to

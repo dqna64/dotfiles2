@@ -7,10 +7,10 @@
 # What it does, in order:
 #   1. For each symlink install.sh / git-setup.sh creates (~/.zshrc, ~/.zshenv,
 #      ~/.tmux.conf, ~/.config/karabiner/karabiner.json, ~/.config/yabai/yabairc,
-#      ~/.gitignore_global, the optional ~/.claude/* and
-#      ~/.cursor/rules/claude.mdc links, and the per-item links under
-#      ~/.claude/skills, ~/.cursor/skills, and ~/.claude/output-styles created
-#      by claude/sync-agent-links.sh),
+#      ~/.gitignore_global, the ~/.claude/settings.json link, and the per-item
+#      links under ~/.claude/skills, ~/.cursor/skills, ~/.claude/output-styles
+#      and ~/.claude/rules created by claude/sync-agent-links.sh - from the base
+#      repo and every overlay listed in zsh-config),
 #      remove it ONLY
 #      if it is a symlink resolving into $DOTFILES_DIR — i.e. one we know we own.
 #      Real files, directories, and symlinks pointing elsewhere are left alone.
@@ -173,10 +173,11 @@ decide() {
 }
 
 # remove_dotfile_symlink <dst>
-# Remove <dst> only if it's a symlink resolving into $DOTFILES_DIR, then try to
-# restore the most recent backup. Anything else is reported and left untouched.
+# Remove <dst> only if it's a symlink resolving into one of the dotfiles repos
+# (the base, or an overlay listed in zsh-config), then try to restore the most
+# recent backup. Anything else is reported and left untouched.
 remove_dotfile_symlink() {
-	local dst="$1"
+	local dst="$1" root
 
 	if [ -L "$dst" ]; then
 		# Fully resolve the link (following any chain and canonicalising
@@ -186,12 +187,16 @@ remove_dotfile_symlink() {
 		local target
 		target="$(canonicalize_path "$dst")"
 
-		if path_inside "$DOTFILES_DIR" "$target"; then
+		local ours=false
+		for root in "${ROOTS[@]}"; do
+			if path_inside "$root" "$target"; then ours=true; break; fi
+		done
+		if [ "$ours" = true ]; then
 			echo_info "Removing symlink $dst -> $target"
 			do_cmd rm "$dst"
 			restore_latest_backup "$dst" true
 		else
-			echo_warn "Skipping $dst: symlink points outside the dotfiles repo ($target). Not ours to remove."
+			echo_warn "Skipping $dst: symlink points outside the dotfiles repos ($target). Not ours to remove."
 		fi
 		return 0
 	fi
@@ -233,8 +238,15 @@ fi
 DOTFILES_DIR="$(cd "$DOTFILES_DIR" >/dev/null 2>&1 && pwd -P)"
 
 echo ""
+# shellcheck source=utils/overlays.sh
+. "$DOTFILES_DIR/utils/overlays.sh"
+ZSH_CONFIG_FILE="$DOTFILES_DIR/zsh/zsh-config"
+ROOTS=()
+while IFS= read -r r; do ROOTS+=("$r"); done < <(dotfiles_roots 2>/dev/null)
+
 echo_success "Uninstalling dqna64 dotfiles"
 echo_info "Repo:     $DOTFILES_DIR"
+for r in "${ROOTS[@]}"; do [ "$r" != "$DOTFILES_DIR" ] && echo_info "Overlay:  $r (links removed; the clone itself is left in place)"; done
 [ "$DRY_RUN" = "true" ] && echo_warn "DRY RUN: no changes will be made."
 
 # === Remove symlinks + restore backups
@@ -261,15 +273,10 @@ if decide "" "Remove the dotfiles symlinks (resolving into $DOTFILES_DIR) and re
 	# Symlink created by git-setup.sh.
 	remove_dotfile_symlink "$HOME/.gitignore_global"
 
-	# Optional symlinks the user may have created by hand following claude/README.md.
-	remove_dotfile_symlink "$HOME/.claude/settings.json"
-	remove_dotfile_symlink "$HOME/.claude/CLAUDE.md"
-	# Optional Cursor global-rule symlink (claude/README.md). Like the ~/.claude
-	# links above this is hand-created, so we only drop the symlink and leave
-	# the user-managed ~/.cursor/rules dir (it may hold other rules) in place.
-	remove_dotfile_symlink "$HOME/.cursor/rules/claude.mdc"
+	# ~/.claude/settings.json, the legacy ~/.claude/CLAUDE.md and
+	# ~/.cursor/rules/claude.mdc links are handled by unsync-agent-links.sh below.
 
-	# Agent skills + output styles the user opted into via
+	# Agent skills, output styles and rules the user opted into via
 	# claude/sync-agent-links.sh. Delegate to its dedicated reverse script (also
 	# runnable standalone) so the link-removal logic lives in one place. It only
 	# drops links resolving into the repo and restores backups, leaving the

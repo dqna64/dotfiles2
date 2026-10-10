@@ -15,8 +15,8 @@ export const meta = {
 // ---- CONFIG (edit per task) -------------------------------------------------
 const MAX_CONCURRENT = 3 // bound heavy gates; do NOT raise without capacity headroom
 const BASE = 'master'
-const LIGHT_CHECK = 'the project light check, e.g. pnpm fin --silent / npm test'
-const HEAVY_GATE = 'the project final gate, e.g. taz check / make verify (bazel-backed, heavy, shared)'
+const LIGHT_CHECK = 'the project light check, e.g. npm test / pytest -q'
+const HEAVY_GATE = 'the project final gate, e.g. make verify / a full CI-equivalent build'
 
 // One entry per unit of work. wt = pre-created worktree path; branch = pre-created branch off BASE.
 const UNITS = [

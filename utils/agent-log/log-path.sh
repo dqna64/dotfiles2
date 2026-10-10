@@ -23,7 +23,7 @@
 #   2. $AGENT_LOGS/<slug>/              the user's own logs root, one folder per
 #   3. ~/.agent/logs/<slug>/            project; <slug> is the absolute git-root
 #      path with '/' replaced by '-' (the same scheme Claude Code uses under
-#      ~/.claude/projects/), so canva5/web and canva7/web never collide.
+#      ~/.claude/projects/), so two checkouts named alike never collide.
 
 # agent_project_dir <dir>
 # Resolve a session directory to its git root, or its physical path outside git.
