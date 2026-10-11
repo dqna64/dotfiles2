@@ -5,14 +5,19 @@ changing this feature are in `CLAUDE.md` -> "Agent activity logs".
 
 ## Where logs live
 
-Always outside the project, resolved by `utils/agent-log/log-path.sh` - the
-writer, `agentlog` and `install.sh` all use it, so they agree:
+Resolved by `utils/agent-log/log-path.sh` - the writer, `agentlog` and
+`install.sh` all use it, so they agree:
 
-1. `$AGENT_LOGS/<project slug>/`.
-2. else `~/.agent_dqna64/logs/<project slug>/`.
+1. `<git root>/.agent_dqna64/logs/`, only if that directory already exists.
+2. else `$AGENT_LOGS/<project slug>/`.
+3. else `~/.agent_dqna64/logs/<project slug>/`.
 
-Unlike branch plans there is no in-repo tier: entries carry the hostname,
-absolute paths and unreviewed summaries, which must not be committed.
+Tier 1 is a per-project opt-in: the user creates the directory by hand
+(`mkdir -p .agent_dqna64/logs`) in a repo that is private, and the logs are
+then committed with the project like plans. Nothing creates it automatically,
+and a repo that has only `.agent_dqna64/plans/` stays on tier 2/3. Entries
+carry the hostname, absolute paths and unreviewed summaries, so never opt in a
+public repo. `agentlog -a` lists only tiers 2/3 (the global root).
 
 `<project slug>` is the absolute git-root path with `/` -> `-` (the scheme Claude
 Code uses under `~/.claude/projects/`), so `canva5/web` and `canva7/web` never

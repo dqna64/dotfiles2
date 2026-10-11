@@ -10,10 +10,11 @@ A per-project record of what agent sessions have actually changed here. Every
 session working in a directory writes its own file into the project's logs
 directory; read together they accumulate across sessions, agents and machines.
 
-The logs directory is always outside the project, never inside the repo:
+The logs directory:
 
-1. `$AGENT_LOGS/<project slug>/` (resolve the env var first; slug = git-root path with `/` -> `-`).
-2. else `~/.agent_dqna64/logs/<project slug>/`.
+1. `<git root>/.agent_dqna64/logs/`, only if it already exists (the user opted this private repo in; it is committed like plans).
+2. else `$AGENT_LOGS/<project slug>/` (resolve the env var first; slug = git-root path with `/` -> `-`).
+3. else `~/.agent_dqna64/logs/<project slug>/`.
 
 If the directory is missing or empty, no session has changed anything in this project yet. Say so and
 carry on; do not create one. Inside it, one file per agent session:
@@ -89,9 +90,11 @@ edit, or delete entries by hand, and never "tidy up" a log file: other sessions
 may be appending to it at the same moment, and it is append-only by design so
 that concurrent writers can't corrupt each other.
 
-Never copy, move or commit a log file into a repo. Entries hold the hostname,
-absolute paths and unreviewed summaries - private, machine-specific detail that
-must not be published. Logs stay in the user's home logs root.
+Never create `.agent_dqna64/logs/` in a repo, and never copy or move a log file
+into one: opting a project in is the user's decision, made by hand, because
+entries hold the hostname, absolute paths and unreviewed summaries that must not
+be published. Where the user has opted in, commit the log files with the project
+like plans; otherwise logs stay in the user's home logs root.
 
 ## Related
 

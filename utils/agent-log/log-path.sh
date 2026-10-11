@@ -16,10 +16,13 @@
 # in its name. One file per session means no two writers ever share a file.
 # The renderer merges files on read and sorts by timestamp.
 #
-# The project's logs directory is always outside the project, so logs are
-# never committed with it:
-#   1. $AGENT_LOGS/<slug>/               the user's own logs root, one folder per
-#   2. ~/.agent_dqna64/logs/<slug>/      project; <slug> is the absolute git-root
+# The project's logs directory:
+#   1. <git root>/.agent_dqna64/logs/    only if that directory already exists:
+#      the user created it to opt the project in (a private repo). Committed
+#      with the project, like plans. Never created here, and .agent_dqna64/
+#      alone (plans) does not opt in.
+#   2. $AGENT_LOGS/<slug>/               the user's own logs root, one folder per
+#   3. ~/.agent_dqna64/logs/<slug>/      project; <slug> is the absolute git-root
 #      path with '/' replaced by '-' (the same scheme Claude Code uses under
 #      ~/.claude/projects/), so two checkouts named alike never collide.
 
@@ -54,6 +57,10 @@ agent_logs_global_root() {
 agent_logs_dir() {
 	local project_dir="${1:-$PWD}" root
 	root="$(agent_project_dir "$project_dir")" || return 1
+	if [ -d "$root/.agent_dqna64/logs" ]; then
+		printf '%s/.agent_dqna64/logs\n' "$root"
+		return
+	fi
 	printf '%s/%s\n' "$(agent_logs_global_root)" "$(agent_project_slug "$root")"
 }
 

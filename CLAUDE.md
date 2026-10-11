@@ -196,13 +196,14 @@ Invariants to preserve if you touch it:
   demanding one line, keep the `NOTHING` escape hatch, and don't add fields to
   the rendered view that repeat on every line (see the machine-name test in
   `render.sh`).
-- **Logs never live inside a project**: `$AGENT_LOGS/<slug>`, else
-  `~/.agent_dqna64/logs/<slug>`, slug = git-root path with `/` -> `-`. Unlike
-  plans, there is no `<repo>/.agent_dqna64/` tier: entries carry the hostname,
-  absolute paths and unreviewed model summaries, which must never be committed
-  (or pushed to a public repo). One file per agent session, named by the
-  agent's own session id (resumable), so no two writers share a file. Keep it
-  that way.
+- **In-repo logs are opt-in, per project**: `<git root>/.agent_dqna64/logs/`
+  only if the user already created it (a private repo), else
+  `$AGENT_LOGS/<slug>`, else `~/.agent_dqna64/logs/<slug>`, slug = git-root
+  path with `/` -> `-`. The writer must never create the in-repo directory,
+  and `.agent_dqna64/` alone (plans) must not opt a repo in: entries carry the
+  hostname, absolute paths and unreviewed model summaries, which must never
+  reach a public repo. One file per agent session, named by the agent's own
+  session id (resumable), so no two writers share a file. Keep it that way.
 
 ## Documentation placement
 

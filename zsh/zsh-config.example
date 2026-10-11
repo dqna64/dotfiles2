@@ -56,8 +56,9 @@ export AGENT_PLANS="$HOME/.agent_dqna64/plans"
 # === Path for agent activity logs
 # Where agent sessions record what they changed: one folder per project, one
 # file per session. Written automatically by utils/agent-log/ hooks; read with
-# the `agentlog` alias. This root gets a <project slug>/ folder per project;
-# logs are never written inside a project. Change it only to move that root.
+# the `agentlog` alias. This root gets a <project slug>/ folder per project,
+# except projects opted in with their own .agent_dqna64/logs/ directory, which
+# log there instead. Change it only to move that root.
 # Default: AGENT_LOGS="$HOME/.agent_dqna64/logs"
 
 export AGENT_LOGS="$HOME/.agent_dqna64/logs"
