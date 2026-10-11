@@ -23,7 +23,7 @@ working everywhere — not just on the machine you happen to be testing on:
 
 - **macOS laptops** — a work MacBook and a personal MacBook (M1, Apple
   Silicon). Both Apple Silicon and Intel brew paths should be handled.
-- **Work devboxes (Linux)** — `DVBX1`, `DVBX2`, `DVBX3`, `DVBX4`, `DVBX5`, and potentially more
+- **Work devboxes (Linux)** — `DVBX1` .. `DVBX9`, and potentially more
   (Linux).
 - **Linux VPS** — DigitalOcean, OVH, and similar.
 

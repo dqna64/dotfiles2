@@ -2,7 +2,7 @@
 # Selects the per-machine directories in every dotfiles repo: zsh/zshrc.d.<id>/
 # and the <file>.<id> variants of single files (claude/settings.<id>.json, ...),
 # with <id> lowercased. Any identifier works; current ones:
-#   DVBX1 .. DVBX5  - work devboxes
+#   DVBX1 .. DVBX9  - work devboxes
 #   MB_M1           - personal MacBook
 #   MB_CNV          - work MacBook
 # Leave unset to load only the machine-independent files.
@@ -69,6 +69,13 @@ export AGENT_LOGS="$HOME/.agent_dqna64/logs"
 # Path to this machine's log, read by install.sh and by agents.
 
 export MACHINE_LOG_FILE=
+
+# === Cursor remote-SSH weblink
+# The SSH Host alias that OTHER machines (e.g. your laptop) use in their own
+# ~/.ssh/config to reach THIS machine. Used by the cursor-weblink skill to
+# build a cursor://vscode-remote/ssh-remote+<alias>/<path> link.
+
+export CURSOR_SSH_HOST_ALIAS=
 
 # === Openrouter
 
