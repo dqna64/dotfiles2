@@ -29,7 +29,7 @@ machine, and opens the given folder.
    from the other end, and suggest they save it for next time:
 
    ```sh
-   export CURSOR_SSH_HOST_ALIAS="dvbx6"   # example
+   export CURSOR_SSH_HOST_ALIAS="coder.dvbx6"   # example
    ```
 
    in `zsh/zsh-config` (add the same var, left blank, to
