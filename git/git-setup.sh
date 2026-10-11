@@ -143,19 +143,43 @@ if [[ -f "$example_file" && -f "$SHELL_VAR_NAMES" ]]; then
     fi
 fi
 
-# IdentityFile must be the private key: strip a trailing .pub at render time
-# (ssh rejects a public key loaded as a private one). git-identity is left as is.
-strip_identityfile_pub() {
+# Sanity-check the IdentityFile paths. Both checks only WARN and render the
+# value verbatim - git-identity is the source of truth and is never rewritten,
+# and a key that is missing here may legitimately exist on another machine.
+#
+# .pub: a recurring mistake — the old variable was named *_SSH_PUBLIC_KEY, and
+# the .pub is what GitHub's UI / ssh-keygen print.
+#
+# Missing file: catches an unedited placeholder, or a key never generated on
+# this machine.
+#
+# Both render verbatim, so a bad path now reaches the config — the warnings
+# spell out the failure rather than quietly papering over it.
+check_identityfile() {
     local varname="$1"
     local path="${!varname}"
+
     if [[ "$path" == *.pub ]]; then
-        printf -v "$varname" '%s' "${path%.pub}"
-        echo "Warning: $varname ends in .pub; IdentityFile needs the private key."
-        echo "         Rendering ${!varname} (git-identity left unchanged — edit it to drop .pub)."
+        echo "Warning: $varname ends in .pub — that's the PUBLIC key."
+        echo "         Rendered as-is, so this Host alias WILL fail: ssh loads it as a"
+        echo "         private key (0644 -> UNPROTECTED PRIVATE KEY FILE -> Permission"
+        echo "         denied (publickey)). Drop the .pub in $GIT_IDENTITY_FILE and re-run."
+    fi
+
+    # ssh expands a leading ~/ itself, so the rendered config keeps it; expand
+    # here only to test existence. Only the ~/ form — ~user/ is not ours to
+    # resolve, and guessing would turn a valid path into a bogus warning.
+    local resolved="$path"
+    [[ "$path" == "~/"* ]] && resolved="$HOME/${path#\~/}"
+    if [[ ! -f "$resolved" ]]; then
+        echo "Warning: $varname points at a file that doesn't exist on this machine:"
+        echo "         $path"
+        echo "         Rendered as-is, so this Host alias will fail until the path is"
+        echo "         right. Fix $GIT_IDENTITY_FILE (or generate/copy the key) and re-run."
     fi
 }
-strip_identityfile_pub PRIMARY_ACC_SSH_PRIV_KEY
-strip_identityfile_pub SECONDARY_ACC_SSH_PRIV_KEY
+check_identityfile PRIMARY_ACC_SSH_PRIV_KEY
+check_identityfile SECONDARY_ACC_SSH_PRIV_KEY
 
 # Reassure the user: git-identity and the files rendered from it are
 # gitignored, so real names/emails/keys/usernames are never committed.

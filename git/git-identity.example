@@ -10,8 +10,9 @@ SECONDARY_NAME="Secondary Name"
 SECONDARY_EMAIL="secondary@example.com"
 
 # PRIVATE key path (e.g. ~/.ssh/id_ed25519), not the .pub. IdentityFile
-# must point at the private key; git-setup.sh strips a trailing .pub if
-# you leave one, but fix it here so the source of truth is correct.
+# must point at the private key. git-setup.sh warns (but renders as-is) if
+# the path ends in .pub or doesn't exist on this machine - fix it here,
+# since this file is the source of truth.
 PRIMARY_ACC_SSH_PRIV_KEY="/path/to/ssh/private_key"
 SECONDARY_ACC_SSH_PRIV_KEY="/path/to/ssh/private_key"
 
