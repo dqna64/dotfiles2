@@ -252,6 +252,9 @@ your login shell. Run `uninstall.sh --help` for all options.
 - [ ] Rename GitHub repo `dotfiles2` -> `dotfiles_dqna64` to match the default
    `$DOTFILES_DIR`. Update repo URLs in `install.sh` and `README.md`; run
    `git remote set-url origin` in existing clones.
+- [ ] Obsidian ignores dot-folders, so `<vault>/.agent_dqna64/plans/` (the `branch-plans` project tier) is invisible
+   in an Obsidian vault (e.g. `canva-jam-2026`). Decide: a visible symlink/alias, an Obsidian "Excluded files" /
+   plugin workaround, or a `branch-plans` tier that accepts a non-dot dir. Not yet verified against Obsidian settings.
 - [x] tmux session saving (via TPM + tmux-resurrect; see `tmux/.tmux.conf`)
 - [ ] Duplicated contants prone to drift due to not using a single source between install.sh
     and everything else. Includes:
