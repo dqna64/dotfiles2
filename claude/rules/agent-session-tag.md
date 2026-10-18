@@ -1,0 +1,2 @@
+# Agent session tag
+- When updating human-readable notes (plans, TODO lists, status docs) to track a task an agent is working on, tag the entry with the agent's session id and its tmux session name, if any, so the user can resume it: `[claude ad2f4222-4a53-42ec-b83b-7297a51ed0d5 on tmux 5fp2]`. Omit the `on tmux ...` part when not in tmux (`$TMUX` unset); get the name with `tmux display-message -p '#S'`. Use `cursor` instead of `claude` if the agent is a Cursor agent.
