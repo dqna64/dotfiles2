@@ -1,6 +1,6 @@
 ---
 name: cursor-weblink
-description: Generate a cursor:// weblink that opens a repo on this machine remotely in Cursor (via Remote-SSH), for pasting into Slack/etc or opening from a laptop. Use when the user asks for a "cursor link", "cursor weblink", or to "open this repo in Cursor from my laptop/elsewhere".
+description: Generate a cursor:// weblink that opens a repo on this machine remotely in Cursor (via Remote-SSH), for pasting into Slack/etc or opening from a laptop. Use when the user asks for a "cursor link", "cursor weblink", or to "open this repo in Cursor from my laptop/elsewhere". Also covers the case where the editor is on this same machine (then it just runs `cursor <path>`).
 ---
 
 # Cursor Remote-SSH Weblink
@@ -10,6 +10,15 @@ another machine launches Cursor there, connects over Remote-SSH to this
 machine, and opens the given folder.
 
 ## Steps
+
+0. **Is the editor on this machine?** Then no link or SSH alias is needed: run
+   `cursor <absolute-path>` and stop (skip the steps below).
+   - Local if the user says so ("I'm on this laptop"), or on macOS with
+     `cursor` on `PATH` and `$SSH_CONNECTION` unset (laptops are not normally
+     SSH'd into).
+   - Remote if the user wants a link to paste or open elsewhere, or
+     `$SSH_CONNECTION` is set (a strong hint of a devbox/VPS session).
+   - If it is not clear which, ask: "Is Cursor on this machine, or another one?"
 
 1. **Get the repo.** If the user named one, use it; otherwise ask which repo.
    Resolve it to an absolute path:
