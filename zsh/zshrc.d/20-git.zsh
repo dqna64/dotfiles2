@@ -113,10 +113,10 @@ evergreen() {
   git checkout master && git pull origin master
 }
 
-whichbranch() {
+currbranch() {
     local dir="${1:-$PWD}"
     if [[ ! -d "$dir" ]]; then
-        echo "whichbranch: not a directory: $dir" >&2
+        echo "currbranch: not a directory: $dir" >&2
         return 1
     fi
     git -C "$dir" rev-parse --abbrev-ref HEAD
