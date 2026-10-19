@@ -113,6 +113,8 @@ evergreen() {
   git checkout master && git pull origin master
 }
 
+# currbranch [dir]: print the current branch of the repo at dir (default: cwd).
+# Prints HEAD when detached.
 currbranch() {
     local dir="${1:-$PWD}"
     if [[ ! -d "$dir" ]]; then
