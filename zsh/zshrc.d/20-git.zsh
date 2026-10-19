@@ -112,3 +112,12 @@ evergreen() {
   echo "Switching to master and pulling down the latest..."
   git checkout master && git pull origin master
 }
+
+whichbranch() {
+    local dir="${1:-$PWD}"
+    if [[ ! -d "$dir" ]]; then
+        echo "whichbranch: not a directory: $dir" >&2
+        return 1
+    fi
+    git -C "$dir" rev-parse --abbrev-ref HEAD
+}
