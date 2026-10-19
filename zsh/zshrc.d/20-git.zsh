@@ -115,6 +115,10 @@ evergreen() {
 
 # currbranch [dir]: print the current branch of the repo at dir (default: cwd).
 # Prints HEAD when detached.
+#
+#   currbranch                 # branch of the cwd's repo
+#   currbranch ~/work/canva    # branch of another repo without cd-ing
+#   git switch "$(currbranch ../other)"   # use it inline
 currbranch() {
     local dir="${1:-$PWD}"
     if [[ ! -d "$dir" ]]; then
