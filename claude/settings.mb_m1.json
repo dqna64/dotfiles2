@@ -1,9 +1,4 @@
 {
-  "model": "sonnet[1m]",
-  "effortLevel": "high",
-  "enabledPlugins": {
-    "typescript-lsp@claude-plugins-official": true
-  },
   "permissions": {
     "allow": [
       "Bash(git *)",
@@ -47,6 +42,7 @@
       "Bash(date *)"
     ]
   },
+  "model": "opus",
   "hooks": {
     "SessionStart": [
       {
@@ -83,11 +79,18 @@
     ]
   },
   "enableWorkflows": true,
+  "enabledPlugins": {
+    "typescript-lsp@claude-plugins-official": true
+  },
+  "effortLevel": "high",
   "modelSettings": {
     "claude-sonnet-5": {
       "effortLevel": "medium"
     },
     "claude-opus-5": {
+      "effortLevel": "high"
+    },
+    "claude-opus-5-5": {
       "effortLevel": "high"
     }
   },
