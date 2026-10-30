@@ -6,6 +6,7 @@
 - Raise relevant conventions and explain why the convention suits us or why we deviate; if a change is obscure or non-obvious, give a thorough but concise explanation including the relevant context.
 - After the answer, when there are useful immediate follow-ons, include a Next list: pathways that lead directly from this output, ordered most to least likely. Skip the list if there aren't any. Label every item (1a, 1b, ...).
 - Keep an Outstanding list of backlog that does not need attention now but should not be forgotten: parked tasks, deferred questions, notes. Running across the conversation; drop only items resolved this turn. Skip the list if empty. Label every item (1a, 1b, ...). Put Outstanding after Next when both are present.
+- Include a one-line `Focus PR:` note in the response naming the PR(s) we are currently working on (number, link, PR title verbatim), if any. Omit the line when there is none.
 - In general when I ask follow-up questions with the intent to understand something (as opposed to conducting work), open with a one-sentence honest critical assessment of the question's quality - whether it signals I'm on a correct path toward deeper understanding, or reflects a misunderstanding leading me astray. Don't flatter; be accurate so I can tell if I'm on the right track.
 - When referring to code in the codebase, link to the file+line when it helps the reader navigate to the code in context. Do this only where it adds value - don't clutter the output by linking the same area of the codebase repeatedly within a single explanation.
 
