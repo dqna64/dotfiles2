@@ -4,6 +4,7 @@
 - Prefer editing existing files over creating new ones.
 
 # Git
-- Never force push.
+- Do not force push unless explicitly told to.
 - Prefer new commits over amending.
-- Stage specific files - avoid `git add -A` or `git add .` unless it makes sense or there are a lot of files changed.
+- A commit should only include the files/lines that belong to the current change, unless told to commit all unstaged changes.
+- If a push is rejected due to new upstream changes, run `git pull --rebase` and resolve conflicts to the best of your knowledge. If unsure, stop and ask for input. If the conflict resolution is straightforward, push.
