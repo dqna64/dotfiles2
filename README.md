@@ -102,6 +102,19 @@ a number when order matters (`10-general.zsh`, `20-git.zsh`). Aliases,
 functions, exports and tool init all go in these files; missing dirs are
 skipped. Drop a file in - no registration anywhere.
 
+## Scripts: `bin/`
+
+`zsh/.zshenv` prepends this repo's `bin/` and each overlay's to `PATH`, base
+first. Drop an executable in - no symlink or registration needed. Prefer
+`bin/` over a shell function when non-zsh callers need it (tmux `run-shell`,
+`ssh <host> <script>`, other scripts); those see `PATH`, but not your aliases.
+
+Currently:
+
+- `ccb` - fork a live Claude Code chat. Use for throwaway follow-ups without polluting the original conversation. Run it in a new terminal tab to pick from the
+  current live chats. In tmux, `prefix + F` forks the chat in the current pane straight
+  into a new window. Needs `jq`. Full usage: `ccb -h`.
+
 ## Adding a new machine
 
 1. Pick an identifier (e.g. `MB_2026`) and set `DQNA64_MACHINE` to it in

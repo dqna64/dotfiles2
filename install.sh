@@ -534,6 +534,14 @@ cat <<EOF
     Saved state lives in ~/.local/share/tmux/resurrect, so your layout
     survives a reboot or tmux server restart.
 
+    Forking Claude Code chats (ccb, from bin/ on PATH):
+
+      prefix + F        fork the chat in the current tmux pane into a new window
+      ccb               same thing from any shell, for chats outside tmux
+
+    Both open a copy of the conversation, so a throwaway follow-up never
+    lands in the original chat. Run 'ccb -h' for the rest.
+
 EOF
 printf '%b' "$RESET"
 

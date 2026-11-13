@@ -1,0 +1,321 @@
+#!/usr/bin/env bash
+# ccb - open a forked copy of a live Claude Code chat in this terminal.
+#
+# Usage:
+#   ccb                  pick a chat from the list and fork it
+#   ccb "question"       same, sending "question" as the first prompt
+#   ccb -p "question"    one-shot: print the answer and exit
+#   ccb -t               tmux: fork the chat in this pane into a new window
+#   ccb -l               list live chats
+#   ccb -s <match>       preselect a chat (match on session name, id or cwd)
+#   ccb -y               ask nothing, take the most recent chat
+#   ccb -i               print the resolved chat's session id and exit
+#
+# Run ccb in a new terminal tab and it lists the live chats in this directory,
+# most recent first, each with its latest prompt, and forks the one you pick.
+#
+# Under -t the chat is exact - the one running in the pane you invoked from -
+# and it forks without asking, for one-keystroke use.
+#
+# Forks made by ccb are never themselves offered as a chat to fork, so repeated
+# forking always branches off the same conversation.
+#
+# Env: CCB_TMUX_TARGET=window|session  (default window)
+
+set -euo pipefail
+
+# Resolve our own path without readlink -f, which BSD/macOS lacks.
+SELF=${BASH_SOURCE[0]}
+case $SELF in */*) : ;; *) SELF=$(command -v "$SELF" 2>/dev/null || printf '%s' "$SELF") ;; esac
+while [ -L "$SELF" ]; do
+  _link=$(readlink "$SELF")
+  case $_link in /*) SELF=$_link ;; *) SELF=$(dirname "$SELF")/$_link ;; esac
+done
+
+SESSIONS_DIR="$HOME/.claude/sessions"
+PROJECTS_DIR="$HOME/.claude/projects"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/ccb"
+FORKS_FILE="$STATE_DIR/forks"
+ASSUME_YES=0
+
+die() { printf 'ccb: %s\n' "$*" >&2; exit 1; }
+note() { printf 'ccb: %s\n' "$*" >&2; }
+
+# Does /proc exist? Overridable so the ps-based path can be exercised on Linux.
+PROC_FS=${CCB_PROC_FS:-$([[ -r /proc/$$/stat ]] && echo 1 || echo 0)}
+
+# Claude Code runs from ~/.local/share/claude/versions/<version>, so the
+# process name alone can be a bare version number. The executable path always
+# contains "claude" though, so test that first and fall back to the name.
+is_claude_proc() {
+  local s
+  if (( PROC_FS )); then
+    s="$(readlink "/proc/$1/exe" 2>/dev/null) $(cat "/proc/$1/comm" 2>/dev/null)"
+    s+=" $(tr '\0' ' ' < "/proc/$1/cmdline" 2>/dev/null)"
+  else
+    s="$(ps -o comm= -p "$1" 2>/dev/null) $(ps -o args= -p "$1" 2>/dev/null)"
+  fi
+  [[ $s == *[Cc]laude* ]]
+}
+
+# Process start time in whatever form the registry records it: jiffies since
+# boot on Linux, an lstart date string on macOS.
+proc_start() {
+  if (( PROC_FS )); then awk '{print $22}' "/proc/$1/stat" 2>/dev/null
+  else ps -o lstart= -p "$1" 2>/dev/null; fi
+}
+
+squeeze() { printf '%s' "$*" | tr -s '[:space:]' ' ' | sed 's/^ //; s/ $//'; }
+
+new_uuid() {
+  if [[ -r /proc/sys/kernel/random/uuid ]]; then cat /proc/sys/kernel/random/uuid
+  elif command -v uuidgen >/dev/null 2>&1; then uuidgen | tr '[:upper:]' '[:lower:]'
+  else python3 -c 'import uuid; print(uuid.uuid4())'; fi
+}
+
+encode_cwd() { printf '%s' "${1//[^a-zA-Z0-9]/-}"; }
+sanitize() { printf '%s' "${1//[^a-zA-Z0-9_-]/-}"; }
+
+known_forks() {
+  if [[ -s $FORKS_FILE ]]; then cat "$FORKS_FILE"; else printf 'x-no-ccb-forks-x\n'; fi
+}
+
+# Live interactive chats as TSV: updatedAt, sessionId, cwd, name.
+# The per-pid registry under ~/.claude/sessions is an internal Claude Code
+# file, so every field access is defensive and failure falls through to the
+# transcript-mtime heuristic in resolve_fallback.
+live_sessions() {
+  local f pid procstart actual
+  shopt -s nullglob
+  for f in "$SESSIONS_DIR"/*.json; do
+    pid=$(jq -r '.pid // empty' "$f" 2>/dev/null) || continue
+    [[ -n $pid ]] || continue
+    kill -0 "$pid" 2>/dev/null || continue
+    is_claude_proc "$pid" || continue
+    # Guard against pid reuse: the recorded start time must match the process
+    # holding that pid now. Only enforced when both values are available.
+    procstart=$(squeeze "$(jq -r '.procStart // empty' "$f" 2>/dev/null)")
+    actual=$(squeeze "$(proc_start "$pid")")
+    [[ -z $procstart || -z $actual || $procstart == "$actual" ]] || continue
+    jq -r 'select(.kind == "interactive")
+           | [.updatedAt // 0, .sessionId, .cwd // "", .name // ""]
+           | @tsv' "$f" 2>/dev/null
+  done | grep -vFf <(known_forks) 2>/dev/null || true
+}
+
+ago() {
+  local ms=$1 s
+  [[ $ms =~ ^[0-9]+$ ]] || { printf 'unknown'; return; }
+  s=$(( $(date +%s) - ms / 1000 ))
+  (( s < 0 )) && s=0
+  if   (( s < 60 ));    then printf '%ds ago' "$s"
+  elif (( s < 3600 ));  then printf '%dm ago' $(( s / 60 ))
+  elif (( s < 86400 )); then printf '%dh ago' $(( s / 3600 ))
+  else                       printf '%dd ago' $(( s / 86400 )); fi
+}
+
+# Best-effort one-line description of what a chat is about, for the picker.
+last_prompt() {
+  local f="$PROJECTS_DIR/$(encode_cwd "$2")/$1.jsonl" txt
+  [[ -f $f ]] || return 0
+  txt=$(tail -c 16384 "$f" 2>/dev/null | grep '"type":"last-prompt"' | tail -1 \
+        | jq -r '.lastPrompt // empty' 2>/dev/null) || return 0
+  txt=${txt//$'\n'/ }
+  [[ -n $txt ]] && printf '%.72s' "$txt"
+}
+
+show_row() {  # updatedAt sessionId cwd name [prefix]
+  local upd=$1 sid=$2 cwd=$3 name=$4 prefix=${5:-} lp
+  printf '%s%-26s  %-10s  %s\n' "$prefix" "${name:-${sid:0:8}}" "$(ago "$upd")" "${cwd/#$HOME/\~}"
+  lp=$(last_prompt "$sid" "$cwd")
+  [[ -n $lp ]] && printf '%s    %s\n' "${prefix//?/ }" "$lp"
+  return 0
+}
+
+# /dev/tty can exist as a node yet fail to open when there is no controlling
+# terminal (cron, pipelines, tmux run-shell), so test it by opening it.
+have_tty() { ( exec 3>/dev/tty ) 2>/dev/null; }
+
+# Read a menu choice on the tty. Echoes the chosen 1-based index.
+ask() {  # max prompt
+  local max=$1 reply
+  printf '%s' "$2" > /dev/tty
+  read -r reply < /dev/tty || reply=""
+  [[ -z $reply ]] && reply=1
+  [[ $reply =~ ^[0-9]+$ ]] && (( reply >= 1 && reply <= max )) \
+    || die "not a valid choice: $reply"
+  printf '%s\n' "$reply"
+}
+
+choose() {  # prints "sessionId<TAB>cwd" for the chosen chat
+  local rows=$1 i=0 upd sid cwd name pick
+  local ids=() cwds=()
+  have_tty || { printf '%s\n' "$rows" | head -1 | cut -f2,3; return; }
+  {
+    echo "Live chats here, most recent first:"
+    while IFS=$'\t' read -r upd sid cwd name; do
+      i=$(( i + 1 )); ids[i]=$sid; cwds[i]=$cwd
+      show_row "$upd" "$sid" "$cwd" "$name" "  $i) "
+    done <<< "$rows"
+  } > /dev/tty
+  pick=$(ask "$i" 'chat [1]: ') || exit 1
+  printf '%s\t%s\n' "${ids[pick]}" "${cwds[pick]}"
+}
+
+# Newest transcript for $PWD. Used only when the registry tells us nothing,
+# e.g. every chat has been closed but you still want to branch off one.
+resolve_fallback() {
+  local dir="$PROJECTS_DIR/$(encode_cwd "$PWD")" newest
+  newest=$(ls -t "$dir"/*.jsonl 2>/dev/null \
+    | grep -vFf <(known_forks) 2>/dev/null | head -1) || true
+  [[ -n ${newest:-} ]] || return 1
+  note "no live chat found; branching off the newest transcript here"
+  printf '%s\t%s\n' "$(basename "$newest" .jsonl)" "$PWD"
+}
+
+# Echoes "sessionId<TAB>cwd".
+resolve_trunk() {
+  local match="${1:-}" rows same_cwd
+  rows=$(live_sessions | sort -t$'\t' -k1,1nr)
+  [[ -n $rows ]] || { resolve_fallback; return; }
+
+  if [[ -n $match ]]; then
+    rows=$(printf '%s\n' "$rows" | grep -iF -- "$match") \
+      || die "no live chat matching '$match' (try: ccb -l)"
+  else
+    # Chats in this directory are what you almost always mean; only widen the
+    # search when there are none, since a new tab inherits the directory.
+    same_cwd=$(printf '%s\n' "$rows" | awk -F'\t' -v c="$PWD" '$3 == c')
+    if [[ -n $same_cwd ]]; then
+      rows="$same_cwd"
+    else
+      note "no live chat in this directory; showing all of them"
+    fi
+  fi
+
+  if (( ASSUME_YES )); then
+    printf '%s\n' "$rows" | head -1 | cut -f2,3
+  else
+    choose "$rows"
+  fi
+}
+
+describe() {  # one-line banner so a wrong pick is obvious immediately
+  local sid=$1 row
+  row=$(live_sessions | awk -F'\t' -v s="$sid" '$2 == s' | head -1)
+  [[ -n $row ]] || { note "forking ${sid:0:8}"; return; }
+  IFS=$'\t' read -r _ _ cwd name <<< "$row"
+  note "forking ${name:-${sid:0:8}}  (${cwd/#$HOME/\~})"
+}
+
+list() {
+  local rows upd sid cwd name
+  rows=$(live_sessions | sort -t$'\t' -k1,1nr)
+  [[ -n $rows ]] || { echo "no live Claude Code chats"; return; }
+  while IFS=$'\t' read -r upd sid cwd name; do
+    show_row "$upd" "$sid" "$cwd" "$name"
+  done <<< "$rows"
+}
+
+# Breadth-first walk for a claude process at or below $1, so a pane running
+# claude directly and one running it under a shell both resolve.
+find_claude_pid() {
+  local roots=("$1") next=() depth=0 p kid
+  while (( ${#roots[@]} && depth < 6 )); do
+    for p in "${roots[@]}"; do
+      is_claude_proc "$p" && { printf '%s\n' "$p"; return 0; }
+    done
+    next=()
+    for p in "${roots[@]}"; do
+      while read -r kid; do [[ -n $kid ]] && next+=("$kid"); done < <(pgrep -P "$p" 2>/dev/null)
+    done
+    roots=("${next[@]}"); (( depth++ ))
+  done
+  return 1
+}
+
+# Fork the chat running in the invoking tmux pane into a new window/session.
+tmux_fork() {
+  [[ -n ${TMUX:-} ]] || die "not inside tmux - open a terminal tab and run: ccb"
+  local pane pane_pid cpid trunk name cwd label self target wid n=2
+  # run-shell exports TMUX but not TMUX_PANE, so the key binding passes the
+  # pane id in; the other two are for interactive use.
+  pane=${1:-${TMUX_PANE:-$(tmux display-message -p '#{pane_id}')}}
+  pane_pid=$(tmux display-message -p -t "$pane" '#{pane_pid}')
+  cwd=$(tmux display-message -p -t "$pane" '#{pane_current_path}')
+
+  cpid=$(find_claude_pid "$pane_pid") \
+    || die "no Claude Code chat running in this pane"
+  trunk=$(jq -r '.sessionId // empty' "$SESSIONS_DIR/$cpid.json" 2>/dev/null) || true
+  [[ -n ${trunk:-} ]] || die "chat in this pane is not in the session registry"
+  name=$(jq -r '.name // empty' "$SESSIONS_DIR/$cpid.json" 2>/dev/null)
+
+  label="fork-$(sanitize "${name:-${trunk:0:8}}")"
+  self=$(command -v ccb 2>/dev/null || printf '%s' "$SELF")
+  target=${CCB_TMUX_TARGET:-window}
+
+  if [[ $target == session ]]; then
+    local base=$label
+    while tmux has-session -t "=$label" 2>/dev/null; do label="$base-$n"; (( n++ )); done
+    wid=$(tmux new-session -d -s "$label" -c "$cwd" -P -F '#{window_id}' \
+            "$self --trunk $trunk")
+    tmux switch-client -t "$label"
+  else
+    wid=$(tmux new-window -n "$label" -c "$cwd" -P -F '#{window_id}' \
+            "$self --trunk $trunk")
+  fi
+  # Keep the window around if claude bailed, so the error stays readable.
+  tmux set-option -w -t "$wid" remain-on-exit failed 2>/dev/null || true
+}
+
+main() {
+  command -v jq >/dev/null ||
+    die "jq is required (brew install jq / apt-get install jq)"
+  local oneshot=0 match="" show_id=0 trunk=""
+  while [[ $# -gt 0 ]]; do
+    case $1 in
+      -l|--list) list; return 0 ;;
+      -t|--tmux) shift; tmux_fork "${1:-}"; return 0 ;;
+      -p|--print) oneshot=1; shift ;;
+      -s|--select) match="${2:-}"; shift 2 ;;
+      -y|--yes) ASSUME_YES=1; shift ;;
+      --trunk) trunk="${2:-}"; shift 2 ;;
+      -i|--id) show_id=1; shift ;;
+      -h|--help)
+        awk 'NR>1 && /^#/ {sub(/^# ?/, ""); print; next} NR>1 {exit}' "$SELF"
+        return 0 ;;
+      --) shift; break ;;
+      *) break ;;
+    esac
+  done
+
+  local explicit=1 cwd=$PWD resolved
+  if [[ -z $trunk ]]; then
+    explicit=0
+    # Via a variable, not process substitution, so that an aborted picker
+    # propagates its exit status instead of looking like "nothing found".
+    resolved=$(resolve_trunk "$match") || exit 1
+    IFS=$'\t' read -r trunk cwd <<< "$resolved"
+  fi
+  [[ -n $trunk ]] || die "no Claude Code chat found here (start one, or use -s)"
+  [[ -n $cwd ]] || cwd=$PWD
+
+  if (( show_id )); then printf '%s\n' "$trunk"; return 0; fi
+  (( explicit )) || describe "$trunk"
+
+  local args fork
+  fork=$(new_uuid)
+  args=(--resume "$trunk" --fork-session --session-id "$fork")
+
+  mkdir -p "$STATE_DIR"
+  printf '%s\n' "$fork" >> "$FORKS_FILE"
+  tail -200 "$FORKS_FILE" > "$FORKS_FILE.tmp" && mv "$FORKS_FILE.tmp" "$FORKS_FILE"
+
+  (( oneshot )) && args=(-p "${args[@]}")
+  # The transcript lives in the project directory keyed by the chat's cwd, and
+  # a branch should continue where the original was running.
+  cd "$cwd" 2>/dev/null || true
+  exec claude "${args[@]}" "$@"
+}
+
+main "$@"
