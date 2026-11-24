@@ -14,7 +14,6 @@ Gordon's todo items are checkboxes. A colour square gives the item's status. Oth
 - A merged PR gets a plain child line, not a checkbox: `- ✅ merged [[YYYY-MM-DD]]` (the date is a wikilink).
 
 ## Markers (what a line is, never ticked away)
-- 🌀 the title of a discrete task: something that can eventually be completed. Its nested blocks may feature more specific info, status items and action items, as well as other sub-tasks, that constitute this task.
 - 🐙 a GitHub PR: `- [ ] 🐙 [<number>](<url>) <short title>`, or `- 🐙 <url>`.
 - 🌱 a branch: `` - 🌱 `<branch>` ``, then the worktree if it has one. If it branches off something other than main/master, say so: `` - 🌱 `<branch-b>` from `<branch-a>` ``.
 - Whenever you note a PR (🐙), also note the branch it is for, as a 🌱 child line under it.
