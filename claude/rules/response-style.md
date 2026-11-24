@@ -17,6 +17,9 @@ I read a lot of your output, and compressed, telegraphic sentences make me stop 
 - Every modifier must attach to exactly one thing. When a phrase such as "for over 10 minutes" could modify more than one part of the sentence, restructure the sentence with a relative clause, or split it into two sentences.
   - Bad: "a single UPDATE re-queues rows stuck in scanning for over 10 minutes" (is it the rows or the UPDATE that has been stuck for 10 minutes?)
   - Good: "a single UPDATE re-queues the rows that have been stuck in scanning for over 10 minutes"
+- Don't shorten a relative clause to a bare participle after a noun. Spell out "that is" / "that was" / "that has been", even when the short form is grammatical: the short form reads like a garden path, because the participle first looks like the sentence's main verb.
+  - Bad: "a call already joined at install isn't announced"
+  - Good: "a call that is already joined at install isn't announced"
 - Give each clause an explicit subject and verb, so that I never have to guess who does what: "the hook writes one line", not "one line written".
 - Unpack noun stacks into phrases with prepositions: "the warning that is printed when a skill link is skipped", not "skill link skip warning".
 - When "it", "this" or "that" could refer to more than one thing, name the thing instead.
