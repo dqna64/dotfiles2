@@ -12,7 +12,7 @@ directory; read together they accumulate across sessions, agents and machines.
 
 The logs directory:
 
-1. `<git root>/.agent_dqna64/logs/`, only if it already exists (the user opted this private repo in; it is committed like plans).
+1. `.agent_dqna64/logs/` in the nearest directory from the cwd up to the git root, only if it already exists (the user opted this private project in; it is committed like plans). A project folder inside a larger repo can have its own.
 2. else `$AGENT_LOGS/<project slug>/` (resolve the env var first; slug = git-root path with `/` -> `-`).
 3. else `~/.agent_dqna64/logs/<project slug>/`.
 
@@ -60,7 +60,7 @@ it grows without bound:
 
 ```sh
 . "${DOTFILES_DIR:-$HOME/dotfiles_dqna64}/utils/agent-log/log-path.sh"
-logs="$(agent_logs_dir "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")"
+logs="$(agent_logs_dir "$PWD")"
 cat "$logs"/*.jsonl | jq -r 'select(.files[]? | test("api/")) | "\(.ts) \(.summary)"'
 cat "$logs"/*.jsonl | jq -r 'select(.branch == "my-branch") | .summary'
 ```

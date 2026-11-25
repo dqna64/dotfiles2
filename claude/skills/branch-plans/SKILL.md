@@ -7,7 +7,7 @@ version: 1.0.0
 # Branch Plans
 
 - Find the plans directory - the first of these that exists:
-  1. `<git root of the cwd>/.agent_dqna64/plans/` (`git rev-parse --show-toplevel`). A project vault keeps the plans for branches of other repos (worktrees reached by absolute path), so this is the repo Claude was launched from, not the repo the branch lives in.
+  1. `.agent_dqna64/plans/` in the nearest directory from the cwd up to the git root (`git rev-parse --show-toplevel` is the upper bound), so a project folder inside a larger repo uses its own plans and the closest one wins. A project vault keeps the plans for branches of other repos (worktrees reached by absolute path), so this is the folder Claude was launched from, not the repo the branch lives in.
   2. `$AGENT_PLANS` (resolve the env var to its actual path before reading).
   3. `~/.agent_dqna64/plans`.
   If none exists, let the user know you can't find a plans directory, and proceed.

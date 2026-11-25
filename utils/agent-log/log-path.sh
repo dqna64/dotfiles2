@@ -17,10 +17,12 @@
 # The renderer merges files on read and sorts by timestamp.
 #
 # The project's logs directory:
-#   1. <git root>/.agent_dqna64/logs/    only if that directory already exists:
-#      the user created it to opt the project in (a private repo). Committed
-#      with the project, like plans. Never created here, and .agent_dqna64/
-#      alone (plans) does not opt in.
+#   1. <project dir>/.agent_dqna64/logs/    only if that directory already
+#      exists: the user created it to opt the project in (a private repo).
+#      <project dir> is the nearest directory, from the session's directory up
+#      to its git root, that holds one, so a project folder inside a larger
+#      repo can have logs of its own. Committed with the project, like plans.
+#      Never created here, and .agent_dqna64/ alone (plans) does not opt in.
 #   2. $AGENT_LOGS/<slug>/               the user's own logs root, one folder per
 #   3. ~/.agent_dqna64/logs/<slug>/      project; <slug> is the absolute git-root
 #      path with '/' replaced by '-' (the same scheme Claude Code uses under
@@ -52,25 +54,46 @@ agent_logs_global_root() {
 	fi
 }
 
-# agent_logs_dir [project_dir]
-# This project's logs directory (may not exist yet; the writer creates it).
+# agent_logs_scope [dir]
+# The directory whose logs apply to a session in <dir>: the nearest directory,
+# from <dir> up to its git root, that holds .agent_dqna64/logs; else the git root.
+agent_logs_scope() {
+	local dir root d
+	dir="$(cd "${1:-$PWD}" 2>/dev/null && pwd -P)" || return 1
+	root="$(agent_project_dir "$dir")" || return 1
+	d="$dir"
+	while [ "$d" != "/" ]; do
+		if [ -d "$d/.agent_dqna64/logs" ]; then
+			printf '%s\n' "$d"
+			return
+		fi
+		[ "$d" = "$root" ] && break
+		d="$(dirname "$d")"
+	done
+	printf '%s\n' "$root"
+}
+
+# agent_logs_dir [dir]
+# The logs directory for a session in <dir> (may not exist yet; the writer
+# creates it).
 agent_logs_dir() {
-	local project_dir="${1:-$PWD}" root
-	root="$(agent_project_dir "$project_dir")" || return 1
-	if [ -d "$root/.agent_dqna64/logs" ]; then
-		printf '%s/.agent_dqna64/logs\n' "$root"
+	local scope root
+	scope="$(agent_logs_scope "${1:-$PWD}")" || return 1
+	if [ -d "$scope/.agent_dqna64/logs" ]; then
+		printf '%s/.agent_dqna64/logs\n' "$scope"
 		return
 	fi
+	root="$(agent_project_dir "$scope")" || return 1
 	printf '%s/%s\n' "$(agent_logs_global_root)" "$(agent_project_slug "$root")"
 }
 
-# agent_session_log_path <project_dir> <agent> <session_id>
+# agent_session_log_path <session_dir> <agent> <session_id>
 # The log file for one session of one project. Reuses the session's existing
 # file (found by its id suffix) so every turn of a session lands in one file;
 # otherwise names a new one with the current UTC time as its start.
 agent_session_log_path() {
-	local project_dir="$1" agent="${2:-unknown}" session_id="$3" dir existing machine start
-	dir="$(agent_logs_dir "$project_dir")" || return 1
+	local session_dir="$1" agent="${2:-unknown}" session_id="$3" dir existing machine start
+	dir="$(agent_logs_dir "$session_dir")" || return 1
 	session_id="${session_id//\//_}"
 	agent="${agent//\//_}"
 	if [ -d "$dir" ]; then

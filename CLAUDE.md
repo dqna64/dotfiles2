@@ -196,8 +196,9 @@ Invariants to preserve if you touch it:
   demanding one line, keep the `NOTHING` escape hatch, and don't add fields to
   the rendered view that repeat on every line (see the machine-name test in
   `render.sh`).
-- **In-repo logs are opt-in, per project**: `<git root>/.agent_dqna64/logs/`
-  only if the user already created it (a private repo), else
+- **In-repo logs are opt-in, per project**: `<project dir>/.agent_dqna64/logs/`
+  (the nearest directory from the session's directory up to the git root that
+  holds one) only if the user already created it (a private repo), else
   `$AGENT_LOGS/<slug>`, else `~/.agent_dqna64/logs/<slug>`, slug = git-root
   path with `/` -> `-`. The writer must never create the in-repo directory,
   and `.agent_dqna64/` alone (plans) must not opt a repo in: entries carry the

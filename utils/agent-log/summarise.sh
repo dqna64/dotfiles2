@@ -42,8 +42,9 @@ case "$project_dir" in
 esac
 
 . "$SCRIPT_DIR/log-path.sh"
+session_dir="$project_dir"
 project_dir="$(agent_project_dir "$project_dir")" || exit 0
-log_file="$(agent_session_log_path "$project_dir" "$agent" "$session_id")"
+log_file="$(agent_session_log_path "$session_dir" "$agent" "$session_id")"
 mkdir -p "$(dirname "$log_file")" 2>/dev/null || exit 0
 
 # A single entry must stay under the filesystem block size for the atomic append

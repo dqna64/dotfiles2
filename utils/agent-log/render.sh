@@ -3,7 +3,7 @@
 # Agent activity log - render the JSONL to readable markdown on stdout.
 #
 # Usage: render.sh [dir] [-n <count>] [-s <session id prefix>] [-a]
-#   dir     project to read (default: the git root above $PWD, else $PWD)
+#   dir     project to read (default: $PWD; its nearest project folder or git root)
 #   -n      show only the most recent <count> entries
 #   -s      only the session(s) whose id starts with the given prefix
 #   -a      every project under the global logs root, merged
@@ -33,8 +33,8 @@ while [ $# -gt 0 ]; do
 	esac
 done
 
-[ -n "$dir" ] || dir="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
-dir="$(agent_project_dir "$dir")"
+[ -n "$dir" ] || dir="$PWD"
+dir="$(agent_logs_scope "$dir")"
 logs_dir="$(agent_logs_dir "$dir")"
 
 shopt -s nullglob

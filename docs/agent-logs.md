@@ -8,14 +8,19 @@ changing this feature are in `CLAUDE.md` -> "Agent activity logs".
 Resolved by `utils/agent-log/log-path.sh` - the writer, `agentlog` and
 `install.sh` all use it, so they agree:
 
-1. `<git root>/.agent_dqna64/logs/`, only if that directory already exists.
+1. `<project dir>/.agent_dqna64/logs/`, only if that directory already exists. `<project dir>` is the
+   nearest directory, from the session's directory up to its git root, that holds one. So a project
+   folder inside a larger repo (a vault that tracks many projects) can have logs of its own, and the
+   nearest one wins.
 2. else `$AGENT_LOGS/<project slug>/`.
 3. else `~/.agent_dqna64/logs/<project slug>/`.
 
 Tier 1 is a per-project opt-in: the user creates the directory by hand
 (`mkdir -p .agent_dqna64/logs`) in a repo that is private, and the logs are
 then committed with the project like plans. Nothing creates it automatically,
-and a repo that has only `.agent_dqna64/plans/` stays on tier 2/3. Entries
+and a repo that has only `.agent_dqna64/plans/` stays on tier 2/3. A session whose folder has no
+`.agent_dqna64/logs/`, and none in any parent up to the git root, uses tier 2/3. It never uses a
+sibling folder's logs, and it never uses the logs of a folder below it. Entries
 carry the hostname, absolute paths and unreviewed summaries, so never opt in a
 public repo. `agentlog -a` lists only tiers 2/3 (the global root).
 
